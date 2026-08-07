@@ -1,0 +1,64 @@
+import json
+from typing import Dict, Any, List
+from tenacity import retry, wait_exponential, stop_after_attempt
+from google import genai
+from google.genai import types
+from src.core.config import settings
+
+class LLMEngine:
+    def __init__(self, client: genai.Client = None):
+        self.client = client or genai.Client(api_key=settings.GEMINI_API_KEY)
+
+    @retry(
+        wait=wait_exponential(multiplier=1, min=4, max=60),
+        stop=stop_after_attempt(5),
+        reraise=True
+    )
+    def call_gemini_api(self, chunk_data: str, target_schema: Dict[str, Any]) -> List[Dict[str, Any]]:
+        properties = {}
+        for key, value_type in target_schema.items():
+            vtype = value_type.lower()
+            if vtype == "integer":
+                properties[key] = {"type": "integer"}
+            elif vtype == "float":
+                properties[key] = {"type": "number"}
+            elif vtype == "boolean":
+                properties[key] = {"type": "boolean"}
+            else:
+                properties[key] = {"type": "string"}
+
+        response_schema = {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": properties,
+                "required": list(properties.keys())
+            }
+        }
+
+        system_instruction = (
+            "You are a strict data transformation engine. "
+            "Your task is to take the provided raw, messy CSV data and map it EXACTLY "
+            "to the required target JSON schema. "
+            "Rules:\n"
+            "1. NO data loss: Every raw row must be mapped to a target row.\n"
+            "2. Do not omit rows.\n"
+            "3. Cast types correctly based on the target schema.\n"
+            "4. If a field cannot be mapped or data is missing, provide a sensible default or null.\n"
+            "5. Output must be valid JSON."
+        )
+
+        prompt = f"Map the following CSV data to the target schema:\n\n{chunk_data}"
+
+        response = self.client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                response_mime_type="application/json",
+                response_schema=response_schema,
+                temperature=0.1,
+            ),
+        )
+
+        return json.loads(response.text)
