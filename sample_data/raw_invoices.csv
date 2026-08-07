@@ -1,0 +1,5 @@
+Invoice#, Date, Client Name, Total Amount, Tax, Status, Notes
+INV-1001, 2023/10/12, "Acme Corp", $1500.00, 10%, PAID, "Check #1234"
+1002, Oct 15 2023, Globex, 2500, , pending, 
+INV-1003, 10-18-2023, Initech, $450.50, 5%, Unpaid, "Call next week"
+1004, , Stark Ind., 9999.99, 8%, PAID, 
