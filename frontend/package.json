@@ -26,6 +26,7 @@
     "@types/react-dom": "^18",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
+    "firebase-tools": "^15.26.0",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "postcss": "^8",
