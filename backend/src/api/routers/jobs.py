@@ -8,7 +8,7 @@ from src.services.firestore import FirestoreService
 
 router = APIRouter()
 
-@router.post("/", response_model=JobResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.post("", response_model=JobResponse, status_code=status.HTTP_202_ACCEPTED)
 async def create_job(
     request: JobRequest,
     pubsub_svc: PubSubService = Depends(get_pubsub_service),
