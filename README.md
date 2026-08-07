@@ -1,4 +1,4 @@
-# Structurify <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Rocket/3D/rocket_3d.png" width="36" align="absbottom" alt="rocket" />
+# Structurify <img src="./docs/icons/rocket.svg" width="36" align="absbottom" alt="rocket" />
 
 **Structurify** is a production-ready, event-driven B2B SaaS platform that automates the transformation of unstructured, messy spreadsheet data (CSV, XLSX) into a standardized master schema using **Google Gemini 2.5 Flash**.
 
@@ -6,7 +6,7 @@ Built on a completely decoupled **Serverless Fan-Out Architecture** on Google Cl
 
 ---
 
-## <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Building%20construction/3D/building_construction_3d.png" width="28" align="absbottom" alt="architecture" /> System Architecture
+## <img src="./docs/icons/architecture.svg" width="28" align="absbottom" alt="architecture" /> System Architecture
 
 The architecture utilizes a robust asynchronous data pipeline:
 
@@ -20,7 +20,7 @@ The architecture utilizes a robust asynchronous data pipeline:
 
 ---
 
-## <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Toolbox/3D/toolbox_3d.png" width="28" align="absbottom" alt="tech stack" /> Tech Stack
+## <img src="./docs/icons/tech_stack.svg" width="28" align="absbottom" alt="tech stack" /> Tech Stack
 
 - **Frontend**: Next.js 14, React, TailwindCSS, Firebase Client SDK
 - **Backend API Gateway**: Python, FastAPI, Uvicorn
@@ -31,7 +31,7 @@ The architecture utilizes a robust asynchronous data pipeline:
 
 ---
 
-## <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Open%20file%20folder/3D/open_file_folder_3d.png" width="28" align="absbottom" alt="project structure" /> Project Structure
+## <img src="./docs/icons/folder.svg" width="28" align="absbottom" alt="project structure" /> Project Structure
 
 The codebase strictly adheres to **Clean Architecture** principles across all microservices:
 
@@ -64,7 +64,7 @@ Structurify/
 
 ---
 
-## <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Laptop/3D/laptop_3d.png" width="28" align="absbottom" alt="local dev" /> Local Development Setup
+## <img src="./docs/icons/laptop.svg" width="28" align="absbottom" alt="local dev" /> Local Development Setup
 
 ### 1. Prerequisites
 - Node.js >= 18
@@ -133,7 +133,7 @@ npm run dev
 
 ---
 
-## <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Cloud/3D/cloud_3d.png" width="28" align="absbottom" alt="cloud deployment" /> Cloud Deployment
+## <img src="./docs/icons/cloud.svg" width="28" align="absbottom" alt="cloud deployment" /> Cloud Deployment
 
 Structurify is designed for seamless, automated deployment to Google Cloud Run. 
 
