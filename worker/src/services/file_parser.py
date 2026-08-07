@@ -25,7 +25,7 @@ class FileParserService:
             
             # 2. Parse File
             if file_path.lower().endswith(".csv"):
-                df = pd.read_csv(io.BytesIO(file_bytes))
+                df = pd.read_csv(io.BytesIO(file_bytes), on_bad_lines='skip')
             elif file_path.lower().endswith((".xlsx", ".xls")):
                 df = pd.read_excel(io.BytesIO(file_bytes))
             else:

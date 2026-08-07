@@ -7,11 +7,21 @@ from src.services.file_parser import FileParserService
 
 class MockStorageService:
     def download_file_bytes(self, bucket_name: str, file_path: str) -> bytes:
+        import os
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        if file_path == "uploads/dirty_data.csv":
+            with open(os.path.join(base_dir, "data/dirty_data.csv"), "rb") as f:
+                return f.read()
+        elif file_path == "uploads/empty.csv":
+            with open(os.path.join(base_dir, "data/empty.csv"), "rb") as f:
+                return f.read()
+                
         df = pd.DataFrame({"Name": ["John"], "Age": ["25"]})
         return df.to_csv(index=False).encode("utf-8")
 
     def upload_file_bytes(self, bucket_name: str, file_path: str, data: bytes, content_type: str) -> str:
-        return "https://mock-download-url"
+        return f"https://mock-download-url/{file_path}"
 
 class MockFirestoreService:
     def __init__(self):

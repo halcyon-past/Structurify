@@ -1,0 +1,6 @@
+first name,last_name,contact info,age,notes
+john,doe,john@doe.com,25,"this is a note with a 
+newline"
+Jane,Smith,555-1234,unknown,weird encoding
+,,missing everything,,
+extra_row_with_too_many_cols,a,b,c,d,e,f,g
