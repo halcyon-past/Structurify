@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "structurify-504821"
-  }
+  },
+  "targets": {
+    "structurify-504821": {
+      "hosting": {
+        "structurify": [
+          "structurify"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

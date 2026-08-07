@@ -25,7 +25,7 @@ export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubm
     onChange(fields.filter((_, i) => i !== index));
   };
 
-  const updateField = (index: number, key: keyof SchemaField, value: any) => {
+  const updateField = <K extends keyof SchemaField>(index: number, key: K, value: SchemaField[K]) => {
     const newFields = [...fields];
     newFields[index] = { ...newFields[index], [key]: value };
     onChange(newFields);
@@ -59,7 +59,7 @@ export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubm
                 />
                 <select 
                   value={field.type}
-                  onChange={(e) => updateField(idx, 'type', e.target.value)}
+                  onChange={(e) => updateField(idx, 'type', e.target.value as FieldType)}
                   className="bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="String">String</option>

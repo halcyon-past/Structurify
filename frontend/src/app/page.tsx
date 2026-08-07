@@ -35,8 +35,8 @@ export default function Home() {
     try {
       const jobId = await uploadAndSubmitJob(file, targetSchema);
       setActiveJobId(jobId);
-    } catch (error: any) {
-      alert(error.message || "An error occurred.");
+    } catch (error: unknown) {
+      alert(error instanceof Error ? error.message : "An error occurred.");
     }
   };
 
