@@ -1,4 +1,4 @@
-# Structurify 🚀
+# Structurify <img src="https://img.icons8.com/color/48/000000/launched-rocket--v1.png" width="32" height="32" align="center" alt="rocket" />
 
 **Structurify** is a production-ready, event-driven B2B SaaS platform that automates the transformation of unstructured, messy spreadsheet data (CSV, XLSX) into a standardized master schema using **Google Gemini 2.5 Flash**.
 
@@ -6,7 +6,7 @@ Built on a completely decoupled **Serverless Fan-Out Architecture** on Google Cl
 
 ---
 
-## 🏗 System Architecture
+## <img src="https://img.icons8.com/color/48/000000/construction.png" width="24" height="24" align="center" alt="architecture" /> System Architecture
 
 The architecture utilizes a robust asynchronous data pipeline:
 
@@ -20,7 +20,7 @@ The architecture utilizes a robust asynchronous data pipeline:
 
 ---
 
-## 🛠 Tech Stack
+## <img src="https://img.icons8.com/color/48/000000/maintenance.png" width="24" height="24" align="center" alt="tech stack" /> Tech Stack
 
 - **Frontend**: Next.js 14, React, TailwindCSS, Firebase Client SDK
 - **Backend API Gateway**: Python, FastAPI, Uvicorn
@@ -31,7 +31,7 @@ The architecture utilizes a robust asynchronous data pipeline:
 
 ---
 
-## 📂 Project Structure
+## <img src="https://img.icons8.com/color/48/000000/folder-invoices.png" width="24" height="24" align="center" alt="project structure" /> Project Structure
 
 The codebase strictly adheres to **Clean Architecture** principles across all microservices:
 
@@ -64,7 +64,7 @@ Structurify/
 
 ---
 
-## 💻 Local Development Setup
+## <img src="https://img.icons8.com/color/48/000000/macbook.png" width="24" height="24" align="center" alt="local dev" /> Local Development Setup
 
 ### 1. Prerequisites
 - Node.js >= 18
@@ -133,7 +133,7 @@ npm run dev
 
 ---
 
-## ☁️ Cloud Deployment
+## <img src="https://img.icons8.com/color/48/000000/cloud.png" width="24" height="24" align="center" alt="cloud deployment" /> Cloud Deployment
 
 Structurify is designed for seamless, automated deployment to Google Cloud Run. 
 
