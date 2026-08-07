@@ -1,0 +1,28 @@
+# Ignore environment files
+.env
+.env.local
+.env.*.local
+
+# Ignore GCP Service Account JSON keys
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+build/
+.DS_Store
