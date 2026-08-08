@@ -23,7 +23,7 @@ describe('JobStatus', () => {
     expect(screen.getByTestId('status-completed')).toBeInTheDocument();
     expect(screen.getByText('50')).toBeInTheDocument();
     expect(screen.getByText('5s')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Download Clean XLSX/i })).toHaveAttribute('href', 'https://test.com');
+    expect(screen.getByRole('link', { name: /Download Clean Dataset/i })).toHaveAttribute('href', 'https://test.com');
   });
 
   it('renders failed status with error message', () => {
