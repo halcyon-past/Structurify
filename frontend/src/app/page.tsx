@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { File } from "lucide-react";
+import Image from "next/image";
 import { UploadZone } from "@/components/UploadZone";
 import { SchemaBuilder, SchemaField } from "@/components/SchemaBuilder";
 import { useFileUpload } from "@/hooks/useFileUpload";
@@ -46,8 +46,8 @@ export default function Home() {
 
       <div className="w-full max-w-6xl p-8 z-10 relative">
         <header className="mb-12 border-b border-white/10 pb-8 pt-8 flex flex-col items-center text-center">
-          <div className="bg-white/5 p-4 rounded-2xl border border-white/10 shadow-glow mb-6 backdrop-blur-xl">
-            <File size={36} className="text-accent-500" />
+          <div className="bg-white/5 p-4 rounded-2xl border border-white/10 shadow-glow mb-6 backdrop-blur-xl flex items-center justify-center">
+            <Image src="/logo.svg" alt="Structurify Logo" width={48} height={48} priority />
           </div>
           <h1 className="text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500">
             Structurify

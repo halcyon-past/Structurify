@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://structurify.web.app/sitemap.xml
