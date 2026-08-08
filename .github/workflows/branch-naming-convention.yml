@@ -16,8 +16,8 @@ jobs:
           BRANCH_NAME="${{ github.head_ref }}"
           echo "Checking branch name: $BRANCH_NAME"
           
-          if [[ ! "$BRANCH_NAME" =~ ^(feature/(dev|uat|main)/[a-zA-Z0-9_-]+|hotfix/[a-zA-Z0-9_-]+)$ ]]; then
-            echo "::error::Branch name does not follow convention. Expected format: feature/<dev|uat|main>/<feature-name> or hotfix/<fix>"
+          if [[ ! "$BRANCH_NAME" =~ ^(main|dev|uat|feature/(dev|uat|main)/[a-zA-Z0-9_-]+|hotfix/[a-zA-Z0-9_-]+)$ ]]; then
+            echo "::error::Branch name does not follow convention. Expected format: feature/<dev|uat|main>/<feature-name>, hotfix/<fix>, or a core branch (main, dev, uat)."
             exit 1
           fi
           echo "Branch name is valid!"
