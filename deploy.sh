@@ -50,6 +50,7 @@ gcloud run deploy structurify-worker \
   --service-account ${SA_EMAIL} \
   --set-env-vars GOOGLE_CLOUD_PROJECT=${PROJECT_ID},RAW_BUCKET_NAME=raw-uploads-${PROJECT_ID},PROCESSED_BUCKET_NAME=processed-outputs-${PROJECT_ID} \
   --set-secrets=GEMINI_API_KEY=gemini-api-key:latest \
+  --memory=2Gi \
   --timeout=3600s
 cd ..
 
