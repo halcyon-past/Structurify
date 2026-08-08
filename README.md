@@ -44,6 +44,22 @@ The architecture utilizes a robust asynchronous data pipeline:
 
 ---
 
+## <img src="./docs/icons/cloud.svg" width="28" align="absbottom" alt="gcp" /> Google Cloud Platform (GCP) Services Used
+
+Structurify heavily leverages GCP's serverless ecosystem to achieve massive scalability and low operational overhead. Here is how each service is utilized:
+
+1. **Cloud Run**: Hosts both the FastAPI Gateway (`structurify-backend`) and the LangGraph Processing Engine (`structurify-worker`) as serverless containers. The backend is public-facing, while the worker is private and triggered internally.
+2. **Cloud Storage (GCS)**: Provides highly durable object storage. 
+   - `raw-uploads` bucket stores incoming, messy spreadsheets.
+   - `processed-outputs` bucket stores the final, clean `.xlsx` and `.csv` files.
+3. **Cloud Pub/Sub**: The backbone of the asynchronous event-driven architecture. The backend publishes events to the `schema-transformation-jobs` topic, which then securely **pushes** the workload to the Cloud Run Worker without holding open synchronous HTTP connections.
+4. **Firestore (Datastore)**: The primary NoSQL database. It logs every job's status, tracking progress in real-time. The frontend subscribes to these Firestore documents via `onSnapshot` to render the live loading timeline.
+5. **Artifact Registry**: Acts as the secure, private container image registry. It stores the Docker images for both the backend and worker before they are deployed to Cloud Run.
+6. **Secret Manager**: Securely stores sensitive credentials like the `GEMINI_API_KEY`. The Cloud Run worker pulls these directly into environment variables at runtime, ensuring keys are never exposed in plaintext.
+7. **Firebase Hosting**: Serves the Next.js static frontend application globally with low-latency CDN caching.
+
+---
+
 ## <img src="./docs/icons/folder.svg" width="28" align="absbottom" alt="project structure" /> Project Structure
 
 The codebase strictly adheres to **Clean Architecture** principles across all microservices:
