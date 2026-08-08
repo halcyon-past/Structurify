@@ -80,6 +80,18 @@ gcloud pubsub subscriptions update schema-transformation-sub-push \
   --push-endpoint="${WORKER_URL}/process-job" \
   --push-auth-service-account="${PUBSUB_SA_EMAIL}"
 
+echo "5. Setting up Chunk Processing Pub/Sub Push Subscription..."
+gcloud pubsub topics create chunk-processing-jobs || true
+
+gcloud pubsub subscriptions create chunk-processing-sub-push \
+  --topic=chunk-processing-jobs \
+  --push-endpoint="${WORKER_URL}/process-chunk" \
+  --push-auth-service-account="${PUBSUB_SA_EMAIL}" \
+  --ack-deadline=600 || \
+gcloud pubsub subscriptions update chunk-processing-sub-push \
+  --push-endpoint="${WORKER_URL}/process-chunk" \
+  --push-auth-service-account="${PUBSUB_SA_EMAIL}"
+
 echo "========================================="
 echo "Deployment Complete!"
 echo "Backend URL: $(gcloud run services describe structurify-backend --platform managed --region ${REGION} --format 'value(status.url)')"
