@@ -6,7 +6,7 @@ export function useFileUpload() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const uploadAndSubmitJob = async (file: File, targetSchema: Record<string, string>): Promise<string> => {
+  const uploadAndSubmitJob = async (file: File, targetSchema: Record<string, string>, email?: string): Promise<string> => {
     setIsUploading(true);
     setUploadProgress(0);
 
@@ -39,14 +39,17 @@ export function useFileUpload() {
       });
 
       // 3. Submit Job
+      const payload: Record<string, unknown> = {
+        file_path,
+        file_name: file.name,
+        target_schema: targetSchema
+      };
+      if (email) payload.email = email;
+
       const jobRes = await fetch(`${BACKEND_URL}/api/v1/jobs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          file_path,
-          file_name: file.name,
-          target_schema: targetSchema
-        })
+        body: JSON.stringify(payload)
       });
       if (!jobRes.ok) throw new Error("Failed to queue job");
       const { job_id } = await jobRes.json();

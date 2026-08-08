@@ -15,6 +15,33 @@ class LLMEngine:
         reraise=True
     )
     def call_gemini_api(self, chunk_data: str, target_schema: Dict[str, Any]) -> List[Dict[str, Any]]:
+        # Handle Auto-Clean Mode (Empty Schema)
+        if not target_schema:
+            system_instruction = (
+                "You are a strict data transformation engine. "
+                "Your task is to take the provided raw, messy CSV data, dynamically infer the schema "
+                "from the headers, and clean the messy data (fixing capitalization, removing extra whitespace, "
+                "standardizing formats) while keeping ALL the original columns. "
+                "Rules:\n"
+                "1. NO data loss: Every raw row must be mapped to a target row.\n"
+                "2. Retain all original columns from the CSV.\n"
+                "3. Clean up the messy formatting in the values.\n"
+                "4. Output must be a valid JSON array of objects, where each object represents a row."
+            )
+            prompt = f"Clean the following CSV data and return it as a JSON array of objects:\n\n{chunk_data}"
+            
+            response = self.client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    response_mime_type="application/json",
+                    temperature=0.1,
+                ),
+            )
+            return json.loads(response.text)
+
+        # Standard Target Schema Mapping Mode
         properties = {}
         for key, value_type in target_schema.items():
             vtype = value_type.lower()
