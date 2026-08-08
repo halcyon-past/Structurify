@@ -1,6 +1,6 @@
 # Structurify: Architectural Deep Dive
 
-This document provides a comprehensive overview of the **Serverless Fan-Out Architecture** that powers Structurify. The system is designed to handle computationally heavy ETl (Extract, Transform, Load) tasks without blocking the web servers, guaranteeing high availability and extremely low latency for the end user.
+This document provides a comprehensive overview of the **Serverless Fan-Out Architecture** that powers Structurify. The system is designed to handle computationally heavy ETL (Extract, Transform, Load) tasks without blocking the web servers, guaranteeing high availability and extremely low latency for the end user.
 
 ---
 
@@ -10,7 +10,7 @@ Structurify is composed of three main layers, all orchestrated via Google Cloud 
 
 1. **Client/Presentation Layer:** Next.js React Application
 2. **Gateway/Routing Layer:** FastAPI Backend (Cloud Run)
-3. **Execution/Worker Layer:** FastAPI Async Worker (Cloud Run) + Gemini 2.5 Flash
+3. **Execution/Worker Layer:** FastAPI Async Worker (Cloud Run) + LangGraph + Gemini 2.5 Flash
 
 ### Component Flowchart
 
@@ -34,8 +34,10 @@ graph TD
     GCS_Processed[("Processed Outputs (GCS)")]:::gcp
     
     Firestore[("Firestore DB")]:::gcp
-    PubSub[["Cloud Pub/Sub Queue"]]:::gcp
+    PubSub_Jobs[["Jobs Queue (Pub/Sub)"]]:::gcp
+    PubSub_Chunks[["Chunks Queue (Pub/Sub)"]]:::gcp
     
+    LangGraph["LangGraph Map-Reduce"]:::worker
     Gemini{{"Gemini 2.5 Flash API"}}:::llm
 
     %% Edges
@@ -45,29 +47,30 @@ graph TD
     NextJS -- "3. Direct HTTP PUT" --> GCS_Raw
     
     NextJS -- "4. Submit Job Metadata" --> FastAPI_Gateway
-    FastAPI_Gateway -- "5. Log 'queued' status" --> Firestore
-    FastAPI_Gateway -- "6. Publish Job Event" --> PubSub
+    FastAPI_Gateway -- "5. Log 'queued'" --> Firestore
+    FastAPI_Gateway -- "6. Publish Job Event" --> PubSub_Jobs
     
-    PubSub -- "7. Push Event (HTTP POST)" --> FastAPI_Worker
+    PubSub_Jobs -- "7. Push /process-job" --> FastAPI_Worker
+    FastAPI_Worker -- "8. File Parser (Split)" --> PubSub_Chunks
     
-    FastAPI_Worker -- "8. Download Raw File" --> GCS_Raw
-    FastAPI_Worker -- "9. Update status 'processing'" --> Firestore
+    PubSub_Chunks -- "9. Push /process-chunk" --> FastAPI_Worker
+    FastAPI_Worker -- "10. State Machine" --> LangGraph
+    LangGraph -- "11. Transform & Self-Correct" --> Gemini
+    Gemini -. "Strict JSON Array" .-> LangGraph
+    LangGraph -- "12. Upload Chunk JSON" --> GCS_Raw
     
-    FastAPI_Worker -- "10. Chunk Data & Map Schema" --> Gemini
-    Gemini -. "Strict JSON Schema Output" .-> FastAPI_Worker
+    FastAPI_Worker -- "13. Transaction Counter" --> Firestore
+    FastAPI_Worker -- "14. Reducer compiles XLSX" --> GCS_Processed
+    FastAPI_Worker -- "15. Send Emails (if >5MB)" --> User
     
-    FastAPI_Worker -- "11. Upload Compiled XLSX" --> GCS_Processed
-    FastAPI_Worker -- "12. Update status 'completed'" --> Firestore
-    
-    Firestore -. "13. Real-time onSnapshot" .-> NextJS
-    NextJS -- "14. Download Clean File" --> GCS_Processed
+    Firestore -. "16. Real-time onSnapshot" .-> NextJS
 ```
 
 ---
 
-## 2. Event-Driven Execution Flow (Sequence Diagram)
+## 2. Map-Reduce Event-Driven Execution Flow (Sequence Diagram)
 
-The true power of Structurify lies in its decoupled nature. The Backend API never touches the actual file payload, and the Frontend never waits on a blocking HTTP request for the LLM to finish processing. 
+The true power of Structurify lies in its decoupled, multi-staged Fan-Out architecture. 
 
 ```mermaid
 sequenceDiagram
@@ -77,41 +80,40 @@ sequenceDiagram
     participant Cloud Storage
     participant Firestore
     participant Pub/Sub
-    participant Worker
+    participant Worker (Splitter)
+    participant Worker (Mapper)
     participant Gemini Flash
+    participant Worker (Reducer)
 
-    Client->>API Gateway: POST /api/v1/upload-url (filename)
-    API Gateway->>Cloud Storage: Generate V4 Signed URL
-    Cloud Storage-->>API Gateway: URL generated
-    API Gateway-->>Client: Returns Upload URL
-
-    Client->>Cloud Storage: Direct PUT File to GCS (Bypasses API)
-    Cloud Storage-->>Client: 200 OK
-
-    Client->>API Gateway: POST /api/v1/jobs (filepath, target_schema)
-    API Gateway->>Firestore: Create Job {status: "queued"}
-    API Gateway->>Pub/Sub: Publish Message {job_id, filepath, schema}
+    Client->>API Gateway: POST /api/v1/jobs (filepath, schema, email)
+    API Gateway->>Pub/Sub: Publish Job Message
     API Gateway-->>Client: 202 Accepted (job_id)
 
-    note over Client, Firestore: Client establishes Firestore onSnapshot listener for UI updates
-
-    Pub/Sub->>Worker: HTTP POST Push Delivery (Message)
-    Worker->>Firestore: Update Job {status: "processing"}
-    Worker->>Cloud Storage: Download Raw CSV/XLSX
-    
-    loop Chunking Pipeline
-        Worker->>Gemini Flash: Prompt + System Instructions + Target JSON Schema
-        Gemini Flash-->>Worker: Enforced JSON Array
+    Pub/Sub->>Worker (Splitter): HTTP POST /process-job
+    Worker (Splitter)->>Cloud Storage: Download Raw CSV/XLSX
+    Worker (Splitter)->>Worker (Splitter): Chunk into 500-row segments
+    loop For each chunk
+        Worker (Splitter)->>Pub/Sub: Publish Chunk Message
     end
     
-    Worker->>Worker: Compile JSON chunks to Pandas DataFrame -> Excel
-    Worker->>Cloud Storage: Upload Processed XLSX File
-    Cloud Storage-->>Worker: Generate 7-day Signed Download URL
+    Worker (Splitter)->>Client: (If >5MB) Send "Processing Started" Email
     
-    Worker->>Firestore: Update Job {status: "completed", download_url}
-    Worker-->>Pub/Sub: 200 OK (Acknowledge Message)
+    Pub/Sub->>Worker (Mapper): HTTP POST /process-chunk
+    loop LangGraph Retry Cycle (Max 3)
+        Worker (Mapper)->>Gemini Flash: Prompt + System Instructions + Target JSON Schema
+        Gemini Flash-->>Worker (Mapper): Enforced JSON Array
+    end
+    Worker (Mapper)->>Cloud Storage: Upload chunk_{id}.json
+    Worker (Mapper)->>Firestore: Transactional Increment completed_chunks
     
-    Firestore-->>Client: Pushes real-time 'completed' state to UI
+    alt is completed_chunks == total_chunks
+        Worker (Mapper)->>Worker (Reducer): trigger reduce_job(job_id)
+        Worker (Reducer)->>Cloud Storage: Download all chunk_{id}.json
+        Worker (Reducer)->>Worker (Reducer): Compile Pandas DataFrame -> Excel
+        Worker (Reducer)->>Cloud Storage: Upload Processed XLSX File
+        Worker (Reducer)->>Client: Send "Success" Email with Download Link
+        Worker (Reducer)->>Firestore: Update Job {status: "completed", download_url}
+    end
 ```
 
 ---
@@ -122,14 +124,23 @@ sequenceDiagram
 **Problem:** Uploading a 50MB spreadsheet through a standard API endpoint causes massive memory bloat on the server and risks HTTP timeout limits.
 **Solution:** The Backend API acts purely as an authenticator. It generates a short-lived presigned URL, allowing the client's browser to stream the file directly to a GCS bucket, bypassing the web server entirely.
 
-### 2. Serverless Fan-Out via Pub/Sub Push
-**Problem:** LLM compilation can take anywhere from 10 seconds to 5 minutes depending on file size. A standard HTTP request will time out after 30-60 seconds, leaving the user with a 504 Gateway Timeout.
-**Solution:** The API Gateway immediately responds with a `202 Accepted` and drops the job onto an event bus (`Cloud Pub/Sub`). Pub/Sub then reliably pushes this event to the asynchronous Worker engine. If the worker fails, Pub/Sub will automatically retry the event using exponential backoff.
+### 2. LangGraph Map-Reduce Pipeline
+**Problem:** A 100,000-row spreadsheet cannot be processed by a single LLM API call due to token context limits (8k output tokens) and aggressive Cloud Run HTTP timeout constraints.
+**Solution:** The Worker employs a highly concurrent Split-Map-Reduce design. 
+- **Split:** The file is chunked into 500-row segments.
+- **Map:** Each chunk is mapped over Gemini concurrently via Pub/Sub. If a chunk fails extraction, a LangGraph state machine catches the error and loops back for up to 3 self-correction retries.
+- **Reduce:** A Firestore transactional counter tracks chunk completions and eventually merges them into a unified `.xlsx` file.
 
-### 3. Strict Schema Enforcement via Gemini Structured Output
-**Problem:** Large Language Models naturally hallucinate or return improperly formatted JSON strings, breaking data pipelines.
-**Solution:** The worker utilizes Gemini 2.5 Flash's `response_schema` configuration. The user-defined schema (e.g. `{"id": "Integer", "name": "String"}`) is dynamically translated into an OpenAPI 3.0 standard schema structure and passed directly to the model's generation config, forcing the model to guarantee absolute schema adherence.
+### 3. Strict Schema Enforcement & Auto-Clean
+**Problem:** LLMs are prone to hallucinating formats or omitting columns.
+**Solution:** 
+- If a target schema is provided, Gemini is forced to map the data directly to a JSON Schema object (`response_schema`).
+- **Auto-Clean Mode:** If no target schema is provided, Structurify dynamically infers the schema, cleans up the mess (capitalization, whitespaces, date formats), and returns the entire spreadsheet as a valid JSON array.
 
-### 4. Firestore Real-time Synchronization
-**Problem:** With asynchronous processing, the client has no way of knowing when the task finishes unless it implements aggressive, resource-heavy HTTP polling (e.g. `setInterval(() => fetchStatus(), 1000)`).
-**Solution:** By storing the job state in Google Firestore, the Next.js client establishes an active WebSocket-based `onSnapshot` listener. The second the Worker updates the database to "completed", the Firebase SDK pushes the state change to the UI instantaneously with zero overhead.
+### 4. Asynchronous Email Notifications
+**Problem:** Large files can take several minutes to process. Users might close the browser tab.
+**Solution:** If a file is larger than 5 MB, the Worker instantly sends an HTML email containing a tracking link (`/track?jobId=...`) the moment the file begins chunking. A secondary success email delivers the final download link, guaranteeing the user never loses their data.
+
+### 5. Rate Limits & Cloud Run Concurrency
+**Problem:** Gemini Free Tier limits allow a maximum of 15 Requests Per Minute (RPM) and 1,500 Requests Per Day. A 50-chunk file processed completely in parallel by Cloud Run will instantly trigger a `429 RESOURCE_EXHAUSTED` error.
+**Solution:** Tenacity is used inside the `LLMEngine` to automatically perform exponential backoffs (up to 60s) on `429` errors. For production, upgrading the GCP project to a paid tier removes this limit, allowing Cloud Run to process 1,000+ chunks concurrently.
