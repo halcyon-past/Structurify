@@ -16,3 +16,8 @@ class FirestoreService:
         if updates:
             data.update(updates)
         job_ref.update(data)
+
+    def get_job(self, job_id: str) -> Dict[str, Any]:
+        job_ref = self.db.collection("jobs").document(job_id)
+        doc = job_ref.get()
+        return doc.to_dict() if doc.exists else None

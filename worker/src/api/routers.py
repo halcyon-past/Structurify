@@ -38,7 +38,7 @@ async def process_job(request: Request):
             file_path = payload.get('file_path')
             target_schema = payload.get('target_schema')
             
-            if not job_id or not file_path or not target_schema:
+            if not job_id or not file_path or target_schema is None:
                 raise ValueError("Missing required fields in payload")
                 
             file_parser_svc.process_file(job_id, file_path, target_schema)
@@ -67,7 +67,7 @@ async def process_chunk(request: Request):
             chunk_data = payload.get('chunk_data')
             target_schema = payload.get('target_schema')
             
-            if not job_id or chunk_id is None or not chunk_data or not target_schema:
+            if not job_id or chunk_id is None or not chunk_data or target_schema is None:
                 raise ValueError("Missing required fields in chunk payload")
                 
             # 1. Map: Extract and self-correct using LangGraph

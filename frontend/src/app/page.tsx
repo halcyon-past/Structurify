@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { File } from "lucide-react";
 import { UploadZone } from "@/components/UploadZone";
-import { JobStatus } from "@/components/JobStatus";
 import { SchemaBuilder, SchemaField } from "@/components/SchemaBuilder";
 import { useFileUpload } from "@/hooks/useFileUpload";
-import { useJobListener } from "@/hooks/useJobListener";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -15,10 +14,11 @@ export default function Home() {
     { name: "name", type: "String", required: true }
   ]);
   
-  const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
   
   const { uploadAndSubmitJob, isUploading, uploadProgress } = useFileUpload();
-  const jobState = useJobListener(activeJobId);
+
+  const router = useRouter();
 
   const handleSubmit = async () => {
     if (!file) return alert("Please select a file.");
@@ -29,11 +29,9 @@ export default function Home() {
       targetSchema[field.name] = field.type;
     }
 
-    setActiveJobId(null);
-
     try {
-      const jobId = await uploadAndSubmitJob(file, targetSchema);
-      setActiveJobId(jobId);
+      const jobId = await uploadAndSubmitJob(file, targetSchema, email);
+      router.push(`/track/${jobId}`);
     } catch (error: unknown) {
       alert(error instanceof Error ? error.message : "An error occurred.");
     }
@@ -67,7 +65,6 @@ export default function Home() {
               isUploading={isUploading} 
               uploadProgress={uploadProgress} 
             />
-            {activeJobId && <JobStatus jobId={activeJobId} jobState={jobState} />}
           </section>
 
           <section>
@@ -77,6 +74,8 @@ export default function Home() {
               onSubmit={handleSubmit}
               isSubmitting={isUploading}
               isSubmitDisabled={!file}
+              email={email}
+              onEmailChange={setEmail}
             />
           </section>
         </div>

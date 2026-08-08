@@ -23,7 +23,7 @@ async def create_job(
     
     # 1. Create Job Document
     try:
-        firestore_svc.create_job(job_id, request.file_path, request.file_name, request.target_schema, now)
+        firestore_svc.create_job(job_id, request.file_path, request.file_name, request.target_schema, now, request.email)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create job document: {str(e)}")
 
@@ -64,5 +64,7 @@ async def get_job_status(
         created_at=data.get("created_at"),
         download_url=data.get("download_url"),
         processed_rows=data.get("processed_rows"),
-        error_message=data.get("error_message")
+        error_message=data.get("error_message"),
+        total_chunks=data.get("total_chunks"),
+        completed_chunks=data.get("completed_chunks")
     )

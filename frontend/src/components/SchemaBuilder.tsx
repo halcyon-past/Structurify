@@ -19,9 +19,11 @@ interface SchemaBuilderProps {
   onSubmit: () => void;
   isSubmitting: boolean;
   isSubmitDisabled: boolean;
+  email: string;
+  onEmailChange: (email: string) => void;
 }
 
-export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubmitDisabled }: SchemaBuilderProps) {
+export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubmitDisabled, email, onEmailChange }: SchemaBuilderProps) {
   const [mode, setMode] = useState<"builder" | "json">("builder");
   const [jsonText, setJsonText] = useState("");
   const [jsonError, setJsonError] = useState<string | null>(null);
@@ -184,6 +186,15 @@ export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubm
       </div>
 
       <div className="mt-8 pt-6 border-t border-white/10 relative">
+        <div className="mb-4">
+          <input 
+            type="email" 
+            value={email}
+            onChange={(e) => onEmailChange(e.target.value)}
+            placeholder="Email for notification (optional)"
+            className="w-full bg-white/5 border border-transparent hover:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500/50 transition-all"
+          />
+        </div>
         <button 
           onClick={onSubmit}
           disabled={isSubmitting || isSubmitDisabled || (mode === "json" && !!jsonError)}

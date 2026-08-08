@@ -3,11 +3,13 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export interface JobState {
-  status: "queued" | "processing" | "completed" | "failed";
+  status: "queued" | "processing" | "processing_chunks" | "completed" | "failed";
   download_url?: string;
   processed_rows?: number;
   duration_seconds?: number;
   error_message?: string;
+  total_chunks?: number;
+  completed_chunks?: number;
 }
 
 export function useJobListener(activeJobId: string | null) {

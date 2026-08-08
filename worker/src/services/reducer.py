@@ -53,3 +53,13 @@ class ReducerService:
             "download_url": download_url,
             "processed_rows": len(df)
         })
+
+        # Send Email Notification if requested
+        job_data = self.firestore_svc.get_job(job_id)
+        if job_data and job_data.get("email"):
+            try:
+                from src.services.email_service import EmailService
+                email_svc = EmailService()
+                email_svc.send_success_email(job_data["email"], download_url)
+            except Exception as e:
+                print(f"Failed to initialize or send email: {e}")
