@@ -92,6 +92,13 @@ gcloud pubsub subscriptions update chunk-processing-sub-push \
   --push-endpoint="${WORKER_URL}/process-chunk" \
   --push-auth-service-account="${PUBSUB_SA_EMAIL}"
 
+echo "6. Building and Deploying Frontend to Firebase Hosting..."
+cd frontend
+npm ci
+npm run build
+npx firebase deploy --only hosting --project ${PROJECT_ID}
+cd ..
+
 echo "========================================="
 echo "Deployment Complete!"
 echo "Backend URL: $(gcloud run services describe structurify-backend --platform managed --region ${REGION} --format 'value(status.url)')"
