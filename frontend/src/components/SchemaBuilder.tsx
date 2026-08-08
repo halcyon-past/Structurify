@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Code, LayoutList } from "lucide-react";
+import Editor from "react-simple-code-editor";
+import { highlight, languages } from "prismjs";
+import "prismjs/components/prism-json";
+import "prismjs/themes/prism-tomorrow.css";
 
 export type FieldType = "String" | "Integer" | "Float" | "Boolean" | "Date";
 
@@ -156,19 +160,18 @@ export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubm
           )
         ) : (
           <div className="flex flex-col h-full gap-3">
-            <textarea
-              value={jsonText}
-              onChange={(e) => handleJsonChange(e.target.value)}
-              className="flex-grow w-full h-[300px] p-5 bg-black/40 text-accent-400 border border-white/5 rounded-xl font-mono text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-accent-500/50 resize-none shadow-inner"
-              spellCheck={false}
-              placeholder={`[
-  {
-    "name": "example",
-    "type": "String",
-    "required": true
-  }
-]`}
-            />
+            <div className="flex-grow w-full h-[300px] bg-black/40 border border-white/5 rounded-xl shadow-inner overflow-auto custom-scrollbar relative focus-within:ring-2 focus-within:ring-accent-500/50">
+              <Editor
+                value={jsonText}
+                onValueChange={(code) => handleJsonChange(code)}
+                highlight={(code) => highlight(code, languages.json, 'json')}
+                padding={20}
+                className="font-mono text-sm leading-relaxed min-h-full"
+                style={{
+                  fontFamily: '"Fira Code", "JetBrains Mono", monospace',
+                }}
+              />
+            </div>
             {jsonError && (
               <div className="bg-red-500/10 text-red-400 text-sm font-medium p-3 rounded-lg border border-red-500/20 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
