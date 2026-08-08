@@ -42,11 +42,19 @@ class MockLLMEngine:
     def call_gemini_api(self, chunk_data: str, target_schema: dict) -> list:
         return [{"name": "John Doe", "age": 25}]
 
+class MockEmailService:
+    def send_started_email(self, to_email: str, tracking_url: str):
+        pass
+
+    def send_success_email(self, to_email: str, download_url: str):
+        pass
+
 @pytest.fixture
 def file_parser():
     from unittest.mock import patch
     with patch('google.cloud.pubsub_v1.PublisherClient'):
         return FileParserService(
             storage_svc=MockStorageService(),
-            firestore_svc=MockFirestoreService()
+            firestore_svc=MockFirestoreService(),
+            email_svc=MockEmailService()
         )

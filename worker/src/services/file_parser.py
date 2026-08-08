@@ -9,19 +9,27 @@ from google.cloud import pubsub_v1
 from src.core.config import settings
 from src.services.storage import StorageService
 from src.services.firestore import FirestoreService
+from src.services.email_service import EmailService
 
 class FileParserService:
-    def __init__(self, storage_svc: StorageService, firestore_svc: FirestoreService):
+    def __init__(self, storage_svc: StorageService, firestore_svc: FirestoreService, email_svc: EmailService):
         self.storage_svc = storage_svc
         self.firestore_svc = firestore_svc
+        self.email_svc = email_svc
         self.publisher = pubsub_v1.PublisherClient()
         self.topic_path = self.publisher.topic_path(settings.GOOGLE_CLOUD_PROJECT, "chunk-processing-jobs")
 
-    def process_file(self, job_id: str, file_path: str, target_schema: Dict[str, Any]):
+    def process_file(self, job_id: str, file_path: str, target_schema: Dict[str, Any], email: str = None):
         self.firestore_svc.update_job_status(job_id, "processing")
         
         try:
             file_bytes = self.storage_svc.download_file_bytes(settings.RAW_BUCKET_NAME, file_path)
+            file_size_mb = len(file_bytes) / (1024 * 1024)
+
+            if file_size_mb > 5.0 and email:
+                tracking_url = f"{settings.FRONTEND_URL}/track?jobId={job_id}"
+                self.email_svc.send_started_email(email, tracking_url)
+
             
             chunk_size = 500
             chunks = []

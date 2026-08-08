@@ -46,3 +46,39 @@ class EmailService:
             print(f"Successfully sent success email to {to_email}")
         except Exception as e:
             print(f"Failed to send email to {to_email}: {e}")
+
+    def send_started_email(self, to_email: str, tracking_url: str):
+        if not all([self.smtp_server, self.smtp_port, self.smtp_username, self.smtp_password]):
+            print(f"Skipping email to {to_email} because SMTP credentials are not fully configured.")
+            return
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "Your Structurify Data is Processing"
+        msg["From"] = self.smtp_from_email
+        msg["To"] = to_email
+
+        html = f"""\
+        <html>
+          <body style="font-family: Arial, sans-serif; background-color: #09090b; color: #ffffff; padding: 40px; text-align: center;">
+            <div style="max-w-2xl; margin: 0 auto; background-color: #1a1a24; padding: 30px; border-radius: 12px; border: 1px solid #333;">
+              <h1 style="color: #8b5cf6;">Structurify</h1>
+              <p style="font-size: 16px; color: #d1d5db;">We've started processing your large dataset! This might take a few minutes.</p>
+              <br>
+              <a href="{tracking_url}" style="background-color: #3b82f6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">Track Progress Live</a>
+              <br><br>
+              <p style="font-size: 12px; color: #6b7280; margin-top: 30px;">This is an automated message from the Structurify ETL Pipeline.</p>
+            </div>
+          </body>
+        </html>
+        """
+
+        msg.attach(MIMEText(html, "html"))
+
+        try:
+            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                server.starttls()
+                server.login(self.smtp_username, self.smtp_password)
+                server.send_message(msg)
+            print(f"Successfully sent processing started email to {to_email}")
+        except Exception as e:
+            print(f"Failed to send email to {to_email}: {e}")
