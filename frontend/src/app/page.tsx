@@ -22,7 +22,6 @@ export default function Home() {
 
   const handleSubmit = async () => {
     if (!file) return alert("Please select a file.");
-    if (schemaFields.length === 0) return alert("Schema cannot be empty.");
     
     const targetSchema: Record<string, string> = {};
     for (const field of schemaFields) {
@@ -77,7 +76,7 @@ export default function Home() {
               onChange={setSchemaFields}
               onSubmit={handleSubmit}
               isSubmitting={isUploading}
-              isSubmitDisabled={schemaFields.length === 0 || !file}
+              isSubmitDisabled={!file}
             />
           </section>
         </div>

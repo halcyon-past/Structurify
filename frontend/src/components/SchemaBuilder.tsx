@@ -101,7 +101,8 @@ export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubm
           fields.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500 py-10 opacity-70">
               <LayoutList size={48} className="mb-4 opacity-50" />
-              <p>No fields defined.</p>
+              <p className="text-lg font-medium text-gray-300">Auto-Clean Mode Active</p>
+              <p className="text-sm mt-2 text-center max-w-sm">No target schema provided. The pipeline will automatically retain all original columns and intelligently clean the messy data.</p>
               <button 
                 onClick={addField}
                 className="mt-4 flex items-center gap-1 text-sm bg-accent-500/20 text-accent-400 hover:bg-accent-500/30 px-4 py-2 rounded-full font-medium transition-colors"
