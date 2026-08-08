@@ -9,6 +9,7 @@ from src.services.llm_engine import LLMEngine
 from src.services.file_parser import FileParserService
 from src.services.chunk_processor import ChunkProcessorService
 from src.services.reducer import ReducerService
+from src.services.email_service import EmailService
 from src.core.config import settings
 
 router = APIRouter()
@@ -16,7 +17,8 @@ router = APIRouter()
 storage_svc = StorageService()
 firestore_svc = FirestoreService()
 llm_engine = LLMEngine()
-file_parser_svc = FileParserService(storage_svc, firestore_svc)
+email_svc = EmailService()
+file_parser_svc = FileParserService(storage_svc, firestore_svc, email_svc)
 chunk_processor_svc = ChunkProcessorService(llm_engine)
 reducer_svc = ReducerService(storage_svc, firestore_svc)
 
@@ -37,11 +39,12 @@ async def process_job(request: Request):
             job_id = payload.get('job_id')
             file_path = payload.get('file_path')
             target_schema = payload.get('target_schema')
+            email = payload.get('email')
             
             if not job_id or not file_path or target_schema is None:
                 raise ValueError("Missing required fields in payload")
                 
-            file_parser_svc.process_file(job_id, file_path, target_schema)
+            file_parser_svc.process_file(job_id, file_path, target_schema, email)
             
     except Exception as e:
         print(f"Error processing message: {str(e)}")
