@@ -16,6 +16,9 @@ class MockStorageService:
         elif file_path == "uploads/empty.csv":
             with open(os.path.join(base_dir, "data/empty.csv"), "rb") as f:
                 return f.read()
+        elif file_path == "uploads/massive_test_1.csv":
+            with open(os.path.join(base_dir, "data/massive_test_1.csv"), "rb") as f:
+                return f.read()
                 
         df = pd.DataFrame({"Name": ["John"], "Age": ["25"]})
         return df.to_csv(index=False).encode("utf-8")
