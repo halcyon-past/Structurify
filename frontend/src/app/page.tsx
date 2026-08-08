@@ -31,7 +31,7 @@ export default function Home() {
 
     try {
       const jobId = await uploadAndSubmitJob(file, targetSchema, email);
-      router.push(`/track/${jobId}`);
+      router.push(`/track?jobId=${jobId}`);
     } catch (error: unknown) {
       alert(error instanceof Error ? error.message : "An error occurred.");
     }

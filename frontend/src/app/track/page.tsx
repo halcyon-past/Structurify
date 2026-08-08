@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useJobListener } from "@/hooks/useJobListener";
 import { ArrowLeft, Download, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
 
-export default function TrackPage() {
-  const params = useParams();
+function TrackContent() {
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const jobId = params.jobId as string;
+  const jobId = searchParams.get("jobId") || "";
   const jobState = useJobListener(jobId);
 
   // Fallback Polling (in case Firebase onSnapshot is blocked)
@@ -26,7 +26,7 @@ export default function TrackPage() {
           const data = await res.json();
           setFallbackData(data);
         }
-      } catch (_) {
+      } catch {
         // ignore
       }
     }, 5000);
@@ -35,10 +35,10 @@ export default function TrackPage() {
   }, [jobId, jobState?.status]);
 
   const currentState = jobState || fallbackData;
-  const status = currentState?.status || "queued";
+  const status = String(currentState?.status || "queued");
 
-  const totalChunks = currentState?.total_chunks || 0;
-  const completedChunks = currentState?.completed_chunks || 0;
+  const totalChunks = Number(currentState?.total_chunks) || 0;
+  const completedChunks = Number(currentState?.completed_chunks) || 0;
   const progressPercent = totalChunks > 0 ? Math.round((completedChunks / totalChunks) * 100) : 0;
 
   return (
@@ -98,17 +98,17 @@ export default function TrackPage() {
           </div>
         )}
 
-        {status === "completed" && currentState?.download_url && (
+        {status === "completed" && !!currentState?.download_url && (
           <div className="mt-8 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-500">
             <div className="flex gap-4 mb-2">
               <div className="bg-black/30 p-4 rounded-2xl flex-1 border border-white/5 text-center">
                 <p className="text-xs text-gray-400 mb-1 uppercase tracking-wider">Processed Rows</p>
-                <p className="text-2xl font-bold text-accent-400">{currentState.processed_rows || "N/A"}</p>
+                <p className="text-2xl font-bold text-accent-400">{Number(currentState.processed_rows) || "N/A"}</p>
               </div>
             </div>
             
             <a 
-              href={currentState.download_url} 
+              href={String(currentState?.download_url)} 
               target="_blank" 
               rel="noreferrer"
               className="group relative flex items-center justify-center gap-2 w-full overflow-hidden rounded-xl bg-green-500/10 hover:bg-green-500/20 text-green-400 py-4 px-4 font-bold transition-all duration-300 border border-green-500/20 hover:border-green-500/40 hover:shadow-[0_0_30px_rgba(34,197,94,0.2)]"
@@ -125,11 +125,19 @@ export default function TrackPage() {
               <AlertCircle size={18} /> Error Details
             </h3>
             <p className="font-mono text-sm bg-red-950/40 p-4 rounded-xl border border-red-500/10 break-words">
-              {currentState?.error_message || "Unknown error occurred"}
+              {String(currentState?.error_message || "Unknown error occurred")}
             </p>
           </div>
         )}
       </div>
     </main>
+  );
+}
+
+export default function TrackPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center text-white"><RefreshCw className="animate-spin text-accent-500" size={32} /></div>}>
+      <TrackContent />
+    </Suspense>
   );
 }
