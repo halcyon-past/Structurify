@@ -73,6 +73,9 @@ export default function Home() {
           </section>
         </div>
       </div>
+      <footer className="mt-12 text-center text-sm text-gray-500">
+        Created by <a href="https://www.aritro.cloud" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">Aritro Saha</a>
+      </footer>
     </main>
   );
 }
