@@ -1,72 +1,63 @@
 import io
 import time
 import traceback
+import json
 from typing import Dict, Any
 import pandas as pd
+from google.cloud import pubsub_v1
 
 from src.core.config import settings
 from src.services.storage import StorageService
 from src.services.firestore import FirestoreService
-from src.services.llm_engine import LLMEngine
 
 class FileParserService:
-    def __init__(self, storage_svc: StorageService, firestore_svc: FirestoreService, llm_engine: LLMEngine):
+    def __init__(self, storage_svc: StorageService, firestore_svc: FirestoreService):
         self.storage_svc = storage_svc
         self.firestore_svc = firestore_svc
-        self.llm_engine = llm_engine
+        self.publisher = pubsub_v1.PublisherClient()
+        self.topic_path = self.publisher.topic_path(settings.GOOGLE_CLOUD_PROJECT, "chunk-processing-jobs")
 
     def process_file(self, job_id: str, file_path: str, target_schema: Dict[str, Any]):
-        start_time = time.time()
         self.firestore_svc.update_job_status(job_id, "processing")
         
         try:
-            # 1. Download file from GCS
             file_bytes = self.storage_svc.download_file_bytes(settings.RAW_BUCKET_NAME, file_path)
             
-            # 2. Parse File
+            chunk_size = 500
+            chunks = []
+            
             if file_path.lower().endswith(".csv"):
-                df = pd.read_csv(io.BytesIO(file_bytes), on_bad_lines='skip')
+                for chunk_df in pd.read_csv(io.BytesIO(file_bytes), on_bad_lines='skip', chunksize=chunk_size):
+                    chunks.append(chunk_df.to_csv(index=False))
             elif file_path.lower().endswith((".xlsx", ".xls")):
                 df = pd.read_excel(io.BytesIO(file_bytes))
+                total_rows = len(df)
+                for start_idx in range(0, total_rows, chunk_size):
+                    end_idx = min(start_idx + chunk_size, total_rows)
+                    chunks.append(df.iloc[start_idx:end_idx].to_csv(index=False))
             else:
                 raise ValueError("Unsupported file format. Must be CSV or XLSX.")
                 
-            total_rows = len(df)
+            total_chunks = len(chunks)
             
-            # 3. Chunk and Transform Data
-            chunk_size = 50
-            all_processed_data = []
-            
-            for start_idx in range(0, total_rows, chunk_size):
-                end_idx = min(start_idx + chunk_size, total_rows)
-                chunk_df = df.iloc[start_idx:end_idx]
-                chunk_csv = chunk_df.to_csv(index=False)
-                processed_chunk = self.llm_engine.call_gemini_api(chunk_csv, target_schema)
-                all_processed_data.extend(processed_chunk)
-                
-            # 4. Compile to Excel
-            processed_df = pd.DataFrame(all_processed_data)
-            output_buffer = io.BytesIO()
-            processed_df.to_excel(output_buffer, index=False, engine='openpyxl')
-            output_buffer.seek(0)
-            
-            # 5. Upload to Processed Bucket
-            output_file_name = f"outputs/processed_{job_id}.xlsx"
-            download_url = self.storage_svc.upload_file_bytes(
-                settings.PROCESSED_BUCKET_NAME,
-                output_file_name,
-                output_buffer.getvalue(),
-                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-            
-            duration = time.time() - start_time
-            
-            # 6. Update status to completed
-            self.firestore_svc.update_job_status(job_id, "completed", {
-                "download_url": download_url,
-                "processed_rows": total_rows,
-                "duration_seconds": round(duration, 2)
+            # Setup tracker in Firestore
+            self.firestore_svc.db.collection("jobs").document(job_id).update({
+                "total_chunks": total_chunks,
+                "completed_chunks": 0,
+                "status": "processing_chunks"
             })
+            
+            for i, chunk_csv in enumerate(chunks):
+                message = {
+                    "job_id": job_id,
+                    "chunk_id": str(i),
+                    "chunk_data": chunk_csv,
+                    "target_schema": target_schema
+                }
+                data = json.dumps(message).encode("utf-8")
+                self.publisher.publish(self.topic_path, data=data)
+                
+            print(f"Job {job_id}: Fanned out {total_chunks} chunks.")
 
         except Exception as e:
             error_message = str(e)

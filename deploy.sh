@@ -50,6 +50,7 @@ gcloud run deploy structurify-worker \
   --service-account ${SA_EMAIL} \
   --set-env-vars GOOGLE_CLOUD_PROJECT=${PROJECT_ID},RAW_BUCKET_NAME=raw-uploads-${PROJECT_ID},PROCESSED_BUCKET_NAME=processed-outputs-${PROJECT_ID} \
   --set-secrets=GEMINI_API_KEY=gemini-api-key:latest \
+  --memory=2Gi \
   --timeout=3600s
 cd ..
 
@@ -79,6 +80,25 @@ gcloud pubsub subscriptions create schema-transformation-sub-push \
 gcloud pubsub subscriptions update schema-transformation-sub-push \
   --push-endpoint="${WORKER_URL}/process-job" \
   --push-auth-service-account="${PUBSUB_SA_EMAIL}"
+
+echo "5. Setting up Chunk Processing Pub/Sub Push Subscription..."
+gcloud pubsub topics create chunk-processing-jobs || true
+
+gcloud pubsub subscriptions create chunk-processing-sub-push \
+  --topic=chunk-processing-jobs \
+  --push-endpoint="${WORKER_URL}/process-chunk" \
+  --push-auth-service-account="${PUBSUB_SA_EMAIL}" \
+  --ack-deadline=600 || \
+gcloud pubsub subscriptions update chunk-processing-sub-push \
+  --push-endpoint="${WORKER_URL}/process-chunk" \
+  --push-auth-service-account="${PUBSUB_SA_EMAIL}"
+
+echo "6. Building and Deploying Frontend to Firebase Hosting..."
+cd frontend
+npm ci
+npm run build
+npx firebase deploy --only hosting --project ${PROJECT_ID}
+cd ..
 
 echo "========================================="
 echo "Deployment Complete!"

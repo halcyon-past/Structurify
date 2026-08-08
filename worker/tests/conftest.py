@@ -16,6 +16,9 @@ class MockStorageService:
         elif file_path == "uploads/empty.csv":
             with open(os.path.join(base_dir, "data/empty.csv"), "rb") as f:
                 return f.read()
+        elif file_path == "uploads/massive_test_1.csv":
+            with open(os.path.join(base_dir, "data/massive_test_1.csv"), "rb") as f:
+                return f.read()
                 
         df = pd.DataFrame({"Name": ["John"], "Age": ["25"]})
         return df.to_csv(index=False).encode("utf-8")
@@ -26,6 +29,9 @@ class MockStorageService:
 class MockFirestoreService:
     def __init__(self):
         self.statuses = {}
+        # Mock the db chain for db.collection("jobs").document(job_id).update
+        from unittest.mock import MagicMock
+        self.db = MagicMock()
 
     def update_job_status(self, job_id: str, status: str, updates: dict = None):
         self.statuses[job_id] = {"status": status}
@@ -38,8 +44,9 @@ class MockLLMEngine:
 
 @pytest.fixture
 def file_parser():
-    return FileParserService(
-        storage_svc=MockStorageService(),
-        firestore_svc=MockFirestoreService(),
-        llm_engine=MockLLMEngine()
-    )
+    from unittest.mock import patch
+    with patch('google.cloud.pubsub_v1.PublisherClient'):
+        return FileParserService(
+            storage_svc=MockStorageService(),
+            firestore_svc=MockFirestoreService()
+        )
