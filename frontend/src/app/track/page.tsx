@@ -3,7 +3,14 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useJobListener } from "@/hooks/useJobListener";
-import { ArrowLeft, Download, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, Download, CheckCircle2, AlertCircle, RefreshCw, UploadCloud, Cpu, Sparkles, FileCheck2 } from "lucide-react";
+
+const STEPS = [
+  { id: 'queued', title: 'Job Queued', description: 'File uploaded and waiting in queue', icon: UploadCloud },
+  { id: 'processing', title: 'Initializing Pipeline', description: 'Reading file and preparing batches', icon: Cpu },
+  { id: 'processing_chunks', title: 'AI Transformation', description: 'Extracting and cleaning data with AI', icon: Sparkles },
+  { id: 'completed', title: 'Ready for Download', description: 'Your structured dataset is ready', icon: FileCheck2 },
+];
 
 function TrackContent() {
   const searchParams = useSearchParams();
@@ -17,7 +24,6 @@ function TrackContent() {
   useEffect(() => {
     if (jobState?.status === "completed" || jobState?.status === "failed") return;
     
-    // Periodically hit the backend just to be safe
     const interval = setInterval(async () => {
       try {
         const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
@@ -36,17 +42,28 @@ function TrackContent() {
 
   const currentState = jobState || fallbackData;
   const status = String(currentState?.status || "queued");
-
+  
   const totalChunks = Number(currentState?.total_chunks) || 0;
   const completedChunks = Number(currentState?.completed_chunks) || 0;
   const progressPercent = totalChunks > 0 ? Math.round((completedChunks / totalChunks) * 100) : 0;
+
+  // Determine current step index
+  let currentStepIndex = 0;
+  if (status === 'processing') currentStepIndex = 1;
+  else if (status === 'processing_chunks') currentStepIndex = 2;
+  else if (status === 'completed') currentStepIndex = 3;
+  else if (status === 'failed') {
+    // If it failed, we keep the index at wherever it was (approx)
+    if (progressPercent > 0) currentStepIndex = 2;
+    else currentStepIndex = 1;
+  }
 
   return (
     <main className="min-h-screen bg-background text-foreground relative flex flex-col items-center justify-center overflow-hidden p-6">
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-600/20 rounded-full blur-[120px] mix-blend-screen animate-blob"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] mix-blend-screen animate-blob" style={{ animationDelay: '2s' }}></div>
       
-      <div className="w-full max-w-2xl z-10 relative bg-white/5 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/10 p-10 overflow-hidden">
+      <div className="w-full max-w-2xl z-10 relative bg-white/5 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/10 p-8 md:p-10 overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent-500 to-blue-500 opacity-70"></div>
         
         <button 
@@ -57,53 +74,100 @@ function TrackContent() {
           Back to Dashboard
         </button>
 
-        <header className="mb-10 text-center flex flex-col items-center">
-          <div className={`p-4 rounded-full mb-6 border relative ${
-            status === 'completed' ? 'bg-green-500/10 text-green-500 border-green-500/30 shadow-[0_0_30px_rgba(34,197,94,0.3)]' :
-            status === 'failed' ? 'bg-red-500/10 text-red-500 border-red-500/30 shadow-[0_0_30px_rgba(239,68,68,0.3)]' :
-            'bg-accent-500/10 text-accent-400 border-accent-500/30 shadow-[0_0_30px_rgba(139,92,246,0.3)]'
-          }`}>
-            {status === 'completed' ? <CheckCircle size={40} /> :
-             status === 'failed' ? <AlertCircle size={40} /> :
-             <RefreshCw size={40} className="animate-spin" />}
-          </div>
-          
-          <h1 className="text-3xl font-bold text-gray-100 mb-2 capitalize">
-            {status.replace("_", " ")}
+        <header className="mb-10 text-center">
+          <h1 className="text-3xl font-bold text-gray-100 mb-2">
+            Job Status Pipeline
           </h1>
-          <p className="text-sm font-mono text-gray-500 bg-black/40 px-3 py-1 rounded-full border border-white/5">
-            ID: {jobId}
+          <p className="text-sm font-mono text-gray-400">
+            Tracking ID: <span className="text-gray-300">{jobId}</span>
           </p>
         </header>
 
-        {(status === "processing" || status === "processing_chunks" || status === "queued") && (
-          <div className="mb-10">
-            <div className="flex justify-between items-end mb-2">
-              <span className="text-sm font-medium text-gray-300">
-                {status === "processing_chunks" ? "Processing Batches..." : "Initializing Pipeline..."}
-              </span>
-              <span className="text-xl font-bold text-accent-400">{progressPercent}%</span>
-            </div>
-            <div className="w-full bg-black/40 rounded-full h-3 border border-white/5 overflow-hidden">
-              <div 
-                className="bg-gradient-to-r from-accent-500 to-blue-500 h-3 rounded-full transition-all duration-500 ease-out"
-                style={{ width: `${progressPercent}%` }}
-              ></div>
-            </div>
-            {totalChunks > 0 && (
-              <p className="text-center text-xs text-gray-500 mt-3 font-mono">
-                {completedChunks} / {totalChunks} chunks mapped
-              </p>
-            )}
-          </div>
-        )}
+        {/* TIMELINE VIEW */}
+        <div className="relative mb-12">
+          {/* Vertical Connecting Line */}
+          <div className="absolute left-[27px] top-4 bottom-8 w-0.5 bg-white/5"></div>
+          
+          <div className="flex flex-col gap-8">
+            {STEPS.map((step, index) => {
+              const isCompleted = currentStepIndex > index || status === 'completed';
+              const isActive = currentStepIndex === index && status !== 'failed' && status !== 'completed';
+              const isFailedAtThisStep = status === 'failed' && currentStepIndex === index;
+              const Icon = step.icon;
 
+              return (
+                <div key={step.id} className={`relative flex gap-6 items-start ${isActive ? 'opacity-100' : isCompleted ? 'opacity-90' : 'opacity-40'}`}>
+                  {/* Status Node */}
+                  <div className="relative z-10 flex-shrink-0">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-500 ${
+                      isCompleted 
+                        ? 'bg-green-500/10 border-green-500/30 text-green-500 shadow-[0_0_20px_rgba(34,197,94,0.2)]'
+                        : isFailedAtThisStep
+                        ? 'bg-red-500/10 border-red-500/30 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)]'
+                        : isActive
+                        ? 'bg-accent-500/20 border-accent-500/50 text-accent-400 shadow-[0_0_30px_rgba(139,92,246,0.4)]'
+                        : 'bg-black/40 border-white/10 text-gray-500'
+                    }`}>
+                      {isCompleted ? <CheckCircle2 size={24} /> : isFailedAtThisStep ? <AlertCircle size={24} /> : <Icon size={24} className={isActive ? 'animate-pulse' : ''} />}
+                    </div>
+                    {/* Active Pulsating Ring */}
+                    {isActive && (
+                      <div className="absolute inset-0 border-2 border-accent-500/50 rounded-2xl animate-ping opacity-20 pointer-events-none"></div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-grow pt-2">
+                    <h3 className={`text-lg font-bold mb-1 ${isCompleted ? 'text-gray-200' : isFailedAtThisStep ? 'text-red-400' : isActive ? 'text-accent-400' : 'text-gray-500'}`}>
+                      {step.title}
+                    </h3>
+                    <p className="text-sm text-gray-400">{step.description}</p>
+
+                    {/* Progress Bar for active chunks step */}
+                    {isActive && step.id === 'processing_chunks' && (
+                      <div className="mt-4 bg-black/30 p-4 rounded-xl border border-white/5 animate-in fade-in slide-in-from-top-2">
+                        <div className="flex justify-between items-end mb-2">
+                          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Mapping Batches</span>
+                          <span className="text-sm font-bold text-accent-400">{progressPercent}%</span>
+                        </div>
+                        <div className="w-full bg-black/50 rounded-full h-2 border border-white/5 overflow-hidden mb-2">
+                          <div 
+                            className="bg-gradient-to-r from-accent-500 to-blue-500 h-2 rounded-full transition-all duration-700 ease-out"
+                            style={{ width: `${progressPercent}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-right text-xs text-gray-500 font-mono">
+                          {completedChunks} / {totalChunks} chunks mapped
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Error details */}
+                    {isFailedAtThisStep && (
+                      <div className="mt-4 p-4 bg-red-950/40 text-red-300 rounded-xl border border-red-500/20 animate-in fade-in">
+                        <p className="font-mono text-xs break-words">
+                          {String(currentState?.error_message || "Unknown error occurred during processing.")}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* COMPLETION AREA */}
         {status === "completed" && !!currentState?.download_url && (
-          <div className="mt-8 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-500">
-            <div className="flex gap-4 mb-2">
-              <div className="bg-black/30 p-4 rounded-2xl flex-1 border border-white/5 text-center">
-                <p className="text-xs text-gray-400 mb-1 uppercase tracking-wider">Processed Rows</p>
-                <p className="text-2xl font-bold text-accent-400">{Number(currentState.processed_rows) || "N/A"}</p>
+          <div className="mt-8 pt-8 border-t border-white/10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="bg-black/30 p-4 rounded-2xl flex-1 border border-white/5 text-center flex flex-col items-center justify-center">
+                <p className="text-xs text-gray-400 mb-1 uppercase tracking-wider">Rows Processed</p>
+                <p className="text-3xl font-bold text-accent-400">{Number(currentState.processed_rows) || "N/A"}</p>
+              </div>
+              <div className="bg-black/30 p-4 rounded-2xl flex-1 border border-white/5 text-center flex flex-col items-center justify-center">
+                <p className="text-xs text-gray-400 mb-1 uppercase tracking-wider">Total Time</p>
+                <p className="text-3xl font-bold text-blue-400">{Number(currentState.duration_seconds) || "N/A"}s</p>
               </div>
             </div>
             
@@ -111,22 +175,11 @@ function TrackContent() {
               href={String(currentState?.download_url)} 
               target="_blank" 
               rel="noreferrer"
-              className="group relative flex items-center justify-center gap-2 w-full overflow-hidden rounded-xl bg-green-500/10 hover:bg-green-500/20 text-green-400 py-4 px-4 font-bold transition-all duration-300 border border-green-500/20 hover:border-green-500/40 hover:shadow-[0_0_30px_rgba(34,197,94,0.2)]"
+              className="group relative flex items-center justify-center gap-2 w-full overflow-hidden rounded-xl bg-green-500/10 hover:bg-green-500/20 text-green-400 py-4 px-4 font-bold transition-all duration-300 border border-green-500/20 hover:border-green-500/40 hover:shadow-[0_0_30px_rgba(34,197,94,0.15)] active:scale-[0.98]"
             >
               <Download size={22} className="group-hover:-translate-y-1 transition-transform" />
               Download Clean Dataset
             </a>
-          </div>
-        )}
-
-        {status === "failed" && (
-          <div className="mt-8 p-6 bg-red-500/10 text-red-300 rounded-2xl border border-red-500/20 animate-in fade-in slide-in-from-bottom-4">
-            <h3 className="font-bold text-red-400 mb-2 flex items-center gap-2">
-              <AlertCircle size={18} /> Error Details
-            </h3>
-            <p className="font-mono text-sm bg-red-950/40 p-4 rounded-xl border border-red-500/10 break-words">
-              {String(currentState?.error_message || "Unknown error occurred")}
-            </p>
           </div>
         )}
       </div>
