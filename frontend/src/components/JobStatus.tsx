@@ -8,32 +8,43 @@ interface JobStatusProps {
 
 export function JobStatus({ jobId, jobState }: JobStatusProps) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-      <h2 className="text-xl font-bold mb-4">Job Status Pipeline</h2>
+    <div className="bg-white/5 backdrop-blur-md rounded-3xl shadow-2xl border border-white/10 p-8 relative overflow-hidden group mt-6">
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent-500 to-blue-500 opacity-50"></div>
       
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-4">
-          <div className={`p-2 rounded-full ${jobState?.status === 'failed' ? 'bg-red-100 text-red-600' : jobState?.status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
-            {jobState?.status === 'completed' ? <CheckCircle size={24} data-testid="status-completed" /> : 
-             jobState?.status === 'failed' ? <AlertCircle size={24} data-testid="status-failed" /> : 
-             <Loader2 size={24} className="animate-spin" data-testid="status-loading" />}
+      <h2 className="text-xl font-bold mb-6 text-gray-100 flex items-center gap-2">
+        <span className="bg-accent-500/20 text-accent-400 w-8 h-8 rounded-full flex items-center justify-center text-sm">
+          <Loader2 size={16} className="animate-spin" />
+        </span>
+        Job Status Pipeline
+      </h2>
+      
+      <div className="flex flex-col gap-5">
+        <div className="flex items-center gap-4 bg-black/20 p-4 rounded-2xl border border-white/5">
+          <div className={`p-3 rounded-xl relative ${
+            jobState?.status === 'failed' ? 'bg-red-500/10 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)]' : 
+            jobState?.status === 'completed' ? 'bg-green-500/10 text-green-500 shadow-[0_0_20px_rgba(34,197,94,0.2)]' : 
+            'bg-blue-500/10 text-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.2)]'
+          }`}>
+            {jobState?.status === 'completed' ? <CheckCircle size={28} data-testid="status-completed" /> : 
+             jobState?.status === 'failed' ? <AlertCircle size={28} data-testid="status-failed" /> : 
+             <Loader2 size={28} className="animate-spin" data-testid="status-loading" />}
           </div>
           <div>
-            <p className="font-bold text-gray-900 capitalize" data-testid="status-text">{jobState?.status || 'Queued'}</p>
-            <p className="text-sm text-gray-500 text-xs font-mono">ID: {jobId}</p>
+            <p className="font-bold text-lg text-gray-100 capitalize" data-testid="status-text">{jobState?.status || 'Queued'}</p>
+            <p className="text-xs text-gray-500 font-mono mt-0.5">ID: {jobId}</p>
           </div>
         </div>
 
         {jobState?.status === 'completed' && (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <p className="text-sm text-gray-500">Processed Rows</p>
-                <p className="font-bold text-lg">{jobState.processed_rows}</p>
+          <div className="mt-2 p-5 bg-black/30 rounded-2xl border border-white/10 animate-in fade-in zoom-in-95 duration-500">
+            <div className="flex justify-between items-center mb-5">
+              <div className="bg-white/5 px-4 py-3 rounded-xl flex-1 mr-3 border border-white/5 text-center">
+                <p className="text-xs text-gray-400 mb-1 font-medium uppercase tracking-wider">Processed Rows</p>
+                <p className="font-bold text-2xl text-accent-400">{jobState.processed_rows}</p>
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Processing Time</p>
-                <p className="font-bold text-lg">{jobState.duration_seconds}s</p>
+              <div className="bg-white/5 px-4 py-3 rounded-xl flex-1 ml-3 border border-white/5 text-center">
+                <p className="text-xs text-gray-400 mb-1 font-medium uppercase tracking-wider">Processing Time</p>
+                <p className="font-bold text-2xl text-blue-400">{jobState.duration_seconds}s</p>
               </div>
             </div>
             {jobState.download_url && (
@@ -41,19 +52,22 @@ export function JobStatus({ jobId, jobState }: JobStatusProps) {
                 href={jobState.download_url} 
                 target="_blank" 
                 rel="noreferrer"
-                className="flex items-center justify-center gap-2 w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                className="group relative flex items-center justify-center gap-2 w-full overflow-hidden rounded-xl bg-green-500/10 hover:bg-green-500/20 text-green-400 py-3.5 px-4 font-bold transition-all duration-300 border border-green-500/20 hover:border-green-500/40 hover:shadow-[0_0_20px_rgba(34,197,94,0.15)]"
               >
-                <Download size={20} />
-                Download Clean XLSX
+                <Download size={20} className="group-hover:translate-y-0.5 transition-transform" />
+                Download Clean Dataset
               </a>
             )}
           </div>
         )}
 
         {jobState?.status === 'failed' && (
-          <div className="mt-4 p-4 bg-red-50 text-red-800 rounded-lg border border-red-200 text-sm overflow-auto">
-            <p className="font-semibold mb-1">Error:</p>
-            <p>{jobState.error_message}</p>
+          <div className="mt-2 p-5 bg-red-500/5 text-red-300 rounded-2xl border border-red-500/20 text-sm overflow-auto animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2 mb-2 font-semibold text-red-400">
+              <AlertCircle size={16} />
+              <span>Pipeline Error Details</span>
+            </div>
+            <p className="font-mono bg-red-950/30 p-3 rounded-lg border border-red-500/10">{jobState.error_message}</p>
           </div>
         )}
       </div>

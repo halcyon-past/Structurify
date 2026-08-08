@@ -18,11 +18,12 @@ class MockFirestoreService:
     def __init__(self):
         self.jobs = {}
 
-    def create_job(self, job_id: str, file_path: str, file_name: str, target_schema: dict, created_at: str):
+    def create_job(self, job_id: str, file_path: str, file_name: str, target_schema: dict, created_at: str, email: str = None):
         self.jobs[job_id] = {
             "job_id": job_id,
             "status": "queued",
-            "created_at": created_at
+            "created_at": created_at,
+            "email": email
         }
 
     def update_job_status(self, job_id: str, status: str, error_message: str = None, updated_at: str = None):

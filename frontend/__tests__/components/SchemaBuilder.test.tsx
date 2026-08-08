@@ -17,6 +17,8 @@ describe('SchemaBuilder', () => {
         onSubmit={onSubmit} 
         isSubmitting={false} 
         isSubmitDisabled={false} 
+        email=""
+        onEmailChange={jest.fn()}
       />
     );
 
@@ -36,10 +38,12 @@ describe('SchemaBuilder', () => {
         onSubmit={onSubmit} 
         isSubmitting={false} 
         isSubmitDisabled={false} 
+        email=""
+        onEmailChange={jest.fn()}
       />
     );
 
-    fireEvent.click(screen.getByText('Compile Heterogeneous Data'));
+    fireEvent.click(screen.getByRole('button', { name: /Compile Heterogeneous Data/i }));
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
@@ -54,9 +58,11 @@ describe('SchemaBuilder', () => {
         onSubmit={onSubmit} 
         isSubmitting={false} 
         isSubmitDisabled={true} 
+        email=""
+        onEmailChange={jest.fn()}
       />
     );
 
-    expect(screen.getByText('Compile Heterogeneous Data')).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Compile Heterogeneous Data/i })).toBeDisabled();
   });
 });

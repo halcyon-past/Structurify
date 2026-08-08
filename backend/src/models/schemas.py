@@ -13,6 +13,7 @@ class JobRequest(BaseModel):
     file_path: str
     target_schema: Dict[str, Any] = Field(..., description="Target JSON schema definition")
     file_name: str
+    email: Optional[str] = None
 
 class JobResponse(BaseModel):
     job_id: str
@@ -26,3 +27,5 @@ class JobStatusResponse(BaseModel):
     download_url: Optional[str] = None
     processed_rows: Optional[int] = None
     error_message: Optional[str] = None
+    total_chunks: Optional[int] = None
+    completed_chunks: Optional[int] = None
