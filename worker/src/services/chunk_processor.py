@@ -46,6 +46,7 @@ class ChunkProcessorService:
             result = self.llm_engine.call_gemini_api(chunk_data, target_schema)
             return {"result": result, "attempts": attempts, "errors": []}
         except Exception as e:
+            print(f"Exception in LLMEngine: {str(e)}")
             return {"result": [], "attempts": attempts, "errors": [str(e)]}
 
     def _validate_node(self, state: ChunkState):
