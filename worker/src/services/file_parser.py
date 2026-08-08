@@ -67,3 +67,4 @@ class FileParserService:
                 "stack_trace": stack_trace
             })
             print(f"Job {job_id} failed: {stack_trace}")
+            raise e

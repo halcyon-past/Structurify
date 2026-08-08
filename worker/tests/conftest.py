@@ -26,6 +26,9 @@ class MockStorageService:
 class MockFirestoreService:
     def __init__(self):
         self.statuses = {}
+        # Mock the db chain for db.collection("jobs").document(job_id).update
+        from unittest.mock import MagicMock
+        self.db = MagicMock()
 
     def update_job_status(self, job_id: str, status: str, updates: dict = None):
         self.statuses[job_id] = {"status": status}
@@ -38,8 +41,9 @@ class MockLLMEngine:
 
 @pytest.fixture
 def file_parser():
-    return FileParserService(
-        storage_svc=MockStorageService(),
-        firestore_svc=MockFirestoreService(),
-        llm_engine=MockLLMEngine()
-    )
+    from unittest.mock import patch
+    with patch('google.cloud.pubsub_v1.PublisherClient'):
+        return FileParserService(
+            storage_svc=MockStorageService(),
+            firestore_svc=MockFirestoreService()
+        )
