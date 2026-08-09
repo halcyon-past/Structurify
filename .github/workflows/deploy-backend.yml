@@ -1,0 +1,40 @@
+name: Deploy Backend
+
+on:
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: "us-central1"
+  REPO_NAME: "structurify-repo"
+
+jobs:
+  deploy-backend:
+    name: Deploy Backend to Cloud Run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build and Deploy Backend
+        run: |
+          BACKEND_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/backend"
+          SA_EMAIL="etl-backend-sa@${PROJECT_ID}.iam.gserviceaccount.com"
+          
+          cd backend
+          gcloud builds submit --tag ${BACKEND_IMAGE} .
+          gcloud run deploy structurify-backend \
+            --image ${BACKEND_IMAGE} \
+            --platform managed \
+            --region ${REGION} \
+            --allow-unauthenticated \
+            --service-account ${SA_EMAIL} \
+            --set-env-vars GOOGLE_CLOUD_PROJECT=${PROJECT_ID},RAW_BUCKET_NAME=raw-uploads-${PROJECT_ID},PUBSUB_TOPIC_ID=schema-transformation-jobs

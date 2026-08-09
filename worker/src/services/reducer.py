@@ -1,5 +1,6 @@
 import io
 import json
+from datetime import datetime
 import pandas as pd
 from src.core.config import settings
 from src.services.storage import StorageService
@@ -31,14 +32,22 @@ class ReducerService:
         df = pd.DataFrame(all_data)
         output_buffer = io.BytesIO()
         
+        job_data = self.firestore_svc.get_job(job_id) or {}
+        original_name = job_data.get("file_name", "data").rsplit('.', 1)[0]
+        
+        # Clean the original name to ensure it's safe for a URL/filename
+        import re
+        safe_original_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', original_name)
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        
         if len(df) > 1000000:
             df.to_csv(output_buffer, index=False)
             content_type = "text/csv"
-            output_file_name = f"outputs/processed_{job_id}.csv"
+            output_file_name = f"outputs/Structurify_{safe_original_name}_{timestamp}.csv"
         else:
             df.to_excel(output_buffer, index=False, engine='openpyxl')
             content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            output_file_name = f"outputs/processed_{job_id}.xlsx"
+            output_file_name = f"outputs/Structurify_{safe_original_name}_{timestamp}.xlsx"
             
         output_buffer.seek(0)
         
@@ -55,8 +64,7 @@ class ReducerService:
         })
 
         # Send Email Notification if requested
-        job_data = self.firestore_svc.get_job(job_id)
-        if job_data and job_data.get("email"):
+        if job_data.get("email"):
             try:
                 from src.services.email_service import EmailService
                 email_svc = EmailService()
