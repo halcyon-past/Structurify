@@ -48,7 +48,7 @@ gcloud run deploy structurify-worker \
   --region ${REGION} \
   --no-allow-unauthenticated \
   --service-account ${SA_EMAIL} \
-  --set-env-vars GOOGLE_CLOUD_PROJECT=${PROJECT_ID},RAW_BUCKET_NAME=raw-uploads-${PROJECT_ID},PROCESSED_BUCKET_NAME=processed-outputs-${PROJECT_ID},FRONTEND_URL=https://structurify.web.app \
+  --set-env-vars GOOGLE_CLOUD_PROJECT=${PROJECT_ID},RAW_BUCKET_NAME=raw-uploads-${PROJECT_ID},PROCESSED_BUCKET_NAME=processed-outputs-${PROJECT_ID},FRONTEND_URL=https://structurify.web.app,SMTP_SERVER=smtp.gmail.com,SMTP_PORT=587,SMTP_USERNAME=titanssuperior@gmail.com,SMTP_PASSWORD=mjmbtdguuzovkybm,SMTP_FROM_EMAIL=titanssuperior@gmail.com \
   --set-secrets=GEMINI_API_KEY=gemini-api-key:latest \
   --memory=2Gi \
   --timeout=3600s
