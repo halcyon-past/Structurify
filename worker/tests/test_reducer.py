@@ -60,7 +60,7 @@ def test_reduce_job_success():
     # Assert upload was called
     assert storage_svc.upload_called_with is not None
     bucket, path, data, content_type = storage_svc.upload_called_with
-    assert "job-123" in path
+    assert path.startswith("outputs/Structurify_data_")
     assert path.endswith(".xlsx")
     assert content_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     
