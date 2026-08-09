@@ -67,7 +67,7 @@ jobs:
             --region ${REGION} \
             --no-allow-unauthenticated \
             --service-account ${SA_EMAIL} \
-            --set-env-vars GOOGLE_CLOUD_PROJECT=${PROJECT_ID},RAW_BUCKET_NAME=raw-uploads-${PROJECT_ID},PROCESSED_BUCKET_NAME=processed-outputs-${PROJECT_ID},FRONTEND_URL=https://structurify.web.app \
+            --set-env-vars GOOGLE_CLOUD_PROJECT=${PROJECT_ID},RAW_BUCKET_NAME=raw-uploads-${PROJECT_ID},PROCESSED_BUCKET_NAME=processed-outputs-${PROJECT_ID},FRONTEND_URL=https://structurify.web.app,SMTP_SERVER=${{ secrets.SMTP_SERVER }},SMTP_PORT=${{ secrets.SMTP_PORT }},SMTP_USERNAME=${{ secrets.SMTP_USERNAME }},SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }},SMTP_FROM_EMAIL=${{ secrets.SMTP_FROM_EMAIL }} \
             --set-secrets=GEMINI_API_KEY=gemini-api-key:latest \
             --memory=2Gi \
             --timeout=3600s
