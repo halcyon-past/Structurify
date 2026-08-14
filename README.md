@@ -167,6 +167,17 @@ npm run dev
 - **Worker**: `cd worker && PYTHONPATH=worker pytest worker/tests/`
 - **Frontend**: `cd frontend && npm run test`
 
+### 5. Generating Mock Data
+To test the pipeline with large, complex datasets, you can generate clean or highly unstructured "messy" data using the provided generation script.
+```bash
+# Ensure Faker is installed in your environment
+pip install Faker
+
+# Generate 50,000 rows of both clean and messy data
+python sample_data/generate_data.py --rows 50000 --type both
+```
+The script will output `generated_clean_50000.csv` and `generated_messy_50000.csv` directly into the `sample_data/` folder (these files are safely git-ignored).
+
 ---
 
 ## <img src="./docs/icons/cloud.svg" width="28" align="absbottom" alt="cloud deployment" /> Cloud Deployment
