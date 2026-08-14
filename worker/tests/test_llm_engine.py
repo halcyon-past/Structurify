@@ -42,3 +42,25 @@ def test_llm_engine_empty_schema_auto_clean():
     # Verify the config did not include response_schema
     call_kwargs = mock_client.models.generate_content.call_args.kwargs
     assert call_kwargs['config'].response_schema is None
+
+def test_generate_metadata_descriptions():
+    mock_client = MagicMock()
+    
+    class MockResponse:
+        text = '{"global_description": "A dataset of users.", "column_descriptions": [{"column_name": "name", "description": "User name"}, {"column_name": "age", "description": "User age"}]}'
+        
+    mock_client.models.generate_content.return_value = MockResponse()
+    
+    engine = LLMEngine(client=mock_client)
+    
+    result = engine.generate_metadata_descriptions(
+        {"name": "String", "age": "Integer"},
+        {"name": {"null_count": 0, "distinct_count": 2}, "age": {"null_count": 0, "distinct_count": 2}}
+    )
+    
+    assert "global_description" in result
+    assert result["global_description"] == "A dataset of users."
+    assert len(result["column_descriptions"]) == 2
+    assert result["column_descriptions"][0]["column_name"] == "name"
+    
+    mock_client.models.generate_content.assert_called_once()

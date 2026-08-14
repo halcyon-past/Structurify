@@ -89,3 +89,43 @@ class LLMEngine:
         )
 
         return json.loads(response.text)
+
+    def generate_metadata_descriptions(self, target_schema: Dict[str, Any], duckdb_stats: Dict[str, Any]) -> Dict[str, Any]:
+        system_instruction = (
+            "You are a data analyst. Based on the provided target schema and statistical metadata, "
+            "write a concise, high-level description of the entire dataset (global_description), "
+            "and a brief 1-sentence description for each column (column_descriptions)."
+        )
+        
+        response_schema = {
+            "type": "object",
+            "properties": {
+                "global_description": {"type": "string"},
+                "column_descriptions": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "column_name": {"type": "string"},
+                            "description": {"type": "string"}
+                        },
+                        "required": ["column_name", "description"]
+                    }
+                }
+            },
+            "required": ["global_description", "column_descriptions"]
+        }
+        
+        prompt = f"Schema: {json.dumps(target_schema)}\nStats: {json.dumps(duckdb_stats)}"
+        
+        response = self.client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                response_mime_type="application/json",
+                response_schema=response_schema,
+                temperature=0.2,
+            ),
+        )
+        return json.loads(response.text)
