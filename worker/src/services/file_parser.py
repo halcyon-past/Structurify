@@ -31,7 +31,9 @@ class FileParserService:
                 self.email_svc.send_started_email(email, tracking_url)
 
             
-            chunk_size = 500
+            # Dynamically calculate chunk size based on target schema to maximize LLM context window
+            num_fields = len(target_schema.keys()) if target_schema else 1
+            chunk_size = max(100, min(1000, 5000 // num_fields))
             chunks = []
             
             if file_path.lower().endswith(".csv"):
