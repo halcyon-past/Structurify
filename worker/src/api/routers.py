@@ -10,6 +10,7 @@ from src.services.file_parser import FileParserService
 from src.services.chunk_processor import ChunkProcessorService
 from src.services.reducer import ReducerService
 from src.services.email_service import EmailService
+from src.services.audit import AuditService
 from src.core.config import settings
 
 router = APIRouter()
@@ -18,9 +19,10 @@ storage_svc = StorageService()
 firestore_svc = FirestoreService()
 llm_engine = LLMEngine()
 email_svc = EmailService()
+audit_svc = AuditService(firestore_svc.db)
 file_parser_svc = FileParserService(storage_svc, firestore_svc, email_svc)
 chunk_processor_svc = ChunkProcessorService(llm_engine)
-reducer_svc = ReducerService(storage_svc, firestore_svc, llm_engine)
+reducer_svc = ReducerService(storage_svc, firestore_svc, llm_engine, audit_svc)
 
 @router.post("/process-job", status_code=status.HTTP_200_OK)
 async def process_job(request: Request):

@@ -11,12 +11,14 @@ from src.core.config import settings
 from src.services.storage import StorageService
 from src.services.firestore import FirestoreService
 from src.services.llm_engine import LLMEngine
+from src.services.audit import AuditService
 
 class ReducerService:
-    def __init__(self, storage_svc: StorageService, firestore_svc: FirestoreService, llm_engine: LLMEngine = None):
+    def __init__(self, storage_svc: StorageService, firestore_svc: FirestoreService, llm_engine: LLMEngine = None, audit_svc: AuditService = None):
         self.storage_svc = storage_svc
         self.firestore_svc = firestore_svc
         self.llm_engine = llm_engine
+        self.audit_svc = audit_svc
 
     def reduce_job(self, job_id: str):
         bucket = self.storage_svc.client.bucket(settings.RAW_BUCKET_NAME)
@@ -133,6 +135,16 @@ class ReducerService:
                 "download_url": download_url,
                 "processed_rows": processed_rows
             })
+            
+            # Log Analytics telemetry
+            if self.audit_svc:
+                try:
+                    # Enrich job_data with processed count for the audit logger
+                    job_data["processed_rows"] = processed_rows
+                    self.audit_svc.log_job_completion(job_data, stats, semantic_meta)
+                except Exception as e:
+                    print(f"Failed to write audit log: {e}")
+                    
         except Exception as e:
             print(f"DuckDB aggregation failed: {e}")
             self.firestore_svc.update_job_status(job_id, "failed", {"error_message": f"DuckDB aggregation failed: {e}"})

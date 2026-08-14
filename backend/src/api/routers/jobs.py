@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Request
 from src.models.schemas import JobRequest, JobResponse, JobStatusResponse
 from src.api.dependencies import get_pubsub_service, get_firestore_service
 from src.services.pubsub import PubSubService
@@ -11,6 +11,7 @@ router = APIRouter()
 @router.post("", response_model=JobResponse, status_code=status.HTTP_202_ACCEPTED)
 async def create_job(
     request: JobRequest,
+    req: Request,
     pubsub_svc: PubSubService = Depends(get_pubsub_service),
     firestore_svc: FirestoreService = Depends(get_firestore_service)
 ):
@@ -21,15 +22,28 @@ async def create_job(
     job_id = str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
     
+    # Identify user (use IP if guest)
+    user_id = request.user_id
+    if not user_id:
+        user_id = req.client.host if req.client else "unknown"
+        if request.email:
+            user_id = request.email
+            
     # 1. Create Job Document
     try:
-        firestore_svc.create_job(job_id, request.file_path, request.file_name, request.target_schema, now, request.email)
+        firestore_svc.create_job(
+            job_id, request.file_path, request.file_name, request.target_schema, now, 
+            request.email, request.role, request.plan, user_id
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create job document: {str(e)}")
 
     # 2. Publish to Pub/Sub
     try:
-        pubsub_svc.publish_job(job_id, request.file_path, request.target_schema)
+        pubsub_svc.publish_job(
+            job_id, request.file_path, request.target_schema, 
+            request.email, request.role, request.plan, user_id
+        )
     except Exception as e:
         # Mark as failed if publish fails
         firestore_svc.update_job_status(

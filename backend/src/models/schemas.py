@@ -14,6 +14,9 @@ class JobRequest(BaseModel):
     target_schema: Dict[str, Any] = Field(..., description="Target JSON schema definition")
     file_name: str
     email: Optional[str] = None
+    role: Optional[str] = "guest"
+    plan: Optional[str] = "free"
+    user_id: Optional[str] = None
 
 class JobResponse(BaseModel):
     job_id: str
