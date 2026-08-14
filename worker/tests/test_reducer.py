@@ -63,8 +63,8 @@ def test_reduce_job_success():
     assert storage_svc.upload_called_with is not None
     bucket, path, data, content_type = storage_svc.upload_called_with
     assert path.startswith("outputs/Structurify_data_")
-    assert path.endswith(".xlsx")
-    assert content_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert path.endswith(".csv")
+    assert content_type == "text/csv"
     
     # Assert firestore was updated
     status_update = firestore_svc.status_updates.get("job-123")
