@@ -22,13 +22,7 @@ async def create_job(
     job_id = str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
     
-    # Identify user (use IP if guest)
     user_id = request.user_id
-    if not user_id:
-        user_id = req.client.host if req.client else "unknown"
-        if request.email:
-            user_id = request.email
-            
     # 1. Create Job Document
     try:
         firestore_svc.create_job(
