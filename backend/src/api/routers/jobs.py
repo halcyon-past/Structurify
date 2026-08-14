@@ -23,11 +23,13 @@ async def create_job(
     now = datetime.utcnow().isoformat()
     
     user_id = request.user_id
+    ip_address = req.client.host if req.client else "unknown"
+    
     # 1. Create Job Document
     try:
         firestore_svc.create_job(
             job_id, request.file_path, request.file_name, request.target_schema, now, 
-            request.email, request.role, request.plan, user_id
+            request.email, request.role, request.plan, user_id, ip_address
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create job document: {str(e)}")
@@ -36,7 +38,7 @@ async def create_job(
     try:
         pubsub_svc.publish_job(
             job_id, request.file_path, request.target_schema, 
-            request.email, request.role, request.plan, user_id
+            request.email, request.role, request.plan, user_id, ip_address
         )
     except Exception as e:
         # Mark as failed if publish fails

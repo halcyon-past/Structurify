@@ -22,6 +22,7 @@ class AuditService:
             "email": job_data.get("email"),
             "role": job_data.get("role", "guest"),
             "plan": job_data.get("plan", "free"),
+            "ip_address": job_data.get("ip_address"),
             "file_name": job_data.get("file_name"),
             "target_schema": job_data.get("target_schema", {}),
             "created_at": job_data.get("created_at"),

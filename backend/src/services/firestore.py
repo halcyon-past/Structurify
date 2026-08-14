@@ -8,7 +8,7 @@ class FirestoreService:
     def __init__(self, client: firestore.Client = None):
         self.db = client or get_firestore_client()
 
-    def create_job(self, job_id: str, file_path: str, file_name: str, target_schema: dict, created_at: str, email: str = None, role: str = "guest", plan: str = "free", user_id: str = None):
+    def create_job(self, job_id: str, file_path: str, file_name: str, target_schema: dict, created_at: str, email: str = None, role: str = "guest", plan: str = "free", user_id: str = None, ip_address: str = None):
         job_ref = self.db.collection("jobs").document(job_id)
         job_data = {
             "job_id": job_id,
@@ -20,7 +20,8 @@ class FirestoreService:
             "updated_at": created_at,
             "role": role,
             "plan": plan,
-            "user_id": user_id
+            "user_id": user_id,
+            "ip_address": ip_address
         }
         if email:
             job_data["email"] = email
