@@ -76,7 +76,7 @@ async def process_chunk(request: Request):
                 raise ValueError("Missing required fields in chunk payload")
                 
             # 1. Map: Extract and self-correct using LangGraph
-            results = chunk_processor_svc.process_chunk(chunk_data, target_schema)
+            results, chunk_tokens = chunk_processor_svc.process_chunk(chunk_data, target_schema)
             
             # 2. Save result to GCS
             result_json = json.dumps(results)
@@ -101,7 +101,10 @@ async def process_chunk(request: Request):
                 completed = data.get("completed_chunks", 0) + 1
                 total = data.get("total_chunks", 0)
                 
-                transaction.update(ref, {"completed_chunks": completed})
+                transaction.update(ref, {
+                    "completed_chunks": completed,
+                    "total_tokens": firestore.Increment(chunk_tokens)
+                })
                 
                 return completed == total
 

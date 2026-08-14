@@ -53,17 +53,33 @@ class AuditService:
         # Write to the job_audits collection
         self.db.collection("job_audits").document(job_id).update(audit_payload)
 
-    def log_job_completion(self, job_data: Dict[str, Any], stats: Dict[str, Any], semantic_meta: Dict[str, Any], download_url: str):
+    def log_job_completion(self, job_data: Dict[str, Any], stats: Dict[str, Any], semantic_meta: Dict[str, Any], download_url: str, total_tokens: int = 0):
         """
         Updates an existing active job with detailed telemetry and metadata.
         """
         job_id = job_data.get("job_id", "unknown")
         
+        completed_at_iso = datetime.utcnow().isoformat()
+        job_runtime_seconds = 0.0
+        
+        # Calculate Job Runtime (Execution time minus queue time)
+        started_at = job_data.get("started_at")
+        if started_at:
+            try:
+                # Handle standard ISO format from Python datetime
+                start_dt = datetime.fromisoformat(started_at)
+                end_dt = datetime.fromisoformat(completed_at_iso)
+                job_runtime_seconds = (end_dt - start_dt).total_seconds()
+            except Exception as e:
+                print(f"Failed to calculate job runtime for {job_id}: {e}")
+        
         audit_payload = {
             "processed_rows": job_data.get("processed_rows", 0),
-            "completed_at": datetime.utcnow().isoformat(),
+            "completed_at": completed_at_iso,
+            "job_runtime_seconds": job_runtime_seconds,
             "status": "completed",
             "download_url": download_url,
+            "total_tokens": total_tokens,
             
             # Analytics Data
             "column_stats": stats,
