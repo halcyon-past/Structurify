@@ -157,3 +157,10 @@ sequenceDiagram
 - **Execution Cost:** The LangGraph state machine extracts `total_token_count` from Gemini API responses. The API router safely tracks token expenditure across parallel Cloud Run instances using `firestore.Increment()` in a guaranteed atomic transaction.
 - **Performance Profiling:** Logs exactly when a job starts `started_at` to distinguish between "queue wait time" and true `job_runtime_seconds`. Also logs `file_size_mb` and `total_chunks` (parallelization factor).
 - **Hard Failure Handling:** Every microservice wraps work in `try/except` and forcefully pushes a `log_job_failure` to the audit log on crash, guaranteeing no job gets stuck in `processing`.
+
+### 7. Cost Mitigation & Graceful Cancellation
+**Problem:** If a user submits a massive file by mistake, they need a way to cancel the job mid-flight. Merely purging the Pub/Sub queue orphans the database records ("ghost jobs"). Furthermore, checking Firestore for a cancellation signal before processing every chunk would generate massive read volumes, eating into database quotas.
+**Solution:** Structurify employs a Graceful Cancellation API coupled with an **In-Memory TTL Cache**.
+- When the UI triggers a cancellation, the Firestore document is instantly marked as `cancelled`.
+- Before hitting the Gemini API (which costs tokens), each worker checks if the job is cancelled.
+- To prevent excessive Firestore reads, the worker caches the status check in its local memory for 15 seconds. If a burst of 50 chunks arrives simultaneously, the worker queries Firestore exactly *once* and relies on the memory cache for the remaining chunks, cutting read costs by over 95%.

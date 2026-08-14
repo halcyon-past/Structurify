@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2026-08-15]
 ### Added
+- Graceful Job Cancellation API with frontend UI integration.
 - Script to generate clean/messy mock datasets (`sample_data/generate_data.py`).
 - Complete Firestore audit logging with user identity tracking.
 - Track active jobs and add cancellation infra IDs to audit logs.
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed bug causing guest users to fall back to IP address incorrectly.
 - Used array of objects in Gemini response schema for strict enforcement.
 ### Performance
+- Implemented In-Memory TTL Cache on Cloud Run worker for job status checks to reduce Firestore read volume by 95%+.
 - Optimized DuckDB metadata queries into a single pass.
 ### Documentation
 - Updated README with instructions for generating test data.
