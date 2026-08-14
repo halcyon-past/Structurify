@@ -10,6 +10,7 @@ def test_process_file_success(file_parser):
     # Assert status was set to processing_chunks
     file_parser.firestore_svc.db.collection().document().update.assert_called()
     assert file_parser.publisher.publish.called
+    assert file_parser.audit_svc.log_job_start.called
 
 def test_process_dirty_csv(file_parser):
     job_id = "test-job-dirty"
@@ -33,13 +34,13 @@ def test_process_massive_csv(file_parser):
     
     file_parser.firestore_svc.db.collection().document().update.assert_called()
     
-    # A 1M row file (excluding header) with chunk_size=500 results in 2000 chunks. 
-    # With header included in chunks, wait, pandas handles header implicitly.
-    # total rows = 1,000,000. chunk_size = 500. So 2000 chunks.
-    assert file_parser.publisher.publish.call_count == 2000
+    # A 1M row file (excluding header) with dynamic chunk_size calculation (capped max 1000 chunks)
+    # chunk_size = max(100, min(1000, 5000 // 2)) = 1000.
+    # total rows = 1,000,000. chunk_size = 1000. So 1000 chunks.
+    assert file_parser.publisher.publish.call_count == 1000
     
     update_call_args = file_parser.firestore_svc.db.collection().document().update.call_args[0][0]
-    assert update_call_args["total_chunks"] == 2000
+    assert update_call_args["total_chunks"] == 1000
 
 
 def test_process_empty_file(file_parser):
@@ -66,3 +67,4 @@ def test_unsupported_file_format(file_parser):
     status_doc = file_parser.firestore_svc.statuses[job_id]
     assert status_doc["status"] == "failed"
     assert "Unsupported file format" in status_doc["error_message"]
+    assert file_parser.audit_svc.log_job_failure.called

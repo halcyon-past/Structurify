@@ -14,7 +14,7 @@ class LLMEngine:
         stop=stop_after_attempt(5),
         reraise=True
     )
-    def call_gemini_api(self, chunk_data: str, target_schema: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def call_gemini_api(self, chunk_data: str, target_schema: Dict[str, Any]) -> tuple[List[Dict[str, Any]], int]:
         # Handle Auto-Clean Mode (Empty Schema)
         if not target_schema:
             system_instruction = (
@@ -39,7 +39,8 @@ class LLMEngine:
                     temperature=0.1,
                 ),
             )
-            return json.loads(response.text)
+            token_count = response.usage_metadata.total_token_count if response.usage_metadata else 0
+            return json.loads(response.text), token_count
 
         # Standard Target Schema Mapping Mode
         properties = {}
@@ -88,4 +89,45 @@ class LLMEngine:
             ),
         )
 
+        token_count = response.usage_metadata.total_token_count if response.usage_metadata else 0
+        return json.loads(response.text), token_count
+
+    def generate_metadata_descriptions(self, target_schema: Dict[str, Any], duckdb_stats: Dict[str, Any]) -> Dict[str, Any]:
+        system_instruction = (
+            "You are a data analyst. Based on the provided target schema and statistical metadata, "
+            "write a concise, high-level description of the entire dataset (global_description), "
+            "and a brief 1-sentence description for each column (column_descriptions)."
+        )
+        
+        response_schema = {
+            "type": "object",
+            "properties": {
+                "global_description": {"type": "string"},
+                "column_descriptions": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "column_name": {"type": "string"},
+                            "description": {"type": "string"}
+                        },
+                        "required": ["column_name", "description"]
+                    }
+                }
+            },
+            "required": ["global_description", "column_descriptions"]
+        }
+        
+        prompt = f"Schema: {json.dumps(target_schema)}\nStats: {json.dumps(duckdb_stats)}"
+        
+        response = self.client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                response_mime_type="application/json",
+                response_schema=response_schema,
+                temperature=0.2,
+            ),
+        )
         return json.loads(response.text)

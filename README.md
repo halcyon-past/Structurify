@@ -14,6 +14,8 @@ Built on a completely decoupled **Serverless Fan-Out Architecture** on Google Cl
 - **Auto-Clean Mode**: Don't know the schema? Structurify will automatically infer the schema from the file headers and repair capitalization, trim whitespace, and standardize date formats across the board.
 - **Email Notifications**: Upload a massive dataset (over 5MB), and Structurify will immediately email you a tracking link to watch the live progress, followed by a final success email with your secure download URL.
 - **Massive Scalability**: The backend acts as a lightweight router while heavy data processing is handled by scalable workers via Cloud Pub/Sub, preventing Gateway Timeouts on long jobs.
+- **Graceful Job Cancellation**: Safely halt massive in-flight jobs via a UI cancel button. In-memory TTL caching on workers ensures instant cancellation without generating "ghost jobs" or burning Firestore read quotas.
+- **Enterprise Observability & Billing**: Logs rich telemetry into Firestore (`job_audits`), tracking LLM Token Usage via atomic transactions, File Sizes, IP Addresses, and exact Job Runtimes to power strict rate limits and future billing models.
 
 ---
 
@@ -165,6 +167,17 @@ npm run dev
 - **Backend**: `cd backend && PYTHONPATH=backend pytest backend/tests/`
 - **Worker**: `cd worker && PYTHONPATH=worker pytest worker/tests/`
 - **Frontend**: `cd frontend && npm run test`
+
+### 5. Generating Mock Data
+To test the pipeline with large, complex datasets, you can generate clean or highly unstructured "messy" data using the provided generation script.
+```bash
+# Ensure Faker is installed in your environment
+pip install Faker
+
+# Generate 50,000 rows of both clean and messy data
+python sample_data/generate_data.py --rows 50000 --type both
+```
+The script will output `generated_clean_50000.csv` and `generated_messy_50000.csv` directly into the `sample_data/` folder (these files are safely git-ignored).
 
 ---
 

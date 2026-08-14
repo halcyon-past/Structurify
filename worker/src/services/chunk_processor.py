@@ -7,6 +7,7 @@ class ChunkState(TypedDict):
     chunk_data: str
     target_schema: Dict[str, Any]
     result: List[Dict[str, Any]]
+    total_tokens: int
     errors: List[str]
     attempts: int
 
@@ -38,16 +39,17 @@ class ChunkProcessorService:
         chunk_data = state["chunk_data"]
         target_schema = state["target_schema"]
         attempts = state.get("attempts", 0) + 1
+        current_tokens = state.get("total_tokens", 0)
         
         if state.get("errors"):
             chunk_data += "\n\nPREVIOUS ERRORS TO FIX:\n" + "\n".join(state["errors"])
             
         try:
-            result = self.llm_engine.call_gemini_api(chunk_data, target_schema)
-            return {"result": result, "attempts": attempts, "errors": []}
+            result, token_count = self.llm_engine.call_gemini_api(chunk_data, target_schema)
+            return {"result": result, "attempts": attempts, "total_tokens": current_tokens + token_count, "errors": []}
         except Exception as e:
             print(f"Exception in LLMEngine: {str(e)}")
-            return {"result": [], "attempts": attempts, "errors": [str(e)]}
+            return {"result": [], "attempts": attempts, "total_tokens": current_tokens, "errors": [str(e)]}
 
     def _validate_node(self, state: ChunkState):
         result = state.get("result", [])
@@ -60,14 +62,15 @@ class ChunkProcessorService:
             return "success"
         return "retry"
         
-    def process_chunk(self, chunk_data: str, target_schema: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def process_chunk(self, chunk_data: str, target_schema: Dict[str, Any]) -> tuple[List[Dict[str, Any]], int]:
         initial_state = {
             "chunk_data": chunk_data,
             "target_schema": target_schema,
             "result": [],
+            "total_tokens": 0,
             "errors": [],
             "attempts": 0
         }
         
         final_state = self.app.invoke(initial_state)
-        return final_state["result"]
+        return final_state["result"], final_state.get("total_tokens", 0)

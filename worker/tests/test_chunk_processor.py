@@ -2,8 +2,8 @@ import pytest
 from src.services.chunk_processor import ChunkProcessorService
 
 class MockLLMEngineSuccess:
-    def call_gemini_api(self, chunk_data: str, target_schema: dict) -> list:
-        return [{"name": "John Doe", "age": 25}]
+    def call_gemini_api(self, chunk_data: str, target_schema: dict) -> tuple:
+        return [{"name": "John Doe", "age": 25}], 100
 
 class MockLLMEngineFailure:
     def __init__(self):
@@ -17,16 +17,17 @@ def test_process_chunk_success():
     engine = MockLLMEngineSuccess()
     processor = ChunkProcessorService(engine)
     
-    result = processor.process_chunk("John, 25", {"name": "String", "age": "Integer"})
+    result, tokens = processor.process_chunk("John, 25", {"name": "String", "age": "Integer"})
     
     assert len(result) == 1
     assert result[0]["name"] == "John Doe"
+    assert tokens == 100
 
 def test_process_chunk_retry_logic():
     engine = MockLLMEngineFailure()
     processor = ChunkProcessorService(engine)
     
-    result = processor.process_chunk("John, 25", {"name": "String", "age": "Integer"})
+    result, tokens = processor.process_chunk("John, 25", {"name": "String", "age": "Integer"})
     
     # It should retry 3 times (the max loop limit in LangGraph for validation before returning success with empty result)
     # The attempts counter starts at 0. So it runs for 0, 1, 2, 3 -> wait, it loops until attempts >= 3.
@@ -40,13 +41,15 @@ def test_process_chunk_retry_logic():
     
     assert engine.call_count == 3
     assert result == [] # Result is empty because all retries failed
+    assert tokens == 0
 
 def test_auto_clean_mode():
     engine = MockLLMEngineSuccess()
     processor = ChunkProcessorService(engine)
     
     # Empty schema dictionary to trigger Auto-Clean mode
-    result = processor.process_chunk("JOHN DOE, 25", {})
+    result, tokens = processor.process_chunk("JOHN DOE, 25", {})
     
     assert len(result) == 1
     assert result[0]["name"] == "John Doe"
+    assert tokens == 100
