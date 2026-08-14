@@ -1,5 +1,6 @@
 import json
 import base64
+import time
 from fastapi import APIRouter, HTTPException, status, Request
 from google.cloud import firestore
 
@@ -23,6 +24,31 @@ audit_svc = AuditService(firestore_svc.db)
 file_parser_svc = FileParserService(storage_svc, firestore_svc, email_svc, audit_svc)
 chunk_processor_svc = ChunkProcessorService(llm_engine)
 reducer_svc = ReducerService(storage_svc, firestore_svc, llm_engine, audit_svc)
+
+CACHE_TTL_SECONDS = 15
+_job_status_cache = {}
+
+def _is_job_cancelled(job_id: str, db: firestore.Client) -> bool:
+    now = time.time()
+    
+    # 1. Check Cache
+    cached = _job_status_cache.get(job_id)
+    if cached and (now - cached["timestamp"]) < CACHE_TTL_SECONDS:
+        return cached["status"] == "cancelled"
+        
+    # 2. Cache Miss: Read Firestore
+    job_ref = db.collection("jobs").document(job_id)
+    job_doc = job_ref.get()
+    
+    status = job_doc.to_dict().get("status") if job_doc.exists else None
+    
+    # Update Cache
+    _job_status_cache[job_id] = {
+        "status": status,
+        "timestamp": now
+    }
+    
+    return status == "cancelled"
 
 @router.post("/process-job", status_code=status.HTTP_200_OK)
 async def process_job(request: Request):
@@ -77,10 +103,7 @@ async def process_chunk(request: Request):
                 
             # 0. Check if job was cancelled
             db = firestore_svc.db
-            job_ref = db.collection("jobs").document(job_id)
-            job_doc = job_ref.get()
-            
-            if job_doc.exists and job_doc.to_dict().get("status") == "cancelled":
+            if _is_job_cancelled(job_id, db):
                 print(f"Job {job_id} is cancelled. Aborting chunk {chunk_id}.")
                 return {"status": "success", "message": "aborted due to cancellation"}
                 
