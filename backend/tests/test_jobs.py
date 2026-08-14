@@ -3,7 +3,10 @@ def test_create_and_get_job(client, mock_firestore):
     payload = {
         "file_path": "uploads/test.csv",
         "file_name": "test.csv",
-        "target_schema": {"name": "String"}
+        "target_schema": {"name": "String"},
+        "email": "test@example.com",
+        "role": "admin",
+        "plan": "pro"
     }
     response = client.post("/api/v1/jobs/", json=payload)
     assert response.status_code == 202

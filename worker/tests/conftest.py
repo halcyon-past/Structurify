@@ -49,6 +49,12 @@ class MockEmailService:
     def send_success_email(self, to_email: str, download_url: str):
         pass
 
+class MockAuditService:
+    def __init__(self):
+        from unittest.mock import MagicMock
+        self.log_job_start = MagicMock()
+        self.log_job_completion = MagicMock()
+
 @pytest.fixture
 def file_parser():
     from unittest.mock import patch
@@ -56,5 +62,6 @@ def file_parser():
         return FileParserService(
             storage_svc=MockStorageService(),
             firestore_svc=MockFirestoreService(),
-            email_svc=MockEmailService()
+            email_svc=MockEmailService(),
+            audit_svc=MockAuditService()
         )

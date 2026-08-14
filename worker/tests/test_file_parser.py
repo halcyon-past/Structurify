@@ -10,6 +10,7 @@ def test_process_file_success(file_parser):
     # Assert status was set to processing_chunks
     file_parser.firestore_svc.db.collection().document().update.assert_called()
     assert file_parser.publisher.publish.called
+    assert file_parser.audit_svc.log_job_start.called
 
 def test_process_dirty_csv(file_parser):
     job_id = "test-job-dirty"

@@ -11,19 +11,22 @@ class MockStorageService:
         return f"https://mock-storage.com/{file_path}"
 
 class MockPubSubService:
-    def publish_job(self, job_id: str, file_path: str, target_schema: dict):
+    def publish_job(self, job_id: str, file_path: str, target_schema: dict, email: str = None, role: str = "guest", plan: str = "free", user_id: str = None):
         pass # mock success
 
 class MockFirestoreService:
     def __init__(self):
         self.jobs = {}
 
-    def create_job(self, job_id: str, file_path: str, file_name: str, target_schema: dict, created_at: str, email: str = None):
+    def create_job(self, job_id: str, file_path: str, file_name: str, target_schema: dict, created_at: str, email: str = None, role: str = "guest", plan: str = "free", user_id: str = None):
         self.jobs[job_id] = {
             "job_id": job_id,
             "status": "queued",
             "created_at": created_at,
-            "email": email
+            "email": email,
+            "role": role,
+            "plan": plan,
+            "user_id": user_id
         }
 
     def update_job_status(self, job_id: str, status: str, error_message: str = None, updated_at: str = None):

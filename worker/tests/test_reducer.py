@@ -56,7 +56,9 @@ def test_reduce_job_success():
     ])
     firestore_svc = MockFirestoreService()
     
-    reducer = ReducerService(storage_svc, firestore_svc)
+    audit_svc = MagicMock()
+    
+    reducer = ReducerService(storage_svc, firestore_svc, audit_svc=audit_svc)
     reducer.reduce_job("job-123")
     
     # Assert upload was called
@@ -71,6 +73,9 @@ def test_reduce_job_success():
     assert status_update is not None
     assert status_update["status"] == "completed"
     assert "download_url" in status_update
+    
+    # Assert audit log was written
+    assert audit_svc.log_job_completion.called
 
 def test_reduce_job_empty_chunks():
     # Simulate the rate limit failure scenario where chunks are empty
