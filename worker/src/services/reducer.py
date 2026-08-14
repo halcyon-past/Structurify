@@ -61,14 +61,24 @@ class ReducerService:
                 self.firestore_svc.update_job_status(job_id, "failed", {"error_message": "No valid data extracted from any chunks."})
                 return
             
-            # Generate Metadata Stats
+            # Generate Metadata Stats efficiently in a single pass
             columns = duckdb.sql(f"DESCRIBE SELECT * FROM '{local_csv}'").fetchall()
             col_names = [col[0] for col in columns]
             
-            stats = {}
+            # Build optimized query to get all stats in one pass
+            select_exprs = []
             for col in col_names:
-                null_count = duckdb.sql(f"SELECT count(*) FROM '{local_csv}' WHERE \"{col}\" IS NULL").fetchone()[0]
-                distinct_count = duckdb.sql(f"SELECT count(DISTINCT \"{col}\") FROM '{local_csv}'").fetchone()[0]
+                select_exprs.append(f"COUNT(\"{col}\")")
+                select_exprs.append(f"approx_count_distinct(\"{col}\")")
+            
+            query = f"SELECT {', '.join(select_exprs)} FROM '{local_csv}'"
+            row_stats = duckdb.sql(query).fetchone()
+            
+            stats = {}
+            for i, col in enumerate(col_names):
+                non_null_count = row_stats[i * 2]
+                distinct_count = row_stats[i * 2 + 1]
+                null_count = processed_rows - non_null_count
                 stats[col] = {
                     "null_count": null_count,
                     "distinct_count": distinct_count,
