@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Request
 from src.models.schemas import JobRequest, JobResponse, JobStatusResponse
 from src.api.dependencies import get_pubsub_service, get_firestore_service
 from src.services.pubsub import PubSubService
@@ -11,6 +11,7 @@ router = APIRouter()
 @router.post("", response_model=JobResponse, status_code=status.HTTP_202_ACCEPTED)
 async def create_job(
     request: JobRequest,
+    req: Request,
     pubsub_svc: PubSubService = Depends(get_pubsub_service),
     firestore_svc: FirestoreService = Depends(get_firestore_service)
 ):
@@ -21,15 +22,24 @@ async def create_job(
     job_id = str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
     
+    user_id = request.user_id
+    ip_address = req.client.host if req.client else "unknown"
+    
     # 1. Create Job Document
     try:
-        firestore_svc.create_job(job_id, request.file_path, request.file_name, request.target_schema, now, request.email)
+        firestore_svc.create_job(
+            job_id, request.file_path, request.file_name, request.target_schema, now, 
+            request.email, request.role, request.plan, user_id, ip_address
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create job document: {str(e)}")
 
     # 2. Publish to Pub/Sub
     try:
-        pubsub_svc.publish_job(job_id, request.file_path, request.target_schema)
+        pubsub_svc.publish_job(
+            job_id, request.file_path, request.target_schema, 
+            request.email, request.role, request.plan, user_id, ip_address
+        )
     except Exception as e:
         # Mark as failed if publish fails
         firestore_svc.update_job_status(
@@ -68,3 +78,23 @@ async def get_job_status(
         total_chunks=data.get("total_chunks"),
         completed_chunks=data.get("completed_chunks")
     )
+
+@router.post("/{job_id}/cancel")
+async def cancel_job(
+    job_id: str,
+    firestore_svc: FirestoreService = Depends(get_firestore_service)
+):
+    """
+    Cancels a job by updating the Firestore job and audit documents.
+    In-flight workers will see the 'cancelled' status and gracefully abort.
+    """
+    data = firestore_svc.get_job(job_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    if data.get("status") in ["completed", "failed", "cancelled"]:
+        raise HTTPException(status_code=400, detail=f"Job cannot be cancelled because it is already {data.get('status')}")
+        
+    firestore_svc.cancel_job(job_id)
+    
+    return {"status": "cancelled", "message": "Job cancelled successfully"}

@@ -37,7 +37,10 @@ If you build a new feature, you are required to write tests for it.
 - Frontend: Add Jest test files (e.g. `UploadZone.test.tsx`) alongside your components.
 
 ### Updating Documentation
-If your PR introduces architectural changes or modifies the infrastructure requirements, you must update `ARCHITECTURE.md` and `README.md` accordingly.
+If your PR introduces new features, architectural changes, or modifies infrastructure requirements, you must update the following files accordingly:
+- `CHANGELOG.md` (Mandatory for all feature additions, bug fixes, or notable changes)
+- `ARCHITECTURE.md` (If modifying system flow or components)
+- `README.md` (If adding new features or setup steps)
 
 ## 4. Submitting a Pull Request
 

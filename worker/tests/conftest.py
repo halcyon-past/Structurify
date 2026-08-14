@@ -38,6 +38,9 @@ class MockFirestoreService:
         if updates:
             self.statuses[job_id].update(updates)
 
+    def get_job(self, job_id: str) -> dict:
+        return self.statuses.get(job_id, {"job_id": job_id, "status": "processing"})
+
 class MockLLMEngine:
     def call_gemini_api(self, chunk_data: str, target_schema: dict) -> list:
         return [{"name": "John Doe", "age": 25}]
@@ -49,6 +52,13 @@ class MockEmailService:
     def send_success_email(self, to_email: str, download_url: str):
         pass
 
+class MockAuditService:
+    def __init__(self):
+        from unittest.mock import MagicMock
+        self.log_job_start = MagicMock()
+        self.log_job_completion = MagicMock()
+        self.log_job_failure = MagicMock()
+
 @pytest.fixture
 def file_parser():
     from unittest.mock import patch
@@ -56,5 +66,6 @@ def file_parser():
         return FileParserService(
             storage_svc=MockStorageService(),
             firestore_svc=MockFirestoreService(),
-            email_svc=MockEmailService()
+            email_svc=MockEmailService(),
+            audit_svc=MockAuditService()
         )
