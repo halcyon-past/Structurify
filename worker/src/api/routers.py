@@ -20,7 +20,7 @@ firestore_svc = FirestoreService()
 llm_engine = LLMEngine()
 email_svc = EmailService()
 audit_svc = AuditService(firestore_svc.db)
-file_parser_svc = FileParserService(storage_svc, firestore_svc, email_svc)
+file_parser_svc = FileParserService(storage_svc, firestore_svc, email_svc, audit_svc)
 chunk_processor_svc = ChunkProcessorService(llm_engine)
 reducer_svc = ReducerService(storage_svc, firestore_svc, llm_engine, audit_svc)
 

@@ -10,17 +10,28 @@ from src.core.config import settings
 from src.services.storage import StorageService
 from src.services.firestore import FirestoreService
 from src.services.email_service import EmailService
+from src.services.audit import AuditService
 
 class FileParserService:
-    def __init__(self, storage_svc: StorageService, firestore_svc: FirestoreService, email_svc: EmailService):
+    def __init__(self, storage_svc: StorageService, firestore_svc: FirestoreService, email_svc: EmailService, audit_svc: AuditService = None):
         self.storage_svc = storage_svc
         self.firestore_svc = firestore_svc
         self.email_svc = email_svc
+        self.audit_svc = audit_svc
         self.publisher = pubsub_v1.PublisherClient()
         self.topic_path = self.publisher.topic_path(settings.GOOGLE_CLOUD_PROJECT, "chunk-processing-jobs")
 
     def process_file(self, job_id: str, file_path: str, target_schema: Dict[str, Any], email: str = None):
         self.firestore_svc.update_job_status(job_id, "processing")
+        
+        # Log job start to audit table
+        if self.audit_svc:
+            job_data = self.firestore_svc.get_job(job_id)
+            if job_data:
+                try:
+                    self.audit_svc.log_job_start(job_data)
+                except Exception as e:
+                    print(f"Failed to log job start: {e}")
         
         try:
             file_bytes = self.storage_svc.download_file_bytes(settings.RAW_BUCKET_NAME, file_path)

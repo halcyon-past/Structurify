@@ -141,7 +141,7 @@ class ReducerService:
                 try:
                     # Enrich job_data with processed count for the audit logger
                     job_data["processed_rows"] = processed_rows
-                    self.audit_svc.log_job_completion(job_data, stats, semantic_meta)
+                    self.audit_svc.log_job_completion(job_data, stats, semantic_meta, download_url)
                 except Exception as e:
                     print(f"Failed to write audit log: {e}")
                     
