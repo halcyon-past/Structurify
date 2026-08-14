@@ -20,7 +20,7 @@ llm_engine = LLMEngine()
 email_svc = EmailService()
 file_parser_svc = FileParserService(storage_svc, firestore_svc, email_svc)
 chunk_processor_svc = ChunkProcessorService(llm_engine)
-reducer_svc = ReducerService(storage_svc, firestore_svc)
+reducer_svc = ReducerService(storage_svc, firestore_svc, llm_engine)
 
 @router.post("/process-job", status_code=status.HTTP_200_OK)
 async def process_job(request: Request):
