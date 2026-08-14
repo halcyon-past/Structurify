@@ -49,7 +49,7 @@ class FirestoreService:
         now = datetime.datetime.utcnow().isoformat()
         cancel_data = {
             "status": "cancelled",
-            "error_message": "Job was manually cancelled by the admin.",
+            "error_message": "Job was manually cancelled by the user.",
             "updated_at": now
         }
         
@@ -63,6 +63,6 @@ class FirestoreService:
         if audit_ref.get().exists:
             audit_ref.update({
                 "status": "cancelled",
-                "error_message": "Job was manually cancelled by the admin.",
+                "error_message": "Job was manually cancelled by the user.",
                 "completed_at": now
             })
