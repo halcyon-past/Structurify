@@ -7,10 +7,12 @@ from src.services.reducer import ReducerService
 class MockBlob:
     def __init__(self, data: list):
         self._data = json.dumps(data).encode('utf-8')
-        self.name = "test.json"
+        import uuid
+        self.name = f"test_{uuid.uuid4()}.json"
         
-    def download_as_bytes(self) -> bytes:
-        return self._data
+    def download_to_filename(self, path: str):
+        with open(path, 'wb') as f:
+            f.write(self._data)
 
 class MockBucket:
     def __init__(self, blobs):
