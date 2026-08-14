@@ -47,7 +47,7 @@ def test_generate_metadata_descriptions():
     mock_client = MagicMock()
     
     class MockResponse:
-        text = '{"global_description": "A dataset of users.", "column_descriptions": {"name": "User name", "age": "User age"}}'
+        text = '{"global_description": "A dataset of users.", "column_descriptions": [{"column_name": "name", "description": "User name"}, {"column_name": "age", "description": "User age"}]}'
         
     mock_client.models.generate_content.return_value = MockResponse()
     
@@ -60,6 +60,7 @@ def test_generate_metadata_descriptions():
     
     assert "global_description" in result
     assert result["global_description"] == "A dataset of users."
-    assert "name" in result["column_descriptions"]
+    assert len(result["column_descriptions"]) == 2
+    assert result["column_descriptions"][0]["column_name"] == "name"
     
     mock_client.models.generate_content.assert_called_once()

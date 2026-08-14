@@ -102,8 +102,15 @@ class LLMEngine:
             "properties": {
                 "global_description": {"type": "string"},
                 "column_descriptions": {
-                    "type": "object",
-                    "additionalProperties": {"type": "string"}
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "column_name": {"type": "string"},
+                            "description": {"type": "string"}
+                        },
+                        "required": ["column_name", "description"]
+                    }
                 }
             },
             "required": ["global_description", "column_descriptions"]

@@ -103,7 +103,8 @@ class ReducerService:
                 writer.writerow([])
                 writer.writerow(["Column Name", "Data Type", "Null Count", "Distinct Count", "Description"])
                 
-                col_desc = semantic_meta.get("column_descriptions", {})
+                col_desc_list = semantic_meta.get("column_descriptions", [])
+                col_desc = {item.get("column_name", ""): item.get("description", "N/A") for item in col_desc_list}
                 for col in col_names:
                     writer.writerow([
                         col, 
