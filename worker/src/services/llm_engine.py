@@ -14,7 +14,7 @@ class LLMEngine:
         stop=stop_after_attempt(5),
         reraise=True
     )
-    def call_gemini_api(self, chunk_data: str, target_schema: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def call_gemini_api(self, chunk_data: str, target_schema: Dict[str, Any]) -> tuple[List[Dict[str, Any]], int]:
         # Handle Auto-Clean Mode (Empty Schema)
         if not target_schema:
             system_instruction = (
@@ -39,7 +39,8 @@ class LLMEngine:
                     temperature=0.1,
                 ),
             )
-            return json.loads(response.text)
+            token_count = response.usage_metadata.total_token_count if response.usage_metadata else 0
+            return json.loads(response.text), token_count
 
         # Standard Target Schema Mapping Mode
         properties = {}
@@ -88,7 +89,8 @@ class LLMEngine:
             ),
         )
 
-        return json.loads(response.text)
+        token_count = response.usage_metadata.total_token_count if response.usage_metadata else 0
+        return json.loads(response.text), token_count
 
     def generate_metadata_descriptions(self, target_schema: Dict[str, Any], duckdb_stats: Dict[str, Any]) -> Dict[str, Any]:
         system_instruction = (

@@ -11,12 +11,14 @@ from src.core.config import settings
 from src.services.storage import StorageService
 from src.services.firestore import FirestoreService
 from src.services.llm_engine import LLMEngine
+from src.services.audit import AuditService
 
 class ReducerService:
-    def __init__(self, storage_svc: StorageService, firestore_svc: FirestoreService, llm_engine: LLMEngine = None):
+    def __init__(self, storage_svc: StorageService, firestore_svc: FirestoreService, llm_engine: LLMEngine = None, audit_svc: AuditService = None):
         self.storage_svc = storage_svc
         self.firestore_svc = firestore_svc
         self.llm_engine = llm_engine
+        self.audit_svc = audit_svc
 
     def reduce_job(self, job_id: str):
         bucket = self.storage_svc.client.bucket(settings.RAW_BUCKET_NAME)
@@ -33,7 +35,13 @@ class ReducerService:
                 has_data = True
                     
         if not has_data:
-            self.firestore_svc.update_job_status(job_id, "failed", {"error_message": "No valid data extracted from any chunks."})
+            error_message = "No valid data extracted from any chunks."
+            self.firestore_svc.update_job_status(job_id, "failed", {"error_message": error_message})
+            if self.audit_svc:
+                try:
+                    self.audit_svc.log_job_failure(job_id, error_message)
+                except Exception as audit_e:
+                    print(f"Failed to write audit failure log: {audit_e}")
             if os.path.exists(tmp_dir):
                 shutil.rmtree(tmp_dir)
             return
@@ -58,7 +66,13 @@ class ReducerService:
             processed_rows = duckdb.sql(f"SELECT count(*) FROM '{local_csv}'").fetchone()[0]
             
             if processed_rows == 0:
-                self.firestore_svc.update_job_status(job_id, "failed", {"error_message": "No valid data extracted from any chunks."})
+                error_message = "No valid data extracted from any chunks."
+                self.firestore_svc.update_job_status(job_id, "failed", {"error_message": error_message})
+                if self.audit_svc:
+                    try:
+                        self.audit_svc.log_job_failure(job_id, error_message)
+                    except Exception as audit_e:
+                        print(f"Failed to write audit failure log: {audit_e}")
                 return
             
             # Generate Metadata Stats efficiently in a single pass
@@ -133,9 +147,26 @@ class ReducerService:
                 "download_url": download_url,
                 "processed_rows": processed_rows
             })
+            
+            # Log Analytics telemetry
+            if self.audit_svc:
+                try:
+                    # Enrich job_data with processed count for the audit logger
+                    job_data["processed_rows"] = processed_rows
+                    total_tokens = job_data.get("total_tokens", 0)
+                    self.audit_svc.log_job_completion(job_data, stats, semantic_meta, download_url, total_tokens)
+                except Exception as e:
+                    print(f"Failed to write audit log: {e}")
+                    
         except Exception as e:
             print(f"DuckDB aggregation failed: {e}")
-            self.firestore_svc.update_job_status(job_id, "failed", {"error_message": f"DuckDB aggregation failed: {e}"})
+            error_message = f"DuckDB aggregation failed: {e}"
+            self.firestore_svc.update_job_status(job_id, "failed", {"error_message": error_message})
+            if self.audit_svc:
+                try:
+                    self.audit_svc.log_job_failure(job_id, error_message)
+                except Exception as audit_e:
+                    print(f"Failed to write audit failure log: {audit_e}")
             return
         finally:
             if os.path.exists(tmp_dir):

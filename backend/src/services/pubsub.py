@@ -10,11 +10,16 @@ class PubSubService:
         self.publisher = publisher or get_pubsub_publisher()
         self.topic_path = self.publisher.topic_path(settings.GOOGLE_CLOUD_PROJECT, settings.PUBSUB_TOPIC_ID)
 
-    def publish_job(self, job_id: str, file_path: str, target_schema: dict):
+    def publish_job(self, job_id: str, file_path: str, target_schema: dict, email: str = None, role: str = "guest", plan: str = "free", user_id: str = None, ip_address: str = None):
         message_data = json.dumps({
             "job_id": job_id,
             "file_path": file_path,
-            "target_schema": target_schema
+            "target_schema": target_schema,
+            "email": email,
+            "role": role,
+            "plan": plan,
+            "user_id": user_id,
+            "ip_address": ip_address
         }).encode("utf-8")
         
         future = self.publisher.publish(self.topic_path, data=message_data)

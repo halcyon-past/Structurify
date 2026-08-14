@@ -10,12 +10,14 @@ from src.core.config import settings
 from src.services.storage import StorageService
 from src.services.firestore import FirestoreService
 from src.services.email_service import EmailService
+from src.services.audit import AuditService
 
 class FileParserService:
-    def __init__(self, storage_svc: StorageService, firestore_svc: FirestoreService, email_svc: EmailService):
+    def __init__(self, storage_svc: StorageService, firestore_svc: FirestoreService, email_svc: EmailService, audit_svc: AuditService = None):
         self.storage_svc = storage_svc
         self.firestore_svc = firestore_svc
         self.email_svc = email_svc
+        self.audit_svc = audit_svc
         self.publisher = pubsub_v1.PublisherClient()
         self.topic_path = self.publisher.topic_path(settings.GOOGLE_CLOUD_PROJECT, "chunk-processing-jobs")
 
@@ -29,7 +31,6 @@ class FileParserService:
             if file_size_mb > 5.0 and email:
                 tracking_url = f"{settings.FRONTEND_URL}/track?jobId={job_id}"
                 self.email_svc.send_started_email(email, tracking_url)
-
             
             # Dynamically calculate chunk size based on target schema to maximize LLM context window
             num_fields = len(target_schema.keys()) if target_schema else 1
@@ -49,6 +50,15 @@ class FileParserService:
                 raise ValueError("Unsupported file format. Must be CSV or XLSX.")
                 
             total_chunks = len(chunks)
+            
+            # Log job start to audit table
+            if self.audit_svc:
+                job_data = self.firestore_svc.get_job(job_id)
+                if job_data:
+                    try:
+                        self.audit_svc.log_job_start(job_data, file_size_mb, total_chunks)
+                    except Exception as e:
+                        print(f"Failed to log job start: {e}")
             
             # Setup tracker in Firestore
             self.firestore_svc.db.collection("jobs").document(job_id).update({
@@ -76,5 +86,10 @@ class FileParserService:
                 "error_message": error_message,
                 "stack_trace": stack_trace
             })
+            if self.audit_svc:
+                try:
+                    self.audit_svc.log_job_failure(job_id, error_message)
+                except Exception as audit_e:
+                    print(f"Failed to write audit failure log: {audit_e}")
             print(f"Job {job_id} failed: {stack_trace}")
             raise e

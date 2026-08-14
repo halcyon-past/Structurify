@@ -1,5 +1,6 @@
 import json
 import base64
+import time
 from fastapi import APIRouter, HTTPException, status, Request
 from google.cloud import firestore
 
@@ -10,6 +11,7 @@ from src.services.file_parser import FileParserService
 from src.services.chunk_processor import ChunkProcessorService
 from src.services.reducer import ReducerService
 from src.services.email_service import EmailService
+from src.services.audit import AuditService
 from src.core.config import settings
 
 router = APIRouter()
@@ -18,9 +20,35 @@ storage_svc = StorageService()
 firestore_svc = FirestoreService()
 llm_engine = LLMEngine()
 email_svc = EmailService()
-file_parser_svc = FileParserService(storage_svc, firestore_svc, email_svc)
+audit_svc = AuditService(firestore_svc.db)
+file_parser_svc = FileParserService(storage_svc, firestore_svc, email_svc, audit_svc)
 chunk_processor_svc = ChunkProcessorService(llm_engine)
-reducer_svc = ReducerService(storage_svc, firestore_svc, llm_engine)
+reducer_svc = ReducerService(storage_svc, firestore_svc, llm_engine, audit_svc)
+
+CACHE_TTL_SECONDS = 15
+_job_status_cache = {}
+
+def _is_job_cancelled(job_id: str, db: firestore.Client) -> bool:
+    now = time.time()
+    
+    # 1. Check Cache
+    cached = _job_status_cache.get(job_id)
+    if cached and (now - cached["timestamp"]) < CACHE_TTL_SECONDS:
+        return cached["status"] == "cancelled"
+        
+    # 2. Cache Miss: Read Firestore
+    job_ref = db.collection("jobs").document(job_id)
+    job_doc = job_ref.get()
+    
+    status = job_doc.to_dict().get("status") if job_doc.exists else None
+    
+    # Update Cache
+    _job_status_cache[job_id] = {
+        "status": status,
+        "timestamp": now
+    }
+    
+    return status == "cancelled"
 
 @router.post("/process-job", status_code=status.HTTP_200_OK)
 async def process_job(request: Request):
@@ -73,8 +101,14 @@ async def process_chunk(request: Request):
             if not job_id or chunk_id is None or not chunk_data or target_schema is None:
                 raise ValueError("Missing required fields in chunk payload")
                 
+            # 0. Check if job was cancelled
+            db = firestore_svc.db
+            if _is_job_cancelled(job_id, db):
+                print(f"Job {job_id} is cancelled. Aborting chunk {chunk_id}.")
+                return {"status": "success", "message": "aborted due to cancellation"}
+                
             # 1. Map: Extract and self-correct using LangGraph
-            results = chunk_processor_svc.process_chunk(chunk_data, target_schema)
+            results, chunk_tokens = chunk_processor_svc.process_chunk(chunk_data, target_schema)
             
             # 2. Save result to GCS
             result_json = json.dumps(results)
@@ -99,7 +133,10 @@ async def process_chunk(request: Request):
                 completed = data.get("completed_chunks", 0) + 1
                 total = data.get("total_chunks", 0)
                 
-                transaction.update(ref, {"completed_chunks": completed})
+                transaction.update(ref, {
+                    "completed_chunks": completed,
+                    "total_tokens": firestore.Increment(chunk_tokens)
+                })
                 
                 return completed == total
 
