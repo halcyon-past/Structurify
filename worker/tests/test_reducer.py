@@ -7,10 +7,12 @@ from src.services.reducer import ReducerService
 class MockBlob:
     def __init__(self, data: list):
         self._data = json.dumps(data).encode('utf-8')
-        self.name = "test.json"
+        import uuid
+        self.name = f"test_{uuid.uuid4()}.json"
         
-    def download_as_bytes(self) -> bytes:
-        return self._data
+    def download_to_filename(self, path: str):
+        with open(path, 'wb') as f:
+            f.write(self._data)
 
 class MockBucket:
     def __init__(self, blobs):
@@ -61,8 +63,8 @@ def test_reduce_job_success():
     assert storage_svc.upload_called_with is not None
     bucket, path, data, content_type = storage_svc.upload_called_with
     assert path.startswith("outputs/Structurify_data_")
-    assert path.endswith(".xlsx")
-    assert content_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert path.endswith(".csv")
+    assert content_type == "text/csv"
     
     # Assert firestore was updated
     status_update = firestore_svc.status_updates.get("job-123")

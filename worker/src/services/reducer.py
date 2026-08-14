@@ -1,7 +1,10 @@
 import io
 import json
+import os
+import shutil
+import re
 from datetime import datetime
-import pandas as pd
+import duckdb
 from src.core.config import settings
 from src.services.storage import StorageService
 from src.services.firestore import FirestoreService
@@ -15,53 +18,65 @@ class ReducerService:
         bucket = self.storage_svc.client.bucket(settings.RAW_BUCKET_NAME)
         blobs = bucket.list_blobs(prefix=f"jobs/{job_id}/results/")
         
-        all_data = []
+        tmp_dir = f"/tmp/{job_id}"
+        os.makedirs(tmp_dir, exist_ok=True)
+        
+        has_data = False
         for blob in blobs:
             if blob.name.endswith('.json'):
-                data_bytes = blob.download_as_bytes()
-                try:
-                    chunk_result = json.loads(data_bytes)
-                    all_data.extend(chunk_result)
-                except Exception as e:
-                    print(f"Failed to parse chunk {blob.name}: {e}")
+                local_path = os.path.join(tmp_dir, os.path.basename(blob.name))
+                blob.download_to_filename(local_path)
+                has_data = True
                     
-        if not all_data:
+        if not has_data:
             self.firestore_svc.update_job_status(job_id, "failed", {"error_message": "No valid data extracted from any chunks."})
+            if os.path.exists(tmp_dir):
+                shutil.rmtree(tmp_dir)
             return
 
-        df = pd.DataFrame(all_data)
-        output_buffer = io.BytesIO()
-        
         job_data = self.firestore_svc.get_job(job_id) or {}
         original_name = job_data.get("file_name", "data").rsplit('.', 1)[0]
         
         # Clean the original name to ensure it's safe for a URL/filename
-        import re
         safe_original_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', original_name)
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         
-        if len(df) > 1000000:
-            df.to_csv(output_buffer, index=False)
-            content_type = "text/csv"
-            output_file_name = f"outputs/Structurify_{safe_original_name}_{timestamp}.csv"
-        else:
-            df.to_excel(output_buffer, index=False, engine='openpyxl')
-            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            output_file_name = f"outputs/Structurify_{safe_original_name}_{timestamp}.xlsx"
+        output_file_name = f"outputs/Structurify_{safe_original_name}_{timestamp}.csv"
+        local_csv = os.path.join(tmp_dir, "output.csv")
+        
+        try:
+            # Use DuckDB to stream all JSON files into a single CSV efficiently
+            # read_json_auto with format='array' parses the list of JSON objects
+            duckdb.sql(f"COPY (SELECT * FROM read_json_auto('{tmp_dir}/*.json')) TO '{local_csv}' (HEADER, DELIMITER ',')")
             
-        output_buffer.seek(0)
-        
-        download_url = self.storage_svc.upload_file_bytes(
-            settings.PROCESSED_BUCKET_NAME,
-            output_file_name,
-            output_buffer.getvalue(),
-            content_type=content_type
-        )
-        
-        self.firestore_svc.update_job_status(job_id, "completed", {
-            "download_url": download_url,
-            "processed_rows": len(df)
-        })
+            # Get the total processed rows
+            processed_rows = duckdb.sql(f"SELECT count(*) FROM '{local_csv}'").fetchone()[0]
+            
+            if processed_rows == 0:
+                self.firestore_svc.update_job_status(job_id, "failed", {"error_message": "No valid data extracted from any chunks."})
+                return
+            
+            with open(local_csv, 'rb') as f:
+                csv_bytes = f.read()
+                
+            download_url = self.storage_svc.upload_file_bytes(
+                settings.PROCESSED_BUCKET_NAME,
+                output_file_name,
+                csv_bytes,
+                content_type="text/csv"
+            )
+            
+            self.firestore_svc.update_job_status(job_id, "completed", {
+                "download_url": download_url,
+                "processed_rows": processed_rows
+            })
+        except Exception as e:
+            print(f"DuckDB aggregation failed: {e}")
+            self.firestore_svc.update_job_status(job_id, "failed", {"error_message": f"DuckDB aggregation failed: {e}"})
+            return
+        finally:
+            if os.path.exists(tmp_dir):
+                shutil.rmtree(tmp_dir)
 
         # Send Email Notification if requested
         if job_data.get("email"):
