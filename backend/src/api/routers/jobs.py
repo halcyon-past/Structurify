@@ -78,3 +78,23 @@ async def get_job_status(
         total_chunks=data.get("total_chunks"),
         completed_chunks=data.get("completed_chunks")
     )
+
+@router.post("/{job_id}/cancel")
+async def cancel_job(
+    job_id: str,
+    firestore_svc: FirestoreService = Depends(get_firestore_service)
+):
+    """
+    Cancels a job by updating the Firestore job and audit documents.
+    In-flight workers will see the 'cancelled' status and gracefully abort.
+    """
+    data = firestore_svc.get_job(job_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    if data.get("status") in ["completed", "failed", "cancelled"]:
+        raise HTTPException(status_code=400, detail=f"Job cannot be cancelled because it is already {data.get('status')}")
+        
+    firestore_svc.cancel_job(job_id)
+    
+    return {"status": "cancelled", "message": "Job cancelled successfully"}

@@ -40,3 +40,29 @@ class FirestoreService:
         if doc.exists:
             return doc.to_dict()
         return None
+
+    def cancel_job(self, job_id: str) -> None:
+        """
+        Forcefully cancels a job, updating both the operational table and the audit logger.
+        """
+        import datetime
+        now = datetime.datetime.utcnow().isoformat()
+        cancel_data = {
+            "status": "cancelled",
+            "error_message": "Job was manually cancelled by the admin.",
+            "updated_at": now
+        }
+        
+        # Update jobs collection
+        job_ref = self.db.collection("jobs").document(job_id)
+        if job_ref.get().exists:
+            job_ref.update(cancel_data)
+            
+        # Update job_audits collection
+        audit_ref = self.db.collection("job_audits").document(job_id)
+        if audit_ref.get().exists:
+            audit_ref.update({
+                "status": "cancelled",
+                "error_message": "Job was manually cancelled by the admin.",
+                "completed_at": now
+            })

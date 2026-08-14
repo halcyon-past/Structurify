@@ -75,6 +75,15 @@ async def process_chunk(request: Request):
             if not job_id or chunk_id is None or not chunk_data or target_schema is None:
                 raise ValueError("Missing required fields in chunk payload")
                 
+            # 0. Check if job was cancelled
+            db = firestore_svc.db
+            job_ref = db.collection("jobs").document(job_id)
+            job_doc = job_ref.get()
+            
+            if job_doc.exists and job_doc.to_dict().get("status") == "cancelled":
+                print(f"Job {job_id} is cancelled. Aborting chunk {chunk_id}.")
+                return {"status": "success", "message": "aborted due to cancellation"}
+                
             # 1. Map: Extract and self-correct using LangGraph
             results, chunk_tokens = chunk_processor_svc.process_chunk(chunk_data, target_schema)
             
