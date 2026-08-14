@@ -35,7 +35,13 @@ class ReducerService:
                 has_data = True
                     
         if not has_data:
-            self.firestore_svc.update_job_status(job_id, "failed", {"error_message": "No valid data extracted from any chunks."})
+            error_message = "No valid data extracted from any chunks."
+            self.firestore_svc.update_job_status(job_id, "failed", {"error_message": error_message})
+            if self.audit_svc:
+                try:
+                    self.audit_svc.log_job_failure(job_id, error_message)
+                except Exception as audit_e:
+                    print(f"Failed to write audit failure log: {audit_e}")
             if os.path.exists(tmp_dir):
                 shutil.rmtree(tmp_dir)
             return
@@ -60,7 +66,13 @@ class ReducerService:
             processed_rows = duckdb.sql(f"SELECT count(*) FROM '{local_csv}'").fetchone()[0]
             
             if processed_rows == 0:
-                self.firestore_svc.update_job_status(job_id, "failed", {"error_message": "No valid data extracted from any chunks."})
+                error_message = "No valid data extracted from any chunks."
+                self.firestore_svc.update_job_status(job_id, "failed", {"error_message": error_message})
+                if self.audit_svc:
+                    try:
+                        self.audit_svc.log_job_failure(job_id, error_message)
+                    except Exception as audit_e:
+                        print(f"Failed to write audit failure log: {audit_e}")
                 return
             
             # Generate Metadata Stats efficiently in a single pass
@@ -147,7 +159,13 @@ class ReducerService:
                     
         except Exception as e:
             print(f"DuckDB aggregation failed: {e}")
-            self.firestore_svc.update_job_status(job_id, "failed", {"error_message": f"DuckDB aggregation failed: {e}"})
+            error_message = f"DuckDB aggregation failed: {e}"
+            self.firestore_svc.update_job_status(job_id, "failed", {"error_message": error_message})
+            if self.audit_svc:
+                try:
+                    self.audit_svc.log_job_failure(job_id, error_message)
+                except Exception as audit_e:
+                    print(f"Failed to write audit failure log: {audit_e}")
             return
         finally:
             if os.path.exists(tmp_dir):

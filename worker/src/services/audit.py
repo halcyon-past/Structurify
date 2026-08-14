@@ -8,7 +8,7 @@ class AuditService:
     def __init__(self, db: firestore.Client):
         self.db = db
 
-    def log_job_start(self, job_data: Dict[str, Any]):
+    def log_job_start(self, job_data: Dict[str, Any], file_size_mb: float = 0.0, total_chunks: int = 0):
         """
         Logs the start of a job to the job_audits collection to track active jobs.
         """
@@ -24,8 +24,11 @@ class AuditService:
             "plan": job_data.get("plan", "free"),
             "ip_address": job_data.get("ip_address"),
             "file_name": job_data.get("file_name"),
+            "file_size_mb": file_size_mb,
+            "total_chunks": total_chunks,
             "target_schema": job_data.get("target_schema", {}),
             "created_at": job_data.get("created_at"),
+            "started_at": datetime.utcnow().isoformat(),
             "status": "processing",
             
             # Infrastructure Tracing
@@ -33,6 +36,22 @@ class AuditService:
         }
         
         self.db.collection("job_audits").document(job_id).set(audit_payload)
+
+    def log_job_failure(self, job_id: str, error_message: str):
+        """
+        Updates an existing active job to failed state with the error message.
+        """
+        if not job_id or job_id == "unknown":
+            return
+            
+        audit_payload = {
+            "status": "failed",
+            "error_message": error_message,
+            "completed_at": datetime.utcnow().isoformat()
+        }
+        
+        # Write to the job_audits collection
+        self.db.collection("job_audits").document(job_id).update(audit_payload)
 
     def log_job_completion(self, job_data: Dict[str, Any], stats: Dict[str, Any], semantic_meta: Dict[str, Any], download_url: str):
         """

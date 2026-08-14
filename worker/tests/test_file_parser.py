@@ -67,3 +67,4 @@ def test_unsupported_file_format(file_parser):
     status_doc = file_parser.firestore_svc.statuses[job_id]
     assert status_doc["status"] == "failed"
     assert "Unsupported file format" in status_doc["error_message"]
+    assert file_parser.audit_svc.log_job_failure.called

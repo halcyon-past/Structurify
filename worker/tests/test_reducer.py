@@ -85,7 +85,9 @@ def test_reduce_job_empty_chunks():
     ])
     firestore_svc = MockFirestoreService()
     
-    reducer = ReducerService(storage_svc, firestore_svc)
+    audit_svc = MagicMock()
+    
+    reducer = ReducerService(storage_svc, firestore_svc, audit_svc=audit_svc)
     
     # It should raise an exception, caught by the reducer, and update the status to failed
     # Wait, does ReducerService catch its own exceptions?
@@ -98,3 +100,4 @@ def test_reduce_job_empty_chunks():
     assert status_update is not None
     assert status_update["status"] == "failed"
     assert "No valid data extracted" in status_update["error_message"]
+    assert audit_svc.log_job_failure.called

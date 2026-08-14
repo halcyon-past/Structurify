@@ -24,15 +24,6 @@ class FileParserService:
     def process_file(self, job_id: str, file_path: str, target_schema: Dict[str, Any], email: str = None):
         self.firestore_svc.update_job_status(job_id, "processing")
         
-        # Log job start to audit table
-        if self.audit_svc:
-            job_data = self.firestore_svc.get_job(job_id)
-            if job_data:
-                try:
-                    self.audit_svc.log_job_start(job_data)
-                except Exception as e:
-                    print(f"Failed to log job start: {e}")
-        
         try:
             file_bytes = self.storage_svc.download_file_bytes(settings.RAW_BUCKET_NAME, file_path)
             file_size_mb = len(file_bytes) / (1024 * 1024)
@@ -40,7 +31,6 @@ class FileParserService:
             if file_size_mb > 5.0 and email:
                 tracking_url = f"{settings.FRONTEND_URL}/track?jobId={job_id}"
                 self.email_svc.send_started_email(email, tracking_url)
-
             
             # Dynamically calculate chunk size based on target schema to maximize LLM context window
             num_fields = len(target_schema.keys()) if target_schema else 1
@@ -60,6 +50,15 @@ class FileParserService:
                 raise ValueError("Unsupported file format. Must be CSV or XLSX.")
                 
             total_chunks = len(chunks)
+            
+            # Log job start to audit table
+            if self.audit_svc:
+                job_data = self.firestore_svc.get_job(job_id)
+                if job_data:
+                    try:
+                        self.audit_svc.log_job_start(job_data, file_size_mb, total_chunks)
+                    except Exception as e:
+                        print(f"Failed to log job start: {e}")
             
             # Setup tracker in Firestore
             self.firestore_svc.db.collection("jobs").document(job_id).update({
@@ -87,5 +86,10 @@ class FileParserService:
                 "error_message": error_message,
                 "stack_trace": stack_trace
             })
+            if self.audit_svc:
+                try:
+                    self.audit_svc.log_job_failure(job_id, error_message)
+                except Exception as audit_e:
+                    print(f"Failed to write audit failure log: {audit_e}")
             print(f"Job {job_id} failed: {stack_trace}")
             raise e
