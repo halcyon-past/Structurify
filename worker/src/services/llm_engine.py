@@ -1,17 +1,30 @@
 import json
 from typing import Dict, Any, List
-from tenacity import retry, wait_exponential, stop_after_attempt
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception
 from google import genai
 from google.genai import types
 from src.core.config import settings
+
+def is_retryable_exception(exception: Exception) -> bool:
+    err_str = str(exception)
+    # Fail fast on Daily Quota limits (Free Tier Per Day)
+    if "PerDay" in err_str or "limit: 20" in err_str:
+        return False
+    # Fail fast on bad requests or not found
+    if "400" in err_str and "INVALID_ARGUMENT" in err_str:
+        return False
+    if "404" in err_str and "NOT_FOUND" in err_str:
+        return False
+    return True
 
 class LLMEngine:
     def __init__(self, client: genai.Client = None):
         self.client = client or genai.Client(api_key=settings.GEMINI_API_KEY)
 
     @retry(
-        wait=wait_exponential(multiplier=1, min=4, max=60),
+        wait=wait_exponential(multiplier=2, min=10, max=120),
         stop=stop_after_attempt(5),
+        retry=retry_if_exception(is_retryable_exception),
         reraise=True
     )
     def call_gemini_api(self, chunk_data: str, target_schema: Dict[str, Any]) -> tuple[List[Dict[str, Any]], int]:

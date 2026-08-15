@@ -14,14 +14,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Global Header component with dynamic authentication UI (including a new link to the History page).
 - Redesigned email notification field in Schema Builder with glassmorphic aesthetics.
 ### Changed
+- Reverted the LLM worker model to the stable `gemini-2.5-flash` to utilize the generous 1,500 Requests-Per-Day free tier quota.
 - Improved Job Tracking UI by integrating the "Cancel Job" button directly into the custom timeline header.
 - Simplified History job card by removing account-level details (Role, Plan) in favor of strictly job-specific metrics.
 - `useFileUpload` hook now attaches user `uid` to the backend job request.
 - `next.config.mjs` modified to allow static exports by disabling the Image Optimization API.
 ### Fixed
+- Fixed critical Cloud Run worker deadlock caused by synchronous gRPC execution on the async event loop.
+- Fixed issue where the LLM engine would endlessly retry on fatal API exceptions (like Daily Quotas or 404s). The chunk processor now fast-fails, saving massive compute costs on dead jobs.
+- Fixed `.dockerignore` patterns to exclude nested `__pycache__` and `.pyc` files, preventing stale local bytecode from executing in production containers.
+- Fixed cancel logic in the worker to instantly abort jobs *before* file fan-out if the user cancels immediately, preventing ghost chunks from entering the queue.
 - Fixed bug where processing time displayed as `0s` for historical jobs by calculating true duration from `created_at` and `completed_at`.
 - Updated worker reducer to properly persist execution duration and LLM-generated column metadata to the main Firestore job document instead of isolating it in audit logs.
-
 ## [1.5.0] - 2026-08-15
 ### Added
 - Graceful Job Cancellation API with frontend UI integration.

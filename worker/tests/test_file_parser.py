@@ -34,13 +34,13 @@ def test_process_massive_csv(file_parser):
     
     file_parser.firestore_svc.db.collection().document().update.assert_called()
     
-    # A 1M row file (excluding header) with dynamic chunk_size calculation (capped max 1000 chunks)
-    # chunk_size = max(100, min(1000, 5000 // 2)) = 1000.
-    # total rows = 1,000,000. chunk_size = 1000. So 1000 chunks.
-    assert file_parser.publisher.publish.call_count == 1000
+    # A 1M row file (excluding header) with dynamic chunk_size calculation
+    # chunk_size = max(250, min(500, 5000 // 2)) = 500.
+    # total rows = 1,000,000. chunk_size = 500. So 2000 chunks.
+    assert file_parser.publisher.publish.call_count == 2000
     
     update_call_args = file_parser.firestore_svc.db.collection().document().update.call_args[0][0]
-    assert update_call_args["total_chunks"] == 1000
+    assert update_call_args["total_chunks"] == 2000
 
 
 def test_process_empty_file(file_parser):
