@@ -27,7 +27,7 @@ resource "google_storage_bucket" "raw_uploads" {
   force_destroy               = true
 
   cors {
-    origin          = ["http://localhost:3000", "https://localhost:3000"]
+    origin          = ["http://localhost:3000", "https://localhost:3000", "https://structurify.web.app", "https://structurify-504821.web.app"]
     method          = ["GET", "PUT", "POST", "OPTIONS"]
     response_header = ["Content-Type", "x-goog-resumable"]
     max_age_seconds = 3600
