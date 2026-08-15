@@ -92,27 +92,22 @@ function TrackContent() {
         </button>
 
         <header className="mb-10 text-center flex flex-col items-center">
-          <div className="flex items-center justify-between w-full mb-2">
-            <div className="w-[100px]"></div> {/* Spacer */}
-            <h1 className="text-3xl font-bold text-gray-100">
-              Job Status Pipeline
-            </h1>
-            <div className="w-[100px] flex justify-end">
-              {(status === 'queued' || status === 'processing' || status === 'processing_chunks') && (
-                <button
-                  onClick={handleCancel}
-                  disabled={isCancelling}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/20 transition-colors text-sm font-medium disabled:opacity-50"
-                >
-                  {isCancelling ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
-                  Cancel Job
-                </button>
-              )}
-            </div>
-          </div>
-          <p className="text-sm font-mono text-gray-400">
+          <h1 className="text-3xl font-bold text-gray-100 mb-2">
+            Job Status Pipeline
+          </h1>
+          <p className="text-sm font-mono text-gray-400 mb-4">
             Tracking ID: <span className="text-gray-300">{jobId}</span>
           </p>
+          {(status === 'queued' || status === 'processing' || status === 'processing_chunks') && (
+            <button
+              onClick={handleCancel}
+              disabled={isCancelling}
+              className="flex items-center gap-1.5 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/20 transition-colors text-sm font-bold disabled:opacity-50"
+            >
+              {isCancelling ? <Loader2 size={16} className="animate-spin" /> : <XCircle size={16} />}
+              Cancel Job
+            </button>
+          )}
         </header>
 
         {/* TIMELINE VIEW */}
