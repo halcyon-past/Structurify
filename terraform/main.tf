@@ -83,6 +83,12 @@ resource "google_service_account" "etl_backend_sa" {
   description  = "Service Account for Backend and Worker"
 }
 
+resource "google_service_account" "pubsub_invoker_sa" {
+  account_id   = "pubsub-invoker-sa"
+  display_name = "Pub/Sub Invoker SA"
+  description  = "Service Account used by Pub/Sub push subscriptions to invoke Cloud Run worker"
+}
+
 locals {
   sa_roles = [
     "roles/storage.objectAdmin",
