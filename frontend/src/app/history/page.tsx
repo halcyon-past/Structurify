@@ -59,15 +59,7 @@ function JobCard({ job }: { job: HistoryJob }) {
             <p className="text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
               <Info size={16} /> Job Metadata
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-black/20 p-3 rounded-lg border border-white/5">
-                <p className="text-xs text-gray-500 uppercase">Role</p>
-                <p className="text-sm text-gray-200 capitalize font-medium">{job.role || 'N/A'}</p>
-              </div>
-              <div className="bg-black/20 p-3 rounded-lg border border-white/5">
-                <p className="text-xs text-gray-500 uppercase">Plan</p>
-                <p className="text-sm text-gray-200 capitalize font-medium">{job.plan || 'N/A'}</p>
-              </div>
+            <div className="grid grid-cols-2 gap-3">
               <div className="bg-black/20 p-3 rounded-lg border border-white/5">
                 <p className="text-xs text-gray-500 uppercase">Total Chunks</p>
                 <p className="text-sm text-gray-200 font-medium">{job.total_chunks || 'N/A'}</p>
