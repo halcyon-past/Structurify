@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
+import Link from "next/link";
 
 export function Header() {
   const { user, loading, signInWithGoogle, logOut } = useAuth();
@@ -9,7 +10,12 @@ export function Header() {
   return (
     <header className="w-full flex items-center justify-between p-4 z-50">
       <div className="flex items-center gap-2">
-        {/* Intentionally left blank, can add branding here if needed */}
+        <Link href="/" className="flex items-center gap-2 group">
+          <Image src="/logo.svg" alt="Logo" width={28} height={28} className="group-hover:opacity-80 transition-opacity" />
+          <span className="font-bold text-lg text-white tracking-tight group-hover:text-gray-300 transition-colors hidden sm:block">
+            Structurify
+          </span>
+        </Link>
       </div>
       <div className="flex items-center gap-4">
         {!loading && (
@@ -29,6 +35,12 @@ export function Header() {
                   {user.displayName || user.email}
                 </span>
               </div>
+              <Link 
+                href="/history"
+                className="text-sm font-medium text-gray-300 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-transparent hover:border-white/10"
+              >
+                History
+              </Link>
               <button 
                 onClick={logOut}
                 className="text-sm font-medium text-gray-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-transparent hover:border-white/10"

@@ -28,7 +28,7 @@ export function JobStatus({ jobId, jobState }: JobStatusProps) {
     }
   };
 
-  const isProcessing = jobState?.status === 'queued' || jobState?.status === 'processing' || !jobState?.status;
+  const isProcessing = jobState?.status === 'queued' || jobState?.status === 'processing' || jobState?.status === 'processing_chunks' || !jobState?.status;
 
   return (
     <div className="bg-white/5 backdrop-blur-md rounded-3xl shadow-2xl border border-white/10 p-8 relative overflow-hidden group mt-6">
