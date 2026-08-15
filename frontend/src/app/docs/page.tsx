@@ -9,66 +9,132 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { Loader2, Edit3, Save, X, Eye } from "lucide-react";
 
-const DOCS_DOC_ID = "docs";
+const DOCS_DOC_ID = "docs_v2";
 
 const DEFAULT_DOCS = `# Structurify Documentation
 
-Welcome to the **Structurify** documentation. Structurify is an AI-powered ETL pipeline that transforms messy, unstructured spreadsheets into strict, machine-readable JSON or Excel schemas.
+Welcome to the **Structurify** documentation! Structurify is an AI-powered ETL pipeline that transforms messy, unstructured spreadsheets into strict, machine-readable datasets.
 
-## Overview
-1. **Upload your unstructured file** (CSV, XLSX, PDF).
-2. **Define your Target Schema** using the UI Builder or raw JSON.
-3. **Submit the Job** and let Google Gemini 2.5 Flash extract and format the data.
-4. **Get notified** via email when the job completes.
+## 🔄 Simplified Architecture Flow
+
+\`\`\`mermaid
+graph TD;
+    A[User Uploads File] --> B[Next.js Frontend];
+    B --> C{File > 5MB?};
+    C -- Yes --> D[Send 'Job Started' Email];
+    C -- No --> E[Bypass Email];
+    D --> E;
+    E --> F[Upload to Google Cloud Storage];
+    F --> G[Pub/Sub Job Queue];
+    G --> H[Cloud Run AI Workers];
+    H --> I[Gemini 2.5 Flash Map-Reduce];
+    I --> J[DuckDB Data Aggregation];
+    J --> K[Zip Creation data.csv + metadata.json];
+    K --> L[Firestore Job Updated];
+    L --> M[Send 'Job Completed' Email with Download Link];
+\`\`\`
+
+## 🚀 How It Works
+1. **Upload your unstructured file**: Currently supported formats are **CSV, XLSX, and XLS**.
+2. **Define your Target Schema**: Use the UI Builder or paste a raw JSON schema.
+3. **Submit the Job**: Our asynchronous MapReduce pipeline processes your data using Google Gemini.
+4. **Download Results**: Once completed, you will receive a ZIP file containing your structured data and a metadata report.
 
 ---
 
 ## 🛠️ Schema Builder (UI)
 
-The UI Builder provides an intuitive way to construct your target schema without writing raw JSON.
+The UI Builder provides an intuitive way to construct your target schema.
 - **Add Fields:** Click \`+ Add Field\` to create a new column constraint.
 - **Field Name:** The exact column name you want in the final output (e.g., \`user_id\`).
-- **Data Type:** Select from \`String\`, \`Integer\`, \`Float\`, \`Boolean\`, \`Date\`, etc.
-- **Validation:** Mark fields as **Required** to enforce strict output, or allow nulls if data is optional.
+- **Data Types Available:** \`String\`, \`Integer\`, \`Float\`, \`Boolean\`, \`Date\`.
+- **Validation:** Mark fields as **Required** to enforce strict output, or leave them optional.
 
 ## 📝 JSON Builder (Advanced)
 
-For power users, you can toggle to the **JSON Editor** mode. This allows you to paste complex, nested schema definitions.
+For power users, you can toggle to the **JSON Editor** mode. This allows you to paste complex schema definitions. 
+**Available Types for JSON Builder:** \`String\`, \`Integer\`, \`Float\`, \`Boolean\`, \`Date\`.
+
+**Example:**
 \`\`\`json
 {
   "customer_id": "String",
   "total_spend": "Float",
-  "is_active": "Boolean"
+  "is_active": "Boolean",
+  "registration_date": "Date"
 }
 \`\`\`
 
+---
+
 ## 📧 Email Notifications
 
-You don't need to stare at the progress bar! Structurify supports asynchronous processing for large datasets.
-- Enter your **Email Address** in the submission form.
-- You will receive a **Job Started** email confirming your schema.
-- Once the MapReduce pipeline completes, you will receive a **Job Completed** email containing a direct download link to your structured CSV/JSON file!
+Structurify supports asynchronous processing so you don't have to wait on the page:
+- **Large Files (>5MB):** You will receive an immediate **"Job Started"** email confirming your job is in the queue.
+- **All Files:** Once the MapReduce pipeline completes, you will receive a **"Job Completed"** email containing a secure direct download link to your results.
 
 ---
 
-### Tips for Best Results
-* **Be descriptive in field names:** AI uses your field names as context. \`customer_first_name\` works better than \`cfn\`.
-* **Monitor Jobs:** You can always check the \`/history\` tab to see your past runs and download previously processed files.
+## 🗂️ History & Result ZIP
+
+All of your past runs are safely stored in your account.
+- **History Tab:** Navigate to \`/history\` to view the status of all your jobs, review their target schemas, and download previously processed files.
+- **ZIP File Export:** The final output is packaged as a \`.zip\` archive containing two files:
+  1. **Data File:** Your beautifully structured CSV or JSON data.
+  2. **Metadata File:** A detailed JSON report generated during the processing phase, giving you insights and statistics about your data extraction!
 `;
+
+interface GitHubRelease {
+  id: number;
+  name: string;
+  tag_name: string;
+  body: string;
+  published_at: string;
+  html_url: string;
+  prerelease: boolean;
+}
 
 export default function DocsPage() {
   const { userData, loading: authLoading } = useAuth();
+  const [activeTab, setActiveTab] = useState<"docs" | "changelog">("docs");
+  
+  // Docs State
   const [markdown, setMarkdown] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editedMarkdown, setEditedMarkdown] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Changelog State
+  const [releases, setReleases] = useState<GitHubRelease[]>([]);
+  const [loadingReleases, setLoadingReleases] = useState(false);
+
   const isAdmin = userData?.role?.toLowerCase() === "admin" || userData?.role?.toLowerCase() === "owner";
 
   useEffect(() => {
     fetchDocs();
   }, []);
+
+  const fetchReleases = async () => {
+    setLoadingReleases(true);
+    try {
+      const res = await fetch("https://api.github.com/repos/halcyon-past/Structurify/releases");
+      if (!res.ok) throw new Error("Failed to fetch releases");
+      const data = await res.json();
+      setReleases(data);
+    } catch (e) {
+      console.error("Error fetching releases:", e);
+    } finally {
+      setLoadingReleases(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "changelog" && releases.length === 0) {
+      fetchReleases();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const fetchDocs = async () => {
     try {
@@ -119,9 +185,29 @@ export default function DocsPage() {
     <main className="min-h-screen bg-[#0a0a0a] text-white pt-24 pb-12 px-6 flex flex-col items-center">
       <div className="w-full max-w-6xl">
         <div className="flex items-center justify-between mb-8 border-b border-white/10 pb-4">
-          <h1 className="text-3xl font-bold tracking-tight text-white/90">Documentation</h1>
+          <div className="flex items-center gap-6">
+            <h1 className="text-3xl font-bold tracking-tight text-white/90">Documentation</h1>
+            <div className="flex bg-white/5 rounded-lg p-1 gap-1">
+              <button
+                onClick={() => setActiveTab("docs")}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
+                  activeTab === "docs" ? "bg-white/10 text-white shadow" : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                Docs
+              </button>
+              <button
+                onClick={() => setActiveTab("changelog")}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
+                  activeTab === "changelog" ? "bg-white/10 text-white shadow" : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                Changelog
+              </button>
+            </div>
+          </div>
           
-          {isAdmin && (
+          {isAdmin && activeTab === "docs" && (
             <div className="flex gap-3">
               {!isEditing ? (
                 <button
@@ -157,42 +243,84 @@ export default function DocsPage() {
           )}
         </div>
 
-        {!isEditing ? (
-          <div className="bg-[#111] border border-white/5 p-8 rounded-3xl shadow-xl">
-            <article className="prose prose-invert prose-emerald max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-                {markdown}
-              </ReactMarkdown>
-            </article>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[70vh]">
-            <div className="flex flex-col h-full bg-[#111] border border-white/10 rounded-3xl overflow-hidden shadow-xl">
-              <div className="bg-white/5 border-b border-white/10 p-3 flex items-center gap-2 text-sm text-gray-400 font-medium">
-                <Edit3 className="w-4 h-4" />
-                Markdown Editor
-              </div>
-              <textarea
-                value={editedMarkdown}
-                onChange={(e) => setEditedMarkdown(e.target.value)}
-                className="flex-1 w-full p-6 bg-transparent text-gray-200 resize-none outline-none font-mono text-sm focus:ring-2 focus:ring-emerald-500/20 transition"
-                placeholder="Write your markdown here..."
-              />
-            </div>
-            
-            <div className="flex flex-col h-full bg-[#111] border border-white/10 rounded-3xl overflow-hidden shadow-xl">
-              <div className="bg-white/5 border-b border-white/10 p-3 flex items-center gap-2 text-sm text-emerald-400/80 font-medium">
-                <Eye className="w-4 h-4" />
-                Live Preview
-              </div>
-              <div className="flex-1 p-6 overflow-y-auto">
+        {activeTab === "docs" ? (
+          <>
+            {!isEditing ? (
+              <div className="bg-[#111] border border-white/5 p-8 rounded-3xl shadow-xl">
                 <article className="prose prose-invert prose-emerald max-w-none">
                   <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-                    {editedMarkdown}
+                    {markdown}
                   </ReactMarkdown>
                 </article>
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[70vh]">
+                <div className="flex flex-col h-full bg-[#111] border border-white/10 rounded-3xl overflow-hidden shadow-xl">
+                  <div className="bg-white/5 border-b border-white/10 p-3 flex items-center gap-2 text-sm text-gray-400 font-medium">
+                    <Edit3 className="w-4 h-4" />
+                    Markdown Editor
+                  </div>
+                  <textarea
+                    value={editedMarkdown}
+                    onChange={(e) => setEditedMarkdown(e.target.value)}
+                    className="flex-1 w-full p-6 bg-transparent text-gray-200 resize-none outline-none font-mono text-sm focus:ring-2 focus:ring-emerald-500/20 transition"
+                    placeholder="Write your markdown here..."
+                  />
+                </div>
+                
+                <div className="flex flex-col h-full bg-[#111] border border-white/10 rounded-3xl overflow-hidden shadow-xl">
+                  <div className="bg-white/5 border-b border-white/10 p-3 flex items-center gap-2 text-sm text-emerald-400/80 font-medium">
+                    <Eye className="w-4 h-4" />
+                    Live Preview
+                  </div>
+                  <div className="flex-1 p-6 overflow-y-auto">
+                    <article className="prose prose-invert prose-emerald max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                        {editedMarkdown}
+                      </ReactMarkdown>
+                    </article>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="space-y-8">
+            {loadingReleases ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 text-white/50 animate-spin" />
+              </div>
+            ) : releases.length === 0 ? (
+              <div className="text-center py-20 text-gray-400">
+                No releases found or failed to load.
+              </div>
+            ) : (
+              releases.map((release) => (
+                <div key={release.id} className="bg-[#111] border border-white/5 p-8 rounded-3xl shadow-xl flex flex-col gap-4">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                    <div className="flex items-center gap-4">
+                      <h2 className="text-2xl font-bold text-emerald-400">{release.name || release.tag_name}</h2>
+                      {release.prerelease && (
+                        <span className="px-2 py-0.5 text-xs font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-full">
+                          Pre-release
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-500 flex items-center gap-4">
+                      <span>{new Date(release.published_at).toLocaleDateString()}</span>
+                      <a href={release.html_url} target="_blank" rel="noreferrer" className="hover:text-emerald-400 transition">
+                        View on GitHub
+                      </a>
+                    </div>
+                  </div>
+                  <article className="prose prose-invert prose-emerald max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                      {release.body || "*No release notes provided.*"}
+                    </ReactMarkdown>
+                  </article>
+                </div>
+              ))
+            )}
           </div>
         )}
       </div>
