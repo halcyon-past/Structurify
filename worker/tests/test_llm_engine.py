@@ -74,3 +74,18 @@ def test_generate_metadata_descriptions():
     assert result["column_descriptions"][0]["column_name"] == "name"
     
     mock_client.models.generate_content.assert_called_once()
+
+from src.services.llm_engine import is_retryable_exception
+
+def test_is_retryable_exception():
+    # Should retry generic errors
+    assert is_retryable_exception(Exception("API Rate Limit Exceeded")) is True
+    assert is_retryable_exception(Exception("503 Service Unavailable")) is True
+    
+    # Should not retry daily quotas
+    assert is_retryable_exception(Exception("429 RESOURCE_EXHAUSTED ... PerDay")) is False
+    assert is_retryable_exception(Exception("Quota exceeded for metric ... limit: 20")) is False
+    
+    # Should not retry bad request or not found
+    assert is_retryable_exception(Exception("400 INVALID_ARGUMENT")) is False
+    assert is_retryable_exception(Exception("404 NOT_FOUND")) is False

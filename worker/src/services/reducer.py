@@ -143,9 +143,35 @@ class ReducerService:
                 content_type="application/zip"
             )
             
+            columns_metadata = {
+                "global_description": semantic_meta.get("global_description", "N/A"),
+                "columns": []
+            }
+            for col in col_names:
+                columns_metadata["columns"].append({
+                    "name": col,
+                    "type": stats[col]["type"],
+                    "null_count": stats[col]["null_count"],
+                    "distinct_count": stats[col]["distinct_count"],
+                    "description": col_desc.get(col, "N/A")
+                })
+                
+            # Calculate duration
+            duration = 0
+            if job_data.get("created_at"):
+                try:
+                    # Clean the ISO string if it has 'Z'
+                    created_str = job_data["created_at"].replace('Z', '+00:00')
+                    created_dt = datetime.fromisoformat(created_str)
+                    duration = (datetime.utcnow() - created_dt.replace(tzinfo=None)).total_seconds()
+                except Exception as e:
+                    print(f"Failed to parse created_at for duration: {e}")
+
             self.firestore_svc.update_job_status(job_id, "completed", {
                 "download_url": download_url,
-                "processed_rows": processed_rows
+                "processed_rows": processed_rows,
+                "duration_seconds": round(duration, 2),
+                "columns_metadata": columns_metadata
             })
             
             # Log Analytics telemetry

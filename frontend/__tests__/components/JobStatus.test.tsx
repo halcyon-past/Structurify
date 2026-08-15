@@ -36,4 +36,15 @@ describe('JobStatus', () => {
     expect(screen.getByTestId('status-failed')).toBeInTheDocument();
     expect(screen.getByText('Format error')).toBeInTheDocument();
   });
+
+  it('renders cancelled status with message', () => {
+    render(
+      <JobStatus 
+        jobId="123" 
+        jobState={{ status: 'cancelled', error_message: 'Job cancelled' }} 
+      />
+    );
+    expect(screen.getByTestId('status-failed')).toBeInTheDocument();
+    expect(screen.getByText('Job cancelled')).toBeInTheDocument();
+  });
 });
