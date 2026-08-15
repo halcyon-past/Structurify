@@ -48,10 +48,25 @@ jobs:
           PUBSUB_SA="pubsub-invoker-sa"
           PUBSUB_SA_EMAIL="${PUBSUB_SA}@${PROJECT_ID}.iam.gserviceaccount.com"
           
+          gcloud run services add-iam-policy-binding structurify-worker \
+            --region ${REGION} \
+            --member=serviceAccount:${PUBSUB_SA_EMAIL} \
+            --role=roles/run.invoker
+          
+          gcloud pubsub subscriptions create schema-transformation-sub-push \
+            --topic=schema-transformation-jobs \
+            --push-endpoint="${WORKER_URL}/process-job" \
+            --push-auth-service-account="${PUBSUB_SA_EMAIL}" \
+            --ack-deadline=600 || \
           gcloud pubsub subscriptions update schema-transformation-sub-push \
             --push-endpoint="${WORKER_URL}/process-job" \
             --push-auth-service-account="${PUBSUB_SA_EMAIL}"
             
+          gcloud pubsub subscriptions create chunk-processing-sub-push \
+            --topic=chunk-processing-jobs \
+            --push-endpoint="${WORKER_URL}/process-chunk" \
+            --push-auth-service-account="${PUBSUB_SA_EMAIL}" \
+            --ack-deadline=600 || \
           gcloud pubsub subscriptions update chunk-processing-sub-push \
             --push-endpoint="${WORKER_URL}/process-chunk" \
             --push-auth-service-account="${PUBSUB_SA_EMAIL}"

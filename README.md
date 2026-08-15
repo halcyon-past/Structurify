@@ -129,7 +129,7 @@ Structurify/
 │   └── __tests__/            # Jest component & hook tests
 │
 ├── deploy.sh                 # Fully automated CI/CD to Cloud Run
-└── setup_gcp_infrastructure.sh # Automated IaC for entire GCP environment
+└── terraform/                # Automated IaC with Terraform for entire GCP environment
 ```
 
 ---
@@ -225,10 +225,12 @@ The script will output `generated_clean_50000.csv` and `generated_messy_50000.cs
 Structurify is designed for seamless, automated deployment to Google Cloud Run. 
 
 ### 1. Initial Infrastructure Setup
-Run the infrastructure shell script once to provision Artifact Registry, Storage Buckets, Firestore, Secret Manager, Pub/Sub, and IAM rules.
+Use Terraform to provision Storage Buckets, Firestore, Secret Manager, Pub/Sub, and IAM rules.
 ```bash
-chmod +x setup_gcp_infrastructure.sh
-./setup_gcp_infrastructure.sh your-gcp-project-id us-central1 your-gemini-api-key
+cd terraform
+terraform init
+terraform apply -var="project_id=your-gcp-project-id" -var="region=us-central1" -var="gemini_api_key=your-gemini-api-key"
+cd ..
 ```
 
 ### 2. Service Deployment
