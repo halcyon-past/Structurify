@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { UploadZone } from "@/components/UploadZone";
 import { SchemaBuilder, SchemaField } from "@/components/SchemaBuilder";
 import { useFileUpload } from "@/hooks/useFileUpload";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Home() {
+  const { user } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [schemaFields, setSchemaFields] = useState<SchemaField[]>([
     { name: "id", type: "Integer", required: true },
@@ -15,6 +17,12 @@ export default function Home() {
   ]);
   
   const [email, setEmail] = useState("");
+  
+  useEffect(() => {
+    if (user?.email && !email) {
+      setEmail(user.email);
+    }
+  }, [user, email]);
   
   const { uploadAndSubmitJob, isUploading, uploadProgress } = useFileUpload();
 
@@ -30,7 +38,7 @@ export default function Home() {
     }
 
     try {
-      const jobId = await uploadAndSubmitJob(file, targetSchema, email);
+      const jobId = await uploadAndSubmitJob(file, targetSchema, email, user?.uid);
       router.push(`/track?jobId=${jobId}`);
     } catch (error: unknown) {
       alert(error instanceof Error ? error.message : "An error occurred.");

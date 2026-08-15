@@ -32,9 +32,11 @@ class FileParserService:
                 tracking_url = f"{settings.FRONTEND_URL}/track?jobId={job_id}"
                 self.email_svc.send_started_email(email, tracking_url)
             
-            # Dynamically calculate chunk size based on target schema to maximize LLM context window
+            # Dynamically calculate chunk size based on target schema.
+            # With gemini-3.6-flash (65K output token limit), we can safely process 500 rows per chunk.
+            # Fewer chunks = fewer Pub/Sub push deliveries = no push window throttling.
             num_fields = len(target_schema.keys()) if target_schema else 1
-            chunk_size = max(100, min(1000, 5000 // num_fields))
+            chunk_size = max(250, min(500, 5000 // num_fields))
             chunks = []
             
             if file_path.lower().endswith(".csv"):
@@ -67,6 +69,7 @@ class FileParserService:
                 "status": "processing_chunks"
             })
             
+            futures = []
             for i, chunk_csv in enumerate(chunks):
                 message = {
                     "job_id": job_id,
@@ -75,7 +78,12 @@ class FileParserService:
                     "target_schema": target_schema
                 }
                 data = json.dumps(message).encode("utf-8")
-                self.publisher.publish(self.topic_path, data=data)
+                future = self.publisher.publish(self.topic_path, data=data)
+                futures.append(future)
+                
+            # Await all publishes before returning to prevent Cloud Run from freezing the background thread
+            for future in futures:
+                future.result()
                 
             print(f"Job {job_id}: Fanned out {total_chunks} chunks.")
 
