@@ -13,6 +13,16 @@ export interface HistoryJob extends JobState {
   plan?: string;
   email?: string;
   ip_address?: string;
+  columns_metadata?: {
+    global_description: string;
+    columns: Array<{
+      name: string;
+      type: string;
+      null_count: number;
+      distinct_count: number;
+      description: string;
+    }>;
+  };
 }
 
 export function useUserHistory(userId: string | undefined) {

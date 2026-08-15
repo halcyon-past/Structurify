@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useJobListener } from "@/hooks/useJobListener";
-import { ArrowLeft, Download, CheckCircle2, AlertCircle, RefreshCw, UploadCloud, Cpu, Sparkles, FileCheck2 } from "lucide-react";
+import { ArrowLeft, Download, CheckCircle2, AlertCircle, RefreshCw, UploadCloud, Cpu, Sparkles, FileCheck2, Loader2, XCircle } from "lucide-react";
 
 const STEPS = [
   { id: 'queued', title: 'Job Queued', description: 'File uploaded and waiting in queue', icon: UploadCloud },
@@ -20,6 +20,23 @@ function TrackContent() {
 
   // Fallback Polling (in case Firebase onSnapshot is blocked)
   const [fallbackData, setFallbackData] = useState<Record<string, unknown> | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+  
+  const handleCancel = async () => {
+    try {
+      setIsCancelling(true);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/v1/jobs/${jobId}/cancel`, {
+        method: 'POST'
+      });
+      if (!res.ok) {
+        console.error("Failed to cancel job");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
   
   useEffect(() => {
     if (jobState?.status === "completed" || jobState?.status === "failed") return;
@@ -74,10 +91,25 @@ function TrackContent() {
           Back to Dashboard
         </button>
 
-        <header className="mb-10 text-center">
-          <h1 className="text-3xl font-bold text-gray-100 mb-2">
-            Job Status Pipeline
-          </h1>
+        <header className="mb-10 text-center flex flex-col items-center">
+          <div className="flex items-center justify-between w-full mb-2">
+            <div className="w-[100px]"></div> {/* Spacer */}
+            <h1 className="text-3xl font-bold text-gray-100">
+              Job Status Pipeline
+            </h1>
+            <div className="w-[100px] flex justify-end">
+              {(status === 'queued' || status === 'processing' || status === 'processing_chunks') && (
+                <button
+                  onClick={handleCancel}
+                  disabled={isCancelling}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/20 transition-colors text-sm font-medium disabled:opacity-50"
+                >
+                  {isCancelling ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
+                  Cancel Job
+                </button>
+              )}
+            </div>
+          </div>
           <p className="text-sm font-mono text-gray-400">
             Tracking ID: <span className="text-gray-300">{jobId}</span>
           </p>

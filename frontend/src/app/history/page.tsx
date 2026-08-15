@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserHistory, HistoryJob } from "@/hooks/useUserHistory";
-import { FileText, Clock, CheckCircle, AlertCircle, Loader2, ChevronDown, Download, Hash, Info } from "lucide-react";
+import { FileText, Clock, CheckCircle, AlertCircle, Loader2, ChevronDown, Download, Hash, Info, Table } from "lucide-react";
 import Link from "next/link";
 
 function JobCard({ job }: { job: HistoryJob }) {
@@ -105,6 +105,44 @@ function JobCard({ job }: { job: HistoryJob }) {
           {(job.status === "failed" || job.status === "cancelled") && job.error_message && (
             <div className="mb-4 p-4 bg-red-500/10 rounded-xl border border-red-500/20 text-red-400 text-sm font-mono">
               <strong>Error:</strong> {job.error_message}
+            </div>
+          )}
+
+          {job.columns_metadata && (
+            <div className="mb-4">
+              <p className="text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                <Table size={16} /> Extracted Columns
+              </p>
+              
+              <div className="bg-black/40 p-4 rounded-xl border border-white/5 mb-3">
+                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Dataset Summary</p>
+                <p className="text-sm text-gray-200">{job.columns_metadata.global_description}</p>
+              </div>
+
+              <div className="overflow-x-auto border border-white/5 rounded-xl bg-black/20">
+                <table className="w-full text-left text-sm text-gray-300">
+                  <thead className="bg-white/5 text-xs uppercase text-gray-400 border-b border-white/5">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Column Name</th>
+                      <th className="px-4 py-3 font-medium">Data Type</th>
+                      <th className="px-4 py-3 font-medium">Nulls</th>
+                      <th className="px-4 py-3 font-medium">Distinct</th>
+                      <th className="px-4 py-3 font-medium min-w-[200px]">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {job.columns_metadata.columns.map((col, idx) => (
+                      <tr key={idx} className="hover:bg-white/5 transition-colors">
+                        <td className="px-4 py-3 font-medium text-gray-200">{col.name}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-accent-400">{col.type}</td>
+                        <td className="px-4 py-3">{col.null_count}</td>
+                        <td className="px-4 py-3">{col.distinct_count}</td>
+                        <td className="px-4 py-3 text-xs text-gray-400 leading-relaxed">{col.description}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
