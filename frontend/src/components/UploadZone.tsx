@@ -38,17 +38,17 @@ export function UploadZone({ file, onFileSelect, isUploading, uploadProgress }: 
   };
 
   return (
-    <div className="bg-white/5 backdrop-blur-md rounded-3xl shadow-2xl border border-white/10 p-8 relative overflow-hidden group">
+    <div className="bg-white/5 backdrop-blur-md rounded-3xl shadow-2xl border border-white/10 p-6 relative overflow-hidden group flex flex-col h-full">
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent-500 to-blue-500 opacity-50"></div>
       
-      <h2 className="text-xl font-bold mb-6 text-gray-100 flex items-center gap-2">
+      <h2 className="text-xl font-bold mb-4 text-gray-100 flex items-center gap-2 flex-shrink-0">
         <span className="bg-accent-500/20 text-accent-400 w-8 h-8 rounded-full flex items-center justify-center text-sm">1</span>
         Upload Source File
       </h2>
       
       <div 
         data-testid="drop-zone"
-        className={`border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center transition-all duration-300 cursor-pointer ${
+        className={`border-2 border-dashed rounded-2xl p-6 flex-1 flex flex-col items-center justify-center transition-all duration-300 cursor-pointer ${
           isDragging 
             ? 'border-accent-400 bg-accent-500/10 scale-[1.02] shadow-[0_0_30px_rgba(139,92,246,0.15)]' 
             : 'border-white/20 hover:border-accent-500/50 hover:bg-white/5'

@@ -46,28 +46,31 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-background text-foreground relative overflow-hidden flex flex-col items-center">
+    <main className="h-screen w-full bg-background text-foreground relative overflow-hidden flex flex-col items-center">
       {/* Animated Background Blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-600/10 rounded-full blur-[120px] mix-blend-screen animate-blob"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] mix-blend-screen animate-blob" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-600/10 rounded-full blur-[120px] mix-blend-screen animate-blob pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] mix-blend-screen animate-blob pointer-events-none" style={{ animationDelay: '2s' }}></div>
 
-      <div className="w-full max-w-3xl p-6 z-10 relative pt-24 pb-12">
-        <header className="mb-8 flex flex-col items-center text-center">
-          <div className="flex items-center gap-4 mb-4">
+      {/* Main Container */}
+      <div className="w-full max-w-7xl h-full flex flex-col p-4 md:p-6 lg:p-8 z-10 relative">
+        {/* Compact Header */}
+        <header className="flex-shrink-0 flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 md:mb-8">
+          <div className="flex items-center gap-4">
             <div className="bg-white/5 p-2 rounded-xl border border-white/10 shadow-sm backdrop-blur-xl flex items-center justify-center">
               <Image src="/logo.svg" alt="Structurify Logo" width={32} height={32} priority />
             </div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-white/90">
+            <h1 className="text-3xl font-extrabold tracking-tight text-white/90">
               Structurify
             </h1>
           </div>
-          <p className="text-gray-400 text-lg font-medium max-w-lg">
-            Transform messy spreadsheets into structured, machine-readable datasets using AI.
+          <p className="text-gray-400 text-sm font-medium">
+            Transform messy spreadsheets into structured, machine-readable datasets.
           </p>
         </header>
 
-        <div className="flex flex-col gap-6">
-          <section>
+        {/* Content Grid */}
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6">
+          <section className="w-full lg:w-5/12 h-[350px] lg:h-full flex flex-col flex-shrink-0">
             <UploadZone 
               file={file} 
               onFileSelect={setFile} 
@@ -76,7 +79,7 @@ export default function Home() {
             />
           </section>
 
-          <section>
+          <section className="w-full lg:w-7/12 h-full flex flex-col min-h-0">
             <SchemaBuilder 
               fields={schemaFields}
               onChange={setSchemaFields}
@@ -89,7 +92,8 @@ export default function Home() {
           </section>
         </div>
 
-        <footer className="mt-12 text-center text-sm text-gray-500">
+        {/* Compact Footer */}
+        <footer className="flex-shrink-0 mt-6 text-center text-xs text-gray-500">
           Created by <a href="https://www.aritro.cloud" target="_blank" rel="noopener noreferrer" className="text-accent-500 hover:text-accent-400 transition-colors hover:underline font-medium">Aritro Saha</a>
         </footer>
       </div>

@@ -74,10 +74,10 @@ export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubm
   };
 
   return (
-    <div className="bg-white/5 backdrop-blur-md rounded-3xl shadow-2xl border border-white/10 p-8 flex flex-col relative overflow-hidden group">
+    <div className="bg-white/5 backdrop-blur-md rounded-3xl shadow-2xl border border-white/10 p-6 flex flex-col h-full relative overflow-hidden group">
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500 opacity-50"></div>
       
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-4 flex-shrink-0">
         <h2 className="text-xl font-bold text-gray-100 flex items-center gap-2">
           <span className="bg-blue-500/20 text-blue-400 w-8 h-8 rounded-full flex items-center justify-center text-sm">2</span>
           Define Target Schema
@@ -163,7 +163,7 @@ export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubm
           )
         ) : (
           <div className="flex flex-col h-full gap-3">
-            <div className="flex-grow w-full h-[200px] bg-black/40 border border-white/5 rounded-xl shadow-inner overflow-auto custom-scrollbar relative focus-within:ring-2 focus-within:ring-accent-500/50">
+            <div className="flex-grow w-full h-full min-h-[150px] bg-black/40 border border-white/5 rounded-xl shadow-inner overflow-auto custom-scrollbar relative focus-within:ring-2 focus-within:ring-accent-500/50">
               <Editor
                 value={jsonText}
                 onValueChange={(code) => handleJsonChange(code)}
@@ -185,8 +185,8 @@ export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubm
         )}
       </div>
 
-      <div className="mt-8 pt-6 border-t border-white/10 relative">
-        <div className="mb-6 relative group/email">
+      <div className="mt-4 pt-4 border-t border-white/10 relative flex-shrink-0">
+        <div className="mb-4 relative group/email">
           <div className="absolute inset-0 bg-gradient-to-r from-accent-500/20 to-purple-500/20 rounded-xl blur-md opacity-0 group-hover/email:opacity-100 transition-opacity duration-500"></div>
           <div className="relative flex items-center bg-black/40 border border-white/10 hover:border-white/20 rounded-xl p-1 backdrop-blur-sm transition-all shadow-inner focus-within:ring-2 focus-within:ring-accent-500/50 focus-within:border-accent-500/50">
             <div className="pl-4 pr-2 text-gray-400 group-focus-within/email:text-accent-400 transition-colors">
@@ -197,7 +197,7 @@ export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubm
               value={email}
               onChange={(e) => onEmailChange(e.target.value)}
               placeholder="Enter email for job completion notification..."
-              className="w-full bg-transparent border-none px-2 py-3 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-0 transition-all"
+              className="w-full bg-transparent border-none px-2 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-0 transition-all"
             />
             {email && (
               <div className="pr-4 text-xs font-medium text-accent-400 animate-in fade-in flex items-center gap-1.5 whitespace-nowrap">
@@ -214,7 +214,7 @@ export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubm
         >
           <div className="absolute inset-0 bg-gradient-to-r from-accent-600 via-purple-600 to-blue-600"></div>
           <div className="absolute inset-0 bg-gradient-to-r from-accent-500 via-purple-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative flex items-center justify-center gap-2 py-4 text-white font-bold tracking-wide">
+          <div className="relative flex items-center justify-center gap-2 py-3 text-white font-bold tracking-wide">
             {isSubmitting ? (
               <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Processing Pipeline...</>
             ) : (
