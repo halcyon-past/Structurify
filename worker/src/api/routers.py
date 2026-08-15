@@ -50,29 +50,36 @@ def _is_job_cancelled(job_id: str, db: firestore.Client) -> bool:
     
     return status == "cancelled"
 
+from typing import Dict, Any, Optional
+from pydantic import BaseModel
+
+class PubSubMessage(BaseModel):
+    data: str
+    messageId: Optional[str] = None
+    publishTime: Optional[str] = None
+    attributes: Optional[Dict[str, str]] = None
+
+class PubSubEnvelope(BaseModel):
+    message: PubSubMessage
+    subscription: str
+
 @router.post("/process-job", status_code=status.HTTP_200_OK)
-async def process_job(request: Request):
+def process_job(envelope: PubSubEnvelope):
     """HTTP POST endpoint called by Pub/Sub Push Subscription (The Splitter)"""
     try:
-        envelope = await request.json()
-        if not envelope or 'message' not in envelope:
-            raise HTTPException(status_code=400, detail="Invalid Pub/Sub message format")
-            
-        pubsub_message = envelope['message']
+        pubsub_message = envelope.message
+        message_data = base64.b64decode(pubsub_message.data).decode('utf-8')
+        payload = json.loads(message_data)
         
-        if isinstance(pubsub_message, dict) and 'data' in pubsub_message:
-            message_data = base64.b64decode(pubsub_message['data']).decode('utf-8')
-            payload = json.loads(message_data)
+        job_id = payload.get('job_id')
+        file_path = payload.get('file_path')
+        target_schema = payload.get('target_schema')
+        email = payload.get('email')
+        
+        if not job_id or not file_path or target_schema is None:
+            raise ValueError("Missing required fields in payload")
             
-            job_id = payload.get('job_id')
-            file_path = payload.get('file_path')
-            target_schema = payload.get('target_schema')
-            email = payload.get('email')
-            
-            if not job_id or not file_path or target_schema is None:
-                raise ValueError("Missing required fields in payload")
-                
-            file_parser_svc.process_file(job_id, file_path, target_schema, email)
+        file_parser_svc.process_file(job_id, file_path, target_schema, email)
             
     except Exception as e:
         print(f"Error processing message: {str(e)}")
@@ -80,73 +87,67 @@ async def process_job(request: Request):
     return {"status": "success"}
 
 @router.post("/process-chunk", status_code=status.HTTP_200_OK)
-async def process_chunk(request: Request):
+def process_chunk(envelope: PubSubEnvelope):
     """HTTP POST endpoint called by Pub/Sub Push Subscription (The Mapper)"""
     try:
-        envelope = await request.json()
-        if not envelope or 'message' not in envelope:
-            raise HTTPException(status_code=400, detail="Invalid Pub/Sub message format")
-            
-        pubsub_message = envelope['message']
+        pubsub_message = envelope.message
+        message_data = base64.b64decode(pubsub_message.data).decode('utf-8')
+        payload = json.loads(message_data)
         
-        if isinstance(pubsub_message, dict) and 'data' in pubsub_message:
-            message_data = base64.b64decode(pubsub_message['data']).decode('utf-8')
-            payload = json.loads(message_data)
+        job_id = payload.get('job_id')
+        chunk_id = payload.get('chunk_id')
+        chunk_data = payload.get('chunk_data')
+        target_schema = payload.get('target_schema')
+        
+        if not job_id or chunk_id is None or not chunk_data or target_schema is None:
+            raise ValueError("Missing required fields in chunk payload")
             
-            job_id = payload.get('job_id')
-            chunk_id = payload.get('chunk_id')
-            chunk_data = payload.get('chunk_data')
-            target_schema = payload.get('target_schema')
+        # 0. Check if job was cancelled
+        db = firestore_svc.db
+        if _is_job_cancelled(job_id, db):
+            print(f"Job {job_id} is cancelled. Aborting chunk {chunk_id}.")
+            return {"status": "success", "message": "aborted due to cancellation"}
             
-            if not job_id or chunk_id is None or not chunk_data or target_schema is None:
-                raise ValueError("Missing required fields in chunk payload")
+        # 1. Map: Extract and self-correct using LangGraph
+        results, chunk_tokens = chunk_processor_svc.process_chunk(chunk_data, target_schema)
+        
+        # 2. Save result to GCS
+        result_json = json.dumps(results)
+        storage_svc.upload_file_bytes(
+            settings.RAW_BUCKET_NAME,
+            f"jobs/{job_id}/results/chunk_{chunk_id}.json",
+            result_json.encode('utf-8'),
+            content_type="application/json"
+        )
+        
+        # 3. Increment counter and check for reduce
+        db = firestore_svc.db
+        job_ref = db.collection("jobs").document(job_id)
+        
+        @firestore.transactional
+        def increment_and_check(transaction, ref):
+            snapshot = ref.get(transaction=transaction)
+            if not snapshot.exists:
+                return False
                 
-            # 0. Check if job was cancelled
-            db = firestore_svc.db
-            if _is_job_cancelled(job_id, db):
-                print(f"Job {job_id} is cancelled. Aborting chunk {chunk_id}.")
-                return {"status": "success", "message": "aborted due to cancellation"}
-                
-            # 1. Map: Extract and self-correct using LangGraph
-            results, chunk_tokens = chunk_processor_svc.process_chunk(chunk_data, target_schema)
+            data = snapshot.to_dict()
+            completed = data.get("completed_chunks", 0) + 1
+            total = data.get("total_chunks", 0)
             
-            # 2. Save result to GCS
-            result_json = json.dumps(results)
-            storage_svc.upload_file_bytes(
-                settings.RAW_BUCKET_NAME,
-                f"jobs/{job_id}/results/chunk_{chunk_id}.json",
-                result_json.encode('utf-8'),
-                content_type="application/json"
-            )
+            transaction.update(ref, {
+                "completed_chunks": completed,
+                "total_tokens": firestore.Increment(chunk_tokens)
+            })
             
-            # 3. Increment counter and check for reduce
-            db = firestore_svc.db
-            job_ref = db.collection("jobs").document(job_id)
-            
-            @firestore.transactional
-            def increment_and_check(transaction, ref):
-                snapshot = ref.get(transaction=transaction)
-                if not snapshot.exists:
-                    return False
-                    
-                data = snapshot.to_dict()
-                completed = data.get("completed_chunks", 0) + 1
-                total = data.get("total_chunks", 0)
-                
-                transaction.update(ref, {
-                    "completed_chunks": completed,
-                    "total_tokens": firestore.Increment(chunk_tokens)
-                })
-                
-                return completed == total
+            return completed == total
 
-            transaction = db.transaction()
-            is_done = increment_and_check(transaction, job_ref)
-            
-            # 4. Reduce: If all chunks finished, merge them
-            if is_done:
-                print(f"Job {job_id} completely mapped. Triggering Reduce phase...")
-                reducer_svc.reduce_job(job_id)
+        transaction = db.transaction()
+        is_done = increment_and_check(transaction, job_ref)
+        
+        # 4. Reduce: If all chunks finished, merge them
+        if is_done:
+            print(f"Job {job_id} completely mapped. Triggering Reduce phase...")
+            reducer_svc.reduce_job(job_id)
             
     except Exception as e:
         print(f"Error processing chunk: {str(e)}")
