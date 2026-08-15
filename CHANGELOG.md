@@ -5,12 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.0] - 2026-08-15
 ### Added
 - Comprehensive **Admin Dashboard** (`/admin`) featuring animated metrics, gradient borders, glassmorphism, and live data aggregation.
 - **Job Details Modal** on the Admin page to inspect complete job metadata (target schema, column classifications, AI summaries, and fatal stack traces).
 - **Global Kill Switch** API endpoint that instantly purges all pending and processing chunks across all four Pub/Sub queues (via cursor seeking), safely terminating ghost jobs.
-- **Live Markdown Documentation System** (`/docs`) backed by real-time Firestore syncing, featuring a split-pane Markdown editor (with GFM support) exclusively available to Admins.
+- **Live Markdown Documentation System** (`/docs`) backed by real-time Firestore syncing, featuring a split-pane Markdown editor exclusively available to Admins.
+- **Native Mermaid.js Rendering Support** on the Documentation page, allowing Admins to embed dynamic architecture flowcharts directly inside markdown blocks.
 - **Dynamic Changelog Tab** that autonomously pulls and renders public release notes directly from the GitHub API.
 - Secured backend collections with strict **Firestore RBAC Security Rules** restricting global reads to owners and admins.
 - Extraction History Dashboard (`/history`) for users to view and download past jobs.
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Global Header component with dynamic authentication UI (including a new link to the History page).
 - Redesigned email notification field in Schema Builder with glassmorphic aesthetics.
 ### Changed
+- **Completely Redesigned Homepage Layout**: Eliminated unnecessary vertical scrolling by condensing the hero section and implementing a strict, side-by-side single-screen responsive layout (no-scroll) on desktop devices.
 - Reverted the LLM worker model to the stable `gemini-2.5-flash` to utilize the generous 1,500 Requests-Per-Day free tier quota.
 - Improved Job Tracking UI by integrating the "Cancel Job" button directly into the custom timeline header.
 - Simplified History job card by removing account-level details (Role, Plan) in favor of strictly job-specific metrics.
