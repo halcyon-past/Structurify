@@ -33,8 +33,10 @@ class FileParserService:
                 self.email_svc.send_started_email(email, tracking_url)
             
             # Dynamically calculate chunk size based on target schema to maximize LLM context window
+            # Gemini output limit is 8192 tokens. 
+            # To prevent hitting the limit and getting truncated JSON, cap chunks at 50-100 rows.
             num_fields = len(target_schema.keys()) if target_schema else 1
-            chunk_size = max(100, min(1000, 5000 // num_fields))
+            chunk_size = max(50, min(100, 1000 // num_fields))
             chunks = []
             
             if file_path.lower().endswith(".csv"):
