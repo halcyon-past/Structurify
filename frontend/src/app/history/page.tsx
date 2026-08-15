@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserHistory, HistoryJob } from "@/hooks/useUserHistory";
-import { FileText, Clock, CheckCircle, AlertCircle, Loader2, ChevronDown, Download, Hash } from "lucide-react";
+import { FileText, Clock, CheckCircle, AlertCircle, Loader2, ChevronDown, Download, Hash, Info } from "lucide-react";
 import Link from "next/link";
 
 function JobCard({ job }: { job: HistoryJob }) {
@@ -55,6 +55,32 @@ function JobCard({ job }: { job: HistoryJob }) {
 
       {expanded && (
         <div className="px-5 pb-5 pt-2 border-t border-white/10 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="mb-4">
+            <p className="text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+              <Info size={16} /> Job Metadata
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                <p className="text-xs text-gray-500 uppercase">Role</p>
+                <p className="text-sm text-gray-200 capitalize font-medium">{job.role || 'N/A'}</p>
+              </div>
+              <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                <p className="text-xs text-gray-500 uppercase">Plan</p>
+                <p className="text-sm text-gray-200 capitalize font-medium">{job.plan || 'N/A'}</p>
+              </div>
+              <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                <p className="text-xs text-gray-500 uppercase">Total Chunks</p>
+                <p className="text-sm text-gray-200 font-medium">{job.total_chunks || 'N/A'}</p>
+              </div>
+              <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                <p className="text-xs text-gray-500 uppercase">Last Updated</p>
+                <p className="text-sm text-gray-200 font-medium truncate">
+                  {job.updated_at ? new Date(job.updated_at).toLocaleTimeString() : 'N/A'}
+                </p>
+              </div>
+            </div>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             {job.status === "completed" && (
               <>

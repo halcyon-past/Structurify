@@ -6,8 +6,13 @@ import { JobState } from "./useJobListener";
 export interface HistoryJob extends JobState {
   job_id: string;
   created_at: string;
+  updated_at?: string;
   file_name: string;
   target_schema: Record<string, string>;
+  role?: string;
+  plan?: string;
+  email?: string;
+  ip_address?: string;
 }
 
 export function useUserHistory(userId: string | undefined) {
