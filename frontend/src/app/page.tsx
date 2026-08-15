@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { UploadZone } from "@/components/UploadZone";
 import { SchemaBuilder, SchemaField } from "@/components/SchemaBuilder";
 import { useFileUpload } from "@/hooks/useFileUpload";
@@ -52,18 +51,10 @@ export default function Home() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] mix-blend-screen animate-blob pointer-events-none" style={{ animationDelay: '2s' }}></div>
 
       {/* Main Container */}
-      <div className="w-full max-w-7xl h-full flex flex-col p-4 md:p-6 lg:p-8 z-10 relative">
-        {/* Compact Header */}
-        <header className="flex-shrink-0 flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 md:mb-8">
-          <div className="flex items-center gap-4">
-            <div className="bg-white/5 p-2 rounded-xl border border-white/10 shadow-sm backdrop-blur-xl flex items-center justify-center">
-              <Image src="/logo.svg" alt="Structurify Logo" width={32} height={32} priority />
-            </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-white/90">
-              Structurify
-            </h1>
-          </div>
-          <p className="text-gray-400 text-sm font-medium">
+      <div className="w-full max-w-7xl h-full flex flex-col p-4 pt-20 md:p-6 md:pt-20 lg:p-8 lg:pt-20 z-10 relative">
+        {/* Compact Subtitle Header */}
+        <header className="flex-shrink-0 flex items-center justify-between mb-4 md:mb-6">
+          <p className="text-gray-300 text-sm md:text-base font-medium">
             Transform messy spreadsheets into structured, machine-readable datasets.
           </p>
         </header>
