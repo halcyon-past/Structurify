@@ -60,6 +60,12 @@ resource "google_pubsub_subscription" "schema_transformation_sub" {
   message_retention_duration = "604800s" # 7 days
 }
 
+resource "google_pubsub_topic" "chunk_processing_jobs" {
+  name = "chunk-processing-jobs"
+
+  depends_on = [google_project_service.enabled_apis]
+}
+
 # 4. Firestore Database Setup
 resource "google_firestore_database" "database" {
   project     = var.project_id

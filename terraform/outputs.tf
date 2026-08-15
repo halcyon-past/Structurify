@@ -9,8 +9,13 @@ output "processed_outputs_bucket_name" {
 }
 
 output "pubsub_topic_name" {
-  description = "The name of the Pub/Sub topic"
+  description = "The name of the Pub/Sub topic for schema transformation"
   value       = google_pubsub_topic.schema_transformation_jobs.name
+}
+
+output "chunk_pubsub_topic_name" {
+  description = "The name of the Pub/Sub topic for chunk processing"
+  value       = google_pubsub_topic.chunk_processing_jobs.name
 }
 
 output "service_account_email" {
