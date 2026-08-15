@@ -31,7 +31,7 @@ class LLMEngine:
             prompt = f"Clean the following CSV data and return it as a JSON array of objects:\n\n{chunk_data}"
             
             response = self.client.models.generate_content(
-                model='gemini-3.6-flash',
+                model='gemini-2.5-flash',
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     system_instruction=system_instruction,
@@ -79,7 +79,7 @@ class LLMEngine:
         prompt = f"Map the following CSV data to the target schema:\n\n{chunk_data}"
 
         response = self.client.models.generate_content(
-            model='gemini-3.6-flash',
+            model='gemini-2.5-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -121,7 +121,7 @@ class LLMEngine:
         prompt = f"Schema: {json.dumps(target_schema)}\nStats: {json.dumps(duckdb_stats)}"
         
         response = self.client.models.generate_content(
-            model='gemini-3.6-flash',
+            model='gemini-2.5-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
