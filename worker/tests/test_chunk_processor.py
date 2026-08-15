@@ -53,3 +53,22 @@ def test_auto_clean_mode():
     assert len(result) == 1
     assert result[0]["name"] == "John Doe"
     assert tokens == 100
+
+class MockLLMEngineFatalFailure:
+    def __init__(self):
+        self.call_count = 0
+        
+    def call_gemini_api(self, chunk_data: str, target_schema: dict) -> tuple:
+        self.call_count += 1
+        raise Exception("429 RESOURCE_EXHAUSTED PerDay limit: 20")
+
+def test_process_chunk_fatal_error_fast_fail():
+    engine = MockLLMEngineFatalFailure()
+    processor = ChunkProcessorService(engine)
+    
+    result, tokens = processor.process_chunk("John, 25", {"name": "String", "age": "Integer"})
+    
+    # It should immediately fail and NOT retry, meaning it only calls API once.
+    assert engine.call_count == 1
+    assert result == []
+    assert tokens == 0
