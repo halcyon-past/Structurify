@@ -3,7 +3,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export interface JobState {
-  status: "queued" | "processing" | "processing_chunks" | "completed" | "failed";
+  status: "queued" | "processing" | "processing_chunks" | "completed" | "failed" | "cancelled";
   download_url?: string;
   processed_rows?: number;
   duration_seconds?: number;
