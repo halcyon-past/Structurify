@@ -30,8 +30,47 @@ The architecture utilizes a robust asynchronous data pipeline:
 5. **LangGraph Map-Reduce Pipeline**: 
     - **Split**: The worker chunks the file (e.g. 500 rows at a time).
     - **Map (LangGraph)**: Each chunk is pushed to Gemini 2.5 Flash using strict `response_schema` parameters. If Gemini hallucinates or encounters an error, a LangGraph state-machine automatically retries the extraction up to 3 times.
-    - **Reduce**: A transaction counter monitors the chunks. When all are complete, a final Reducer service compiles them into a pristine Excel (`.xlsx`) workbook.
+    - **Reduce**: A transaction counter monitors the chunks. When all are complete, a final Reducer service uses DuckDB to compile them into a pristine `.csv` and generate comprehensive `metadata.json`, packaging them into a secure `.zip` archive.
 6. **Real-time UI**: The frontend listens to Firestore via `onSnapshot` and instantly provides the user with a real-time progress bar and a secure download URL.
+
+```mermaid
+graph TD;
+    A[User Uploads File] --> B[Next.js Frontend];
+    B --> C{File > 5MB?};
+    C -- Yes --> D[Send 'Job Started' Email];
+    C -- No --> E[Bypass Email];
+    D --> E;
+    E --> F[Upload to Google Cloud Storage];
+    F --> G[Pub/Sub Job Queue];
+    G --> H[Cloud Run AI Workers];
+    H --> I[Gemini 2.5 Flash Map-Reduce];
+    I --> J[DuckDB Data Aggregation];
+    J --> K[Zip Creation data.csv + metadata.json];
+    K --> L[Firestore Job Updated];
+    L --> M[Send 'Job Completed' Email with Download Link];
+```
+
+---
+
+## <img src="./docs/icons/shield.svg" width="28" align="absbottom" alt="admin" /> Admin & Audit Management
+
+Structurify features robust observability and administrative controls via an integrated Role-Based Access Control (RBAC) system.
+
+1. **Comprehensive Admin Dashboard (`/admin`)**: 
+   - A real-time, glassmorphic dashboard protected by Firestore security rules. 
+   - Displays global platform metrics: Total Users, Active Processing Jobs, Total Tokens Burned, and Job Success Rates.
+   - Admins can inspect complete metadata for any job, including the user's target schema, AI-generated column summaries, execution duration, and fatal stack traces.
+2. **Global Kill Switch**: 
+   - If a runaway job is consuming too many resources, Admins can trigger the "Kill Switch" directly from the dashboard.
+   - This hits a dedicated backend API that securely seeks all Pub/Sub subscription cursors to `now()`, instantly purging the queue and gracefully cancelling all active workloads.
+3. **Telemetry & Audit Logging**: 
+   - Every job execution is rigorously tracked via the `AuditService`. 
+   - The system decouple identity (`user_id`) from origin (`ip_address`) for guest rate-limiting.
+   - We track exact compute costs (LLM tokens burned) extracted from Gemini API responses and safely increment them in Firestore via atomic transactions.
+4. **Editable Documentation System (`/docs`)**:
+   - A public, real-time documentation page backed directly by Firestore.
+   - Admins have access to a split-pane live Markdown editor (with Mermaid.js support) to rewrite and persist docs instantly.
+   - Features a dynamic `Changelog` tab that autonomously pulls public release notes directly from the GitHub API.
 
 ---
 

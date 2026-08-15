@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { UploadZone } from "@/components/UploadZone";
 import { SchemaBuilder, SchemaField } from "@/components/SchemaBuilder";
 import { useFileUpload } from "@/hooks/useFileUpload";
@@ -46,27 +45,23 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-background text-foreground relative overflow-hidden flex flex-col items-center">
+    <main className="h-screen w-full bg-background text-foreground relative overflow-hidden flex flex-col items-center">
       {/* Animated Background Blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-600/20 rounded-full blur-[120px] mix-blend-screen animate-blob"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] mix-blend-screen animate-blob" style={{ animationDelay: '2s' }}></div>
-      <div className="absolute top-[40%] left-[30%] w-[30%] h-[30%] bg-purple-600/20 rounded-full blur-[100px] mix-blend-screen animate-blob" style={{ animationDelay: '4s' }}></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-600/10 rounded-full blur-[120px] mix-blend-screen animate-blob pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] mix-blend-screen animate-blob pointer-events-none" style={{ animationDelay: '2s' }}></div>
 
-      <div className="w-full max-w-6xl p-8 z-10 relative">
-        <header className="mb-12 border-b border-white/10 pb-8 pt-8 flex flex-col items-center text-center">
-          <div className="bg-white/5 p-4 rounded-2xl border border-white/10 shadow-glow mb-6 backdrop-blur-xl flex items-center justify-center">
-            <Image src="/logo.svg" alt="Structurify Logo" width={48} height={48} priority />
-          </div>
-          <h1 className="text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500">
-            Structurify
-          </h1>
-          <p className="text-gray-400 text-xl font-medium max-w-2xl">
-            AI-Powered Heterogeneous Schema Compiler & ETL Pipeline
+      {/* Main Container */}
+      <div className="w-full max-w-7xl h-full flex flex-col p-4 pt-20 md:p-6 md:pt-20 lg:p-8 lg:pt-20 z-10 relative">
+        {/* Compact Subtitle Header */}
+        <header className="flex-shrink-0 flex items-center justify-between mb-4 md:mb-6">
+          <p className="text-gray-300 text-sm md:text-base font-medium">
+            Transform messy spreadsheets into structured, machine-readable datasets.
           </p>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <section className="flex flex-col gap-6">
+        {/* Content Grid */}
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6">
+          <section className="w-full lg:w-5/12 h-[350px] lg:h-full flex flex-col flex-shrink-0">
             <UploadZone 
               file={file} 
               onFileSelect={setFile} 
@@ -75,7 +70,7 @@ export default function Home() {
             />
           </section>
 
-          <section>
+          <section className="w-full lg:w-7/12 h-full flex flex-col min-h-0">
             <SchemaBuilder 
               fields={schemaFields}
               onChange={setSchemaFields}
@@ -87,10 +82,12 @@ export default function Home() {
             />
           </section>
         </div>
+
+        {/* Compact Footer */}
+        <footer className="flex-shrink-0 mt-6 text-center text-xs text-gray-500">
+          Created by <a href="https://www.aritro.cloud" target="_blank" rel="noopener noreferrer" className="text-accent-500 hover:text-accent-400 transition-colors hover:underline font-medium">Aritro Saha</a>
+        </footer>
       </div>
-      <footer className="mt-12 mb-8 text-center text-sm text-gray-500 z-10">
-        Created by <a href="https://www.aritro.cloud" target="_blank" rel="noopener noreferrer" className="text-accent-500 hover:text-accent-400 transition-colors hover:underline font-medium">Aritro Saha</a>
-      </footer>
     </main>
   );
 }
