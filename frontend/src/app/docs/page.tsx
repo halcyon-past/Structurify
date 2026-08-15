@@ -8,6 +8,26 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { Loader2, Edit3, Save, X, Eye } from "lucide-react";
+import mermaid from "mermaid";
+import { useRef } from "react";
+
+const Mermaid = ({ chart }: { chart: string }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    if (ref.current) {
+      const id = 'mermaid-svg-' + Math.random().toString(36).substring(2, 9);
+      mermaid.render(id, chart).then(({ svg }) => {
+        if (ref.current) {
+          ref.current.innerHTML = svg;
+        }
+      }).catch(console.error);
+    }
+  }, [chart]);
+  
+  return <div ref={ref} className="flex justify-center my-8 overflow-x-auto w-full" />;
+};
 
 const DOCS_DOC_ID = "docs_v2";
 
@@ -248,7 +268,24 @@ export default function DocsPage() {
             {!isEditing ? (
               <div className="bg-[#111] border border-white/5 p-8 rounded-3xl shadow-xl">
                 <article className="prose prose-invert prose-emerald max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                  <ReactMarkdown 
+                remarkPlugins={[remarkGfm]} 
+                rehypePlugins={[rehypeRaw]}
+                components={{
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  code({ inline, className, children, ...props }: any) {
+                    const match = /language-(\w+)/.exec(className || "");
+                    if (!inline && match && match[1] === "mermaid") {
+                      return <Mermaid chart={String(children).replace(/\n$/, "")} />;
+                    }
+                    return (
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
+                    );
+                  }
+                }}
+              >
                     {markdown}
                   </ReactMarkdown>
                 </article>
@@ -275,7 +312,24 @@ export default function DocsPage() {
                   </div>
                   <div className="flex-1 p-6 overflow-y-auto">
                     <article className="prose prose-invert prose-emerald max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                      <ReactMarkdown 
+                remarkPlugins={[remarkGfm]} 
+                rehypePlugins={[rehypeRaw]}
+                components={{
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  code({ inline, className, children, ...props }: any) {
+                    const match = /language-(\w+)/.exec(className || "");
+                    if (!inline && match && match[1] === "mermaid") {
+                      return <Mermaid chart={String(children).replace(/\n$/, "")} />;
+                    }
+                    return (
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
+                    );
+                  }
+                }}
+              >
                         {editedMarkdown}
                       </ReactMarkdown>
                     </article>
@@ -314,7 +368,24 @@ export default function DocsPage() {
                     </div>
                   </div>
                   <article className="prose prose-invert prose-emerald max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]} 
+                      rehypePlugins={[rehypeRaw]}
+                      components={{
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        code({ inline, className, children, ...props }: any) {
+                          const match = /language-(\w+)/.exec(className || "");
+                          if (!inline && match && match[1] === "mermaid") {
+                            return <Mermaid chart={String(children).replace(/\n$/, "")} />;
+                          }
+                          return (
+                            <code className={className} {...props}>
+                              {children}
+                            </code>
+                          );
+                        }
+                      }}
+                    >
                       {release.body || "*No release notes provided.*"}
                     </ReactMarkdown>
                   </article>

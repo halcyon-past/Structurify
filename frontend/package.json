@@ -13,6 +13,7 @@
     "@tailwindcss/typography": "^0.5.20",
     "firebase": "^12.17.1",
     "lucide-react": "^1.30.0",
+    "mermaid": "^11.16.1",
     "next": "14.2.35",
     "prismjs": "^1.30.0",
     "react": "^18",
