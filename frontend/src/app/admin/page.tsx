@@ -451,6 +451,38 @@ export default function AdminPage() {
                 </div>
               )}
 
+              {selectedJob.columns_metadata && (
+                <div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-2">Column Intelligence (AI Generated)</div>
+                  <div className="bg-black/50 border border-white/5 rounded-2xl p-5 text-gray-300">
+                    {selectedJob.columns_metadata.global_description && (
+                      <div className="mb-4 text-sm text-emerald-400/80 italic border-l-2 border-emerald-500/30 pl-3 py-1">
+                        {selectedJob.columns_metadata.global_description}
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {selectedJob.columns_metadata.columns?.map((col, idx: number) => (
+                        <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-3 text-sm flex flex-col justify-between">
+                          <div>
+                            <div className="flex justify-between items-start mb-2 gap-2">
+                              <div className="font-bold text-gray-200 truncate">{col.name || col.column_name}</div>
+                              <span className="px-2 py-0.5 bg-black/40 border border-white/5 text-gray-400 rounded-md text-[10px] uppercase tracking-wider font-bold shrink-0">
+                                {col.type || 'Unknown'}
+                              </span>
+                            </div>
+                            <div className="text-gray-400 text-xs mb-3 line-clamp-2" title={col.description}>{col.description}</div>
+                          </div>
+                          <div className="flex gap-2 text-[10px] font-mono text-gray-500 mt-auto">
+                            <span className="px-2 py-1 bg-black/40 rounded-md shrink-0">Nulls: {col.null_count}</span>
+                            <span className="px-2 py-1 bg-black/40 rounded-md shrink-0">Distinct: {col.distinct_count}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-black/50 border border-white/5 rounded-2xl p-4">
                   <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Timestamps</div>

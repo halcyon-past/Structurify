@@ -14,7 +14,17 @@ export interface AdminJob {
   error_message?: string;
   ip_address?: string;
   target_schema?: Record<string, string>;
-  columns_metadata?: Record<string, unknown>;
+  columns_metadata?: {
+    global_description?: string;
+    columns?: Array<{
+      name?: string;
+      column_name?: string;
+      type?: string;
+      null_count?: number;
+      distinct_count?: number;
+      description?: string;
+    }>;
+  };
   total_tokens?: number;
   processed_rows?: number;
   total_chunks?: number;
