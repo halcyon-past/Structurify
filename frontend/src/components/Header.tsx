@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 export function Header() {
-  const { user, loading, signInWithGoogle, logOut } = useAuth();
+  const { user, userData, loading, signInWithGoogle, logOut } = useAuth();
 
   return (
     <header className="w-full flex items-center justify-between p-4 z-50">
@@ -35,6 +35,14 @@ export function Header() {
                   {user.displayName || user.email}
                 </span>
               </div>
+              {(userData?.role === "admin" || userData?.role === "owner") && (
+                <Link 
+                  href="/admin"
+                  className="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-emerald-500/20 hover:border-emerald-500/40"
+                >
+                  Admin Portal
+                </Link>
+              )}
               <Link 
                 href="/history"
                 className="text-sm font-medium text-gray-300 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-transparent hover:border-white/10"
