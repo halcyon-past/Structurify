@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Code, LayoutList } from "lucide-react";
+import { Plus, Trash2, Code, LayoutList, Mail } from "lucide-react";
 import Editor from "react-simple-code-editor";
 import { highlight, languages } from "prismjs";
 import "prismjs/components/prism-json";
@@ -186,14 +186,26 @@ export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubm
       </div>
 
       <div className="mt-8 pt-6 border-t border-white/10 relative">
-        <div className="mb-4">
-          <input 
-            type="email" 
-            value={email}
-            onChange={(e) => onEmailChange(e.target.value)}
-            placeholder="Email for notification (optional)"
-            className="w-full bg-white/5 border border-transparent hover:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500/50 transition-all"
-          />
+        <div className="mb-6 relative group/email">
+          <div className="absolute inset-0 bg-gradient-to-r from-accent-500/20 to-purple-500/20 rounded-xl blur-md opacity-0 group-hover/email:opacity-100 transition-opacity duration-500"></div>
+          <div className="relative flex items-center bg-black/40 border border-white/10 hover:border-white/20 rounded-xl p-1 backdrop-blur-sm transition-all shadow-inner focus-within:ring-2 focus-within:ring-accent-500/50 focus-within:border-accent-500/50">
+            <div className="pl-4 pr-2 text-gray-400 group-focus-within/email:text-accent-400 transition-colors">
+              <Mail size={18} />
+            </div>
+            <input 
+              type="email" 
+              value={email}
+              onChange={(e) => onEmailChange(e.target.value)}
+              placeholder="Enter email for job completion notification..."
+              className="w-full bg-transparent border-none px-2 py-3 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-0 transition-all"
+            />
+            {email && (
+              <div className="pr-4 text-xs font-medium text-accent-400 animate-in fade-in flex items-center gap-1.5 whitespace-nowrap">
+                <span className="w-1.5 h-1.5 bg-accent-500 rounded-full animate-pulse"></span>
+                Ready
+              </div>
+            )}
+          </div>
         </div>
         <button 
           onClick={onSubmit}

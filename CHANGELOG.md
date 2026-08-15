@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Google OAuth 2 support via Firebase Authentication.
+- User profile generation in Firestore (`users` collection) upon first login with assigned `role` and `plan`.
+- Global Header component with dynamic authentication UI.
+- Redesigned email notification field in Schema Builder with glassmorphic aesthetics.
+### Changed
+- `useFileUpload` hook now attaches user `uid` to the backend job request.
+- `next.config.mjs` modified to allow static exports by disabling the Image Optimization API.
 
 ## [1.5.0] - 2026-08-15
 ### Added
