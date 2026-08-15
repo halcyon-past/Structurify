@@ -53,12 +53,25 @@ class ChunkProcessorService:
 
     def _validate_node(self, state: ChunkState):
         result = state.get("result", [])
+        errors = state.get("errors", [])
         if not result:
+            if errors:
+                return {"errors": errors}
             return {"errors": ["Empty result or extraction failed."]}
-        return {"errors": state.get("errors", [])}
+        return {"errors": errors}
         
     def _route_validation(self, state: ChunkState):
-        if not state.get("errors") or state.get("attempts", 0) >= 3:
+        errors = state.get("errors", [])
+        if not errors:
+            return "success"
+            
+        # Fail fast on fatal errors (Daily Quota, 400, 404)
+        for err in errors:
+            if any(fatal in err for fatal in ["PerDay", "limit: 20", "400", "404"]):
+                print(f"Fatal error detected. Aborting LangGraph retries: {err}")
+                return "success"
+                
+        if state.get("attempts", 0) >= 3:
             return "success"
         return "retry"
         

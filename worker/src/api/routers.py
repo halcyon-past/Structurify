@@ -79,6 +79,11 @@ def process_job(envelope: PubSubEnvelope):
         if not job_id or not file_path or target_schema is None:
             raise ValueError("Missing required fields in payload")
             
+        db = firestore_svc.db
+        if _is_job_cancelled(job_id, db):
+            print(f"Job {job_id} is cancelled. Aborting process-job.")
+            return {"status": "success", "message": "aborted due to cancellation"}
+            
         file_parser_svc.process_file(job_id, file_path, target_schema, email)
             
     except Exception as e:
