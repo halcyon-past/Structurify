@@ -6,7 +6,7 @@ export function useFileUpload() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const uploadAndSubmitJob = async (file: File, targetSchema: Record<string, string>, email?: string): Promise<string> => {
+  const uploadAndSubmitJob = async (file: File, targetSchema: Record<string, string>, email?: string, userId?: string): Promise<string> => {
     setIsUploading(true);
     setUploadProgress(0);
 
@@ -45,6 +45,7 @@ export function useFileUpload() {
         target_schema: targetSchema
       };
       if (email) payload.email = email;
+      if (userId) payload.user_id = userId;
 
       const jobRes = await fetch(`${BACKEND_URL}/api/v1/jobs`, {
         method: "POST",

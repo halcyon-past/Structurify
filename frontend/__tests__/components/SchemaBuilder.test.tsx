@@ -65,4 +65,23 @@ describe('SchemaBuilder', () => {
 
     expect(screen.getByRole('button', { name: /Compile Heterogeneous Data/i })).toBeDisabled();
   });
+
+  it('calls onEmailChange when email input changes', () => {
+    const onEmailChange = jest.fn();
+    render(
+      <SchemaBuilder 
+        fields={defaultFields} 
+        onChange={jest.fn()} 
+        onSubmit={jest.fn()} 
+        isSubmitting={false} 
+        isSubmitDisabled={false} 
+        email=""
+        onEmailChange={onEmailChange}
+      />
+    );
+
+    const input = screen.getByPlaceholderText(/Enter email for job completion notification/i);
+    fireEvent.change(input, { target: { value: 'test@example.com' } });
+    expect(onEmailChange).toHaveBeenCalledWith('test@example.com');
+  });
 });
