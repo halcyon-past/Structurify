@@ -10,6 +10,11 @@ export interface AdminJob {
   email: string;
   created_at: string;
   file_name: string;
+  updated_at?: string;
+  error_message?: string;
+  ip_address?: string;
+  target_schema?: Record<string, string>;
+  columns_metadata?: Record<string, unknown>;
   total_tokens?: number;
   processed_rows?: number;
   total_chunks?: number;

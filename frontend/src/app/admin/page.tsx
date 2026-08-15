@@ -1,19 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
-import { useAdminData } from "@/hooks/useAdminData";
+import { useAdminData, AdminJob } from "@/hooks/useAdminData";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   Users, Activity, Database, CheckCircle2, 
   Clock, XCircle, ShieldAlert, RefreshCw, 
-  Zap, ChevronRight, BarChart3
+  Zap, ChevronRight, BarChart3, Info
 } from "lucide-react";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"dashboard" | "jobs" | "users">("dashboard");
+  const [selectedJob, setSelectedJob] = useState<AdminJob | null>(null);
+  const [currentTime, setCurrentTime] = useState(Date.now());
   const { users, jobs, auditLogs, loading, updateUserRole, updateUserPlan, cancelJob } = useAdminData();
   const { userData } = useAuth();
+
+  useEffect(() => {
+    // Update current time every second for live duration calculations
+    const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading) {
     return (
@@ -26,25 +34,39 @@ export default function AdminPage() {
     );
   }
 
-  // Derived Metrics
   const totalUsers = users.length;
   const proUsers = users.filter(u => u.plan === "pro" || u.plan === "max").length;
   const activeJobs = jobs.filter(j => j.status === "queued" || j.status === "processing");
   const failedJobs = jobs.filter(j => j.status === "failed").length;
   
-  // FIXED: Sum total_tokens from jobs instead of audit logs to get true global count including live jobs
   const totalTokensUsed = jobs.reduce((acc, job) => acc + (job.total_tokens || 0), 0);
   const totalRowsProcessed = jobs.reduce((acc, job) => acc + (job.processed_rows || 0), 0);
   const successRate = jobs.length > 0 ? Math.round(((jobs.length - failedJobs) / jobs.length) * 100) : 100;
 
   const formatNumber = (num: number) => new Intl.NumberFormat('en-US').format(num);
 
+  const calculateDuration = (job: AdminJob) => {
+    const start = new Date(job.created_at).getTime();
+    let end = currentTime;
+    if (job.status === "completed" || job.status === "failed" || job.status === "cancelled") {
+      end = job.updated_at ? new Date(job.updated_at).getTime() : start;
+    }
+    
+    const diff = Math.max(0, end - start);
+    const seconds = Math.floor((diff / 1000) % 60);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    if (minutes > 0) return `${minutes}m ${seconds}s`;
+    return `${seconds}s`;
+  };
+
   return (
     <AdminProtectedRoute>
-      <div className="min-h-screen bg-[#050505] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),rgba(255,255,255,0))] pt-28 pb-12 px-4 sm:px-6 lg:px-8 text-white font-sans selection:bg-emerald-500/30">
+      <div className="min-h-screen bg-[#050505] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),rgba(255,255,255,0))] pt-28 pb-12 px-4 sm:px-6 lg:px-8 text-white font-sans selection:bg-emerald-500/30 relative">
         <div className="max-w-7xl mx-auto space-y-10">
           
-          {/* Header Section */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 relative z-10">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold mb-4 tracking-wider uppercase">
@@ -84,10 +106,8 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Dashboard Tab */}
           {activeTab === "dashboard" && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
-              {/* Top Metrics Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 <MetricCard 
                   icon={<Users className="w-6 h-6"/>} 
@@ -123,10 +143,7 @@ export default function AdminPage() {
                 />
               </div>
 
-              {/* Lower Section */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* System Health Panel */}
                 <div className="lg:col-span-1 flex flex-col gap-6">
                   <div className="bg-gradient-to-b from-white/[0.08] to-transparent border border-white/10 rounded-3xl p-8 backdrop-blur-md relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-32 bg-emerald-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-emerald-500/10 transition-colors duration-700"></div>
@@ -165,7 +182,6 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* Live Audit Feed */}
                 <div className="lg:col-span-2 bg-gradient-to-b from-white/[0.05] to-transparent border border-white/10 rounded-3xl p-8 backdrop-blur-md flex flex-col h-[500px]">
                   <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
                     <Clock className="w-6 h-6 text-blue-400"/> 
@@ -208,12 +224,10 @@ export default function AdminPage() {
                     )}
                   </div>
                 </div>
-
               </div>
             </div>
           )}
 
-          {/* Jobs Tab */}
           {activeTab === "jobs" && (
             <div className="bg-gradient-to-b from-white/[0.05] to-transparent border border-white/10 rounded-3xl p-2 overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 shadow-2xl backdrop-blur-md">
               <div className="overflow-x-auto">
@@ -221,73 +235,85 @@ export default function AdminPage() {
                   <thead>
                     <tr className="border-b border-white/10">
                       <th className="p-5 text-xs font-bold text-gray-400 uppercase tracking-wider">Target File</th>
-                      <th className="p-5 text-xs font-bold text-gray-400 uppercase tracking-wider">User Account</th>
                       <th className="p-5 text-xs font-bold text-gray-400 uppercase tracking-wider">State</th>
                       <th className="p-5 text-xs font-bold text-gray-400 uppercase tracking-wider">Progress</th>
-                      <th className="p-5 text-xs font-bold text-gray-400 uppercase tracking-wider">Initiated</th>
+                      <th className="p-5 text-xs font-bold text-gray-400 uppercase tracking-wider">Time Taken</th>
                       <th className="p-5 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {jobs.map((job) => (
-                      <tr key={job.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors group">
-                        <td className="p-5">
-                          <div className="text-sm font-bold text-gray-200 group-hover:text-emerald-300 transition-colors flex items-center gap-2">
-                            <Database className="w-4 h-4 text-gray-500" />
-                            {job.file_name}
-                          </div>
-                          <div className="text-xs text-gray-600 font-mono mt-1.5">{job.id}</div>
-                        </td>
-                        <td className="p-5">
-                          <div className="text-sm text-gray-300">{job.email || "System/Unknown"}</div>
-                          <div className="text-xs text-gray-600 mt-1 font-mono">{job.user_id.substring(0,8)}...</div>
-                        </td>
-                        <td className="p-5">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${
-                            job.status === "completed" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
-                            job.status === "failed" ? "bg-red-500/10 text-red-400 border-red-500/20" :
-                            job.status === "cancelled" ? "bg-gray-500/10 text-gray-400 border-gray-500/20" :
-                            "bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.2)]"
-                          }`}>
-                            {job.status === "completed" ? <CheckCircle2 className="w-3.5 h-3.5"/> : 
-                             job.status === "failed" ? <XCircle className="w-3.5 h-3.5"/> : 
-                             job.status === "cancelled" ? <XCircle className="w-3.5 h-3.5"/> : 
-                             <Activity className="w-3.5 h-3.5 animate-spin"/>}
-                            {job.status.toUpperCase()}
-                          </span>
-                        </td>
-                        <td className="p-5">
-                          {job.total_chunks ? (
-                            <div className="flex items-center gap-3 w-32">
-                              <div className="flex-1 bg-black/50 rounded-full h-1.5 overflow-hidden border border-white/5">
-                                <div 
-                                  className={`h-full rounded-full ${job.status === 'completed' ? 'bg-emerald-500' : 'bg-blue-500'}`} 
-                                  style={{ width: `${Math.round(((job.completed_chunks || 0) / job.total_chunks) * 100)}%` }}
-                                ></div>
-                              </div>
-                              <span className="text-xs font-mono text-gray-400">
-                                {Math.round(((job.completed_chunks || 0) / job.total_chunks) * 100)}%
-                              </span>
+                    {jobs.map((job) => {
+                      const rawPercentage = job.total_chunks ? Math.round(((job.completed_chunks || 0) / job.total_chunks) * 100) : 0;
+                      const progressPercentage = Math.min(100, rawPercentage); // clamp at 100%
+                      
+                      return (
+                        <tr key={job.id} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors group cursor-pointer" onClick={() => setSelectedJob(job)}>
+                          <td className="p-5">
+                            <div className="text-sm font-bold text-gray-200 group-hover:text-emerald-300 transition-colors flex items-center gap-2">
+                              <Database className="w-4 h-4 text-gray-500" />
+                              {job.file_name}
                             </div>
-                          ) : <span className="text-xs text-gray-600 font-mono">N/A</span>}
-                        </td>
-                        <td className="p-5 text-sm text-gray-400">{new Date(job.created_at).toLocaleString()}</td>
-                        <td className="p-5 text-right">
-                          {(job.status === "queued" || job.status === "processing") && (
+                            <div className="text-xs text-gray-600 font-mono mt-1.5">{job.email || job.id.substring(0,8)}</div>
+                          </td>
+                          <td className="p-5">
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${
+                              job.status === "completed" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                              job.status === "failed" ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                              job.status === "cancelled" ? "bg-gray-500/10 text-gray-400 border-gray-500/20" :
+                              "bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.2)]"
+                            }`}>
+                              {job.status === "completed" ? <CheckCircle2 className="w-3.5 h-3.5"/> : 
+                               job.status === "failed" ? <XCircle className="w-3.5 h-3.5"/> : 
+                               job.status === "cancelled" ? <XCircle className="w-3.5 h-3.5"/> : 
+                               <Activity className="w-3.5 h-3.5 animate-spin"/>}
+                              {job.status.toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="p-5">
+                            {job.total_chunks ? (
+                              <div className="flex items-center gap-3 w-32">
+                                <div className="flex-1 bg-black/50 rounded-full h-1.5 overflow-hidden border border-white/5">
+                                  <div 
+                                    className={`h-full rounded-full ${job.status === 'completed' ? 'bg-emerald-500' : 'bg-blue-500'}`} 
+                                    style={{ width: `${progressPercentage}%` }}
+                                  ></div>
+                                </div>
+                                <span className="text-xs font-mono text-gray-400">
+                                  {progressPercentage}%
+                                </span>
+                              </div>
+                            ) : <span className="text-xs text-gray-600 font-mono">N/A</span>}
+                          </td>
+                          <td className="p-5 text-sm text-gray-300 font-mono">
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-gray-500" />
+                              {calculateDuration(job)}
+                            </div>
+                          </td>
+                          <td className="p-5 text-right flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                             <button
-                              onClick={() => cancelJob(job.id)}
-                              className="inline-flex items-center gap-1.5 text-xs font-bold text-red-400 hover:text-white bg-red-500/10 hover:bg-red-500 border border-red-500/20 hover:border-red-500 px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-red-500/20"
+                              onClick={() => setSelectedJob(job)}
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 rounded-xl transition-all"
                             >
-                              <XCircle className="w-3.5 h-3.5" />
-                              Kill Job
+                              <Info className="w-3.5 h-3.5" />
+                              Details
                             </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                            {(job.status === "queued" || job.status === "processing") && (
+                              <button
+                                onClick={() => cancelJob(job.id)}
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-red-400 hover:text-white bg-red-500/10 hover:bg-red-500 border border-red-500/20 hover:border-red-500 px-3 py-2 rounded-xl transition-all shadow-lg hover:shadow-red-500/20"
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                                Kill
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                     {jobs.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="p-16 text-center">
+                        <td colSpan={5} className="p-16 text-center">
                           <Database className="w-12 h-12 text-gray-600 mx-auto mb-4 opacity-50" />
                           <div className="text-gray-400 text-lg font-medium">No processing jobs active</div>
                           <div className="text-gray-600 text-sm mt-1">The global queue is completely empty.</div>
@@ -300,7 +326,6 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Users Tab */}
           {activeTab === "users" && (
             <div className="bg-gradient-to-b from-white/[0.05] to-transparent border border-white/10 rounded-3xl p-2 overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 shadow-2xl backdrop-blur-md">
               <div className="overflow-x-auto">
@@ -382,6 +407,73 @@ export default function AdminPage() {
 
         </div>
       </div>
+
+      {/* Job Details Modal */}
+      {selectedJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#0f1115] border border-white/10 w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-center p-6 border-b border-white/10 bg-white/5">
+              <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                <Database className="w-5 h-5 text-emerald-400" />
+                Job Metadata
+              </h2>
+              <button onClick={() => setSelectedJob(null)} className="p-2 text-gray-400 hover:text-white rounded-full hover:bg-white/10 transition-colors">
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar text-sm space-y-6">
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-black/50 border border-white/5 rounded-2xl p-4">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Job ID</div>
+                  <div className="font-mono text-gray-200">{selectedJob.id}</div>
+                </div>
+                <div className="bg-black/50 border border-white/5 rounded-2xl p-4">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">User / IP</div>
+                  <div className="text-gray-200">{selectedJob.email || "System"} <span className="text-gray-500 font-mono text-xs ml-2">({selectedJob.ip_address || "unknown"})</span></div>
+                </div>
+              </div>
+
+              {selectedJob.error_message && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4">
+                  <div className="text-xs text-red-400 uppercase tracking-wider font-bold mb-1 flex items-center gap-1.5"><ShieldAlert className="w-3.5 h-3.5"/> Fatal Error</div>
+                  <div className="font-mono text-red-200 whitespace-pre-wrap">{selectedJob.error_message}</div>
+                </div>
+              )}
+
+              {selectedJob.target_schema && (
+                <div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-2">Target Schema</div>
+                  <div className="bg-black/50 border border-white/5 rounded-2xl p-4 font-mono text-gray-300 overflow-x-auto">
+                    <pre>{JSON.stringify(selectedJob.target_schema, null, 2)}</pre>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-black/50 border border-white/5 rounded-2xl p-4">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Timestamps</div>
+                  <div className="text-gray-300 space-y-1">
+                    <div><span className="text-gray-500">Created:</span> {new Date(selectedJob.created_at).toLocaleString()}</div>
+                    {selectedJob.updated_at && <div><span className="text-gray-500">Updated:</span> {new Date(selectedJob.updated_at).toLocaleString()}</div>}
+                    <div><span className="text-gray-500">Duration:</span> {calculateDuration(selectedJob)}</div>
+                  </div>
+                </div>
+                <div className="bg-black/50 border border-white/5 rounded-2xl p-4">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Execution Metrics</div>
+                  <div className="text-gray-300 space-y-1">
+                    <div><span className="text-gray-500">Tokens:</span> {formatNumber(selectedJob.total_tokens || 0)}</div>
+                    <div><span className="text-gray-500">Rows:</span> {formatNumber(selectedJob.processed_rows || 0)}</div>
+                    <div><span className="text-gray-500">Chunks:</span> {selectedJob.completed_chunks || 0} / {selectedJob.total_chunks || 0}</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
     </AdminProtectedRoute>
   );
 }
