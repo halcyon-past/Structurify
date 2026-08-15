@@ -44,6 +44,12 @@ export function Header() {
                 </Link>
               )}
               <Link 
+                href="/docs"
+                className="text-sm font-medium text-gray-300 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-transparent hover:border-white/10 hidden sm:block whitespace-nowrap"
+              >
+                Docs
+              </Link>
+              <Link 
                 href="/history"
                 className="text-sm font-medium text-gray-300 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-transparent hover:border-white/10 hidden sm:block whitespace-nowrap"
               >

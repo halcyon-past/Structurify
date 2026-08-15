@@ -26,5 +26,10 @@ service cloud.firestore {
       allow read: if isAuthenticated() && resource.data.user_id == request.auth.uid;
       allow read: if isAdmin();
     }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }

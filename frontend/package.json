@@ -10,13 +10,17 @@
     "test": "jest"
   },
   "dependencies": {
+    "@tailwindcss/typography": "^0.5.20",
     "firebase": "^12.17.1",
     "lucide-react": "^1.30.0",
     "next": "14.2.35",
     "prismjs": "^1.30.0",
     "react": "^18",
     "react-dom": "^18",
-    "react-simple-code-editor": "^0.14.1"
+    "react-markdown": "^10.1.0",
+    "react-simple-code-editor": "^0.14.1",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
