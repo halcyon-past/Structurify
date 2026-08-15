@@ -10,7 +10,7 @@ class LLMEngine:
         self.client = client or genai.Client(api_key=settings.GEMINI_API_KEY)
 
     @retry(
-        wait=wait_exponential(multiplier=1, min=4, max=60),
+        wait=wait_exponential(multiplier=2, min=10, max=120),
         stop=stop_after_attempt(5),
         reraise=True
     )
@@ -31,7 +31,7 @@ class LLMEngine:
             prompt = f"Clean the following CSV data and return it as a JSON array of objects:\n\n{chunk_data}"
             
             response = self.client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.6-flash',
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     system_instruction=system_instruction,
@@ -79,7 +79,7 @@ class LLMEngine:
         prompt = f"Map the following CSV data to the target schema:\n\n{chunk_data}"
 
         response = self.client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-3.6-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -121,7 +121,7 @@ class LLMEngine:
         prompt = f"Schema: {json.dumps(target_schema)}\nStats: {json.dumps(duckdb_stats)}"
         
         response = self.client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-3.6-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
