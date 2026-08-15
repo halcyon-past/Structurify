@@ -74,7 +74,7 @@ export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubm
   };
 
   return (
-    <div className="bg-white/5 backdrop-blur-md rounded-3xl shadow-2xl border border-white/10 p-8 flex flex-col h-full relative overflow-hidden group">
+    <div className="bg-white/5 backdrop-blur-md rounded-3xl shadow-2xl border border-white/10 p-8 flex flex-col relative overflow-hidden group">
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500 opacity-50"></div>
       
       <div className="flex justify-between items-center mb-8">
@@ -163,7 +163,7 @@ export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubm
           )
         ) : (
           <div className="flex flex-col h-full gap-3">
-            <div className="flex-grow w-full h-[300px] bg-black/40 border border-white/5 rounded-xl shadow-inner overflow-auto custom-scrollbar relative focus-within:ring-2 focus-within:ring-accent-500/50">
+            <div className="flex-grow w-full h-[200px] bg-black/40 border border-white/5 rounded-xl shadow-inner overflow-auto custom-scrollbar relative focus-within:ring-2 focus-within:ring-accent-500/50">
               <Editor
                 value={jsonText}
                 onValueChange={(code) => handleJsonChange(code)}
