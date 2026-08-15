@@ -98,3 +98,72 @@ async def cancel_job(
     firestore_svc.cancel_job(job_id)
     
     return {"status": "cancelled", "message": "Job cancelled successfully"}
+
+@router.post("/kill-switch")
+async def kill_switch(
+    firestore_svc: FirestoreService = Depends(get_firestore_service)
+):
+    """
+    Emergency Kill Switch: 
+    1. Seeks all pub/sub subscriptions to the current timestamp to instantly purge the message queues.
+    2. Marks all 'queued' and 'processing' jobs in Firestore as 'cancelled'.
+    """
+    try:
+        from src.core.config import settings
+        from google.cloud import pubsub_v1
+        from google.protobuf.timestamp_pb2 import Timestamp
+        
+        project_id = settings.GOOGLE_CLOUD_PROJECT
+        if not project_id:
+            project_id = "structurify-504821" # fallback
+            
+        subscriber = pubsub_v1.SubscriberClient()
+        timestamp = Timestamp()
+        timestamp.GetCurrentTime()
+        
+        subs = [
+            f"projects/{project_id}/subscriptions/schema-transformation-sub-push",
+            f"projects/{project_id}/subscriptions/chunk-processing-sub-push",
+            f"projects/{project_id}/subscriptions/schema-transformation-sub",
+            f"projects/{project_id}/subscriptions/test-pull-sub"
+        ]
+        
+        for sub in subs:
+            try:
+                subscriber.seek(
+                    request={
+                        "subscription": sub,
+                        "time": timestamp
+                    }
+                )
+            except Exception as e:
+                print(f"Failed to seek subscription {sub}: {e}")
+                
+        # Update Firestore
+        db = firestore_svc.db
+        jobs_ref = db.collection("jobs")
+        
+        batch = db.batch()
+        count = 0
+        now = datetime.utcnow().isoformat()
+        
+        for job_status in ["queued", "processing"]:
+            query = jobs_ref.where("status", "==", job_status).stream()
+            for doc in query:
+                batch.update(doc.reference, {
+                    "status": "cancelled",
+                    "updated_at": now,
+                    "error_message": "Global Kill Switch Activated by Admin"
+                })
+                count += 1
+                if count % 400 == 0:
+                    batch.commit()
+                    batch = db.batch()
+                    
+        if count % 400 != 0:
+            batch.commit()
+            
+        return {"status": "success", "message": f"Purged queues and cancelled {count} ghost jobs."}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
