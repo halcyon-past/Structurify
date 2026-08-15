@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { 
   Users, Activity, Database, CheckCircle2, 
   Clock, XCircle, ShieldAlert, RefreshCw, 
-  Zap, ChevronRight, BarChart3, Info
+  Zap, ChevronRight, BarChart3, Info, Skull
 } from "lucide-react";
 
 export default function AdminPage() {
@@ -16,6 +16,20 @@ export default function AdminPage() {
   const [currentTime, setCurrentTime] = useState(Date.now());
   const { users, jobs, auditLogs, loading, updateUserRole, updateUserPlan, cancelJob } = useAdminData();
   const { userData } = useAuth();
+
+  const killSwitch = async () => {
+    if (!window.confirm("CRITICAL WARNING: This will immediately purge ALL active queues and forcefully terminate all running processing jobs across the entire system. Are you absolutely sure?")) return;
+    
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/jobs/kill-switch`, { method: "POST" });
+      const data = await res.json();
+      alert(`Kill switch engaged. System purged: ${data.message || "Success"}`);
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to engage kill switch.");
+    }
+  };
 
   useEffect(() => {
     // Update current time every second for live duration calculations
@@ -82,6 +96,15 @@ export default function AdminPage() {
             </div>
             
             <div className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-2xl p-1.5 backdrop-blur-xl shadow-2xl">
+              <button 
+                onClick={killSwitch}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-red-400 bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 transition-all shadow-[0_0_15px_rgba(239,68,68,0.15)] hover:shadow-red-500/30"
+                title="Purge all queues and abort active jobs"
+              >
+                <Skull className="w-4 h-4" />
+                ENGAGE KILL SWITCH
+              </button>
+              <div className="w-px h-8 bg-white/10 mx-1"></div>
               <button 
                 onClick={() => window.location.reload()}
                 className="p-3 rounded-xl hover:bg-white/10 text-gray-400 hover:text-white transition-all"
