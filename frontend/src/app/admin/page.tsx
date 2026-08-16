@@ -518,6 +518,7 @@ export default function AdminPage() {
                       <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Commit</th>
                       <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Actor</th>
                       <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Timestamp</th>
+                      <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Logs</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -560,13 +561,21 @@ export default function AdminPage() {
                           <td className="p-4 text-sm text-gray-400">
                             {dep.actor}
                           </td>
+                          <td className="p-4 text-right text-sm font-mono text-gray-400">
+                            {dateString}
+                          </td>
                           <td className="p-4 text-right">
                             {dep.log_url ? (
-                              <a href={dep.log_url} target="_blank" rel="noopener noreferrer" className="text-sm font-mono text-indigo-400 hover:text-indigo-300 hover:underline">
-                                {dateString}
+                              <a 
+                                href={dep.log_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 hover:text-indigo-300 transition-colors text-xs font-bold uppercase tracking-wider"
+                              >
+                                View Logs
                               </a>
                             ) : (
-                              <span className="text-sm font-mono text-gray-500">{dateString}</span>
+                              <span className="text-xs text-gray-600 font-bold uppercase tracking-wider">No Logs</span>
                             )}
                           </td>
                         </tr>
@@ -574,7 +583,7 @@ export default function AdminPage() {
                     })}
                     {(!deployments || deployments.length === 0) && (
                       <tr>
-                        <td colSpan={5} className="p-8 text-center text-gray-500 text-sm">
+                        <td colSpan={6} className="p-8 text-center text-gray-500 text-sm">
                           No deployment history found.
                         </td>
                       </tr>
