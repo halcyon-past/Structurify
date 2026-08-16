@@ -73,7 +73,7 @@ export const useAdminData = () => {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [deployments, setDeployments] = useState<DeploymentLog[]>([]);
   const [settings, setSettings] = useState<SystemSettings>({
-    llm_model: "gemini-2.5-flash",
+    llm_model: "gemini-3.6-flash",
     max_rows_per_chunk: 500,
     target_cells_per_chunk: 5000,
   });

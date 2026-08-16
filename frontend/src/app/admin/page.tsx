@@ -684,14 +684,14 @@ export default function AdminPage() {
                         <label className="text-sm font-bold text-gray-300 uppercase tracking-wider">Gemini LLM Model</label>
                         <p className="text-sm text-gray-500 mb-2">Select the underlying Gemini model used by the ETL worker for data transformation.</p>
                         <select 
-                          value={localSettings.llm_model || 'gemini-2.5-flash'}
+                          value={localSettings.llm_model || 'gemini-3.6-flash'}
                           onChange={(e) => setLocalSettings({...localSettings, llm_model: e.target.value})}
                           className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
                         >
-                          <option value="gemini-2.5-flash">Gemini 2.5 Flash (Default)</option>
-                          <option value="gemini-2.5-pro">Gemini 2.5 Pro (High Accuracy)</option>
-                          <option value="gemini-2.0-flash">Gemini 2.0 Flash (Legacy)</option>
-                          <option value="gemini-2.0-pro-exp-02-05">Gemini 2.0 Pro Experimental</option>
+                          <option value="gemini-3.6-flash">Gemini 3.6 Flash (Default)</option>
+                          <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite (Fast/Cost Efficient)</option>
+                          <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview (Complex Reasoning)</option>
+                          <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite (Ultra Fast)</option>
                         </select>
                       </div>
 

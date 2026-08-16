@@ -40,7 +40,7 @@ class LLMEngine:
             prompt_template = config_service.get("prompt_auto_clean_user", "Clean the following CSV data and return it as a JSON array of objects:\n\n{chunk_data}")
             prompt = prompt_template.format(chunk_data=chunk_data)
             
-            model = config_service.get('llm_model', 'gemini-2.5-flash')
+            model = config_service.get('llm_model', 'gemini-3.6-flash')
 
             response = self.client.models.generate_content(
                 model=model,
@@ -85,7 +85,7 @@ class LLMEngine:
 
         prompt_template = config_service.get("prompt_schema_map_user", "Map the following CSV data to the target schema:\n\n{chunk_data}")
         prompt = prompt_template.format(chunk_data=chunk_data)
-        model = config_service.get('llm_model', 'gemini-2.5-flash')
+        model = config_service.get('llm_model', 'gemini-3.6-flash')
 
         response = self.client.models.generate_content(
             model=model,
@@ -126,7 +126,7 @@ class LLMEngine:
         prompt_template = config_service.get("prompt_metadata_user", "Schema: {schema}\nStats: {stats}")
         prompt = prompt_template.format(schema=json.dumps(target_schema), stats=json.dumps(duckdb_stats))
         
-        model = config_service.get('llm_model', 'gemini-2.5-flash')
+        model = config_service.get('llm_model', 'gemini-3.6-flash')
 
         response = self.client.models.generate_content(
             model=model,
