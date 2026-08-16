@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, orderBy, updateDoc, setDoc, doc, limit, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { UserData } from './useAuth';
 
 export interface AdminJob {
@@ -159,8 +159,12 @@ export const useAdminData = () => {
   };
 
   const cancelJob = async (jobId: string) => {
+    const token = await auth.currentUser?.getIdToken();
     await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/jobs/${jobId}/cancel`, {
-      method: 'POST'
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     });
   };
 

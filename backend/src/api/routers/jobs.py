@@ -83,7 +83,8 @@ async def get_job_status(
 async def cancel_job(
     job_id: str,
     firestore_svc: FirestoreService = Depends(get_firestore_service),
-    pubsub_svc: PubSubService = Depends(get_pubsub_service)
+    pubsub_svc: PubSubService = Depends(get_pubsub_service),
+    decoded_token: dict = Security(get_current_user)
 ):
     """
     Cancels a job by updating the Firestore job and audit documents.
@@ -92,6 +93,13 @@ async def cancel_job(
     data = firestore_svc.get_job(job_id)
     if not data:
         raise HTTPException(status_code=404, detail="Job not found")
+        
+    uid = decoded_token.get("uid")
+    user_doc = firestore_svc.db.collection("users").document(uid).get().to_dict() or {}
+    role = user_doc.get("role", "").lower()
+    
+    if data.get("user_id") != uid and role not in ["admin", "owner"]:
+        raise HTTPException(status_code=403, detail="Not authorized to cancel this job")
         
     if data.get("status") in ["completed", "failed", "cancelled"]:
         raise HTTPException(status_code=400, detail=f"Job cannot be cancelled because it is already {data.get('status')}")
@@ -105,7 +113,8 @@ async def cancel_job(
 @router.post("/kill-switch")
 async def kill_switch(
     firestore_svc: FirestoreService = Depends(get_firestore_service),
-    pubsub_svc: PubSubService = Depends(get_pubsub_service)
+    pubsub_svc: PubSubService = Depends(get_pubsub_service),
+    decoded_token: dict = Security(get_current_admin)
 ):
     """
     Emergency Kill Switch: 

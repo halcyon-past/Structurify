@@ -29,7 +29,7 @@ class FileParserService:
             file_bytes = self.storage_svc.download_file_bytes(settings.RAW_BUCKET_NAME, file_path)
             file_size_mb = len(file_bytes) / (1024 * 1024)
 
-            if file_size_mb > 5.0 and email:
+            if file_size_mb > 1.0 and email:
                 tracking_url = f"{settings.FRONTEND_URL}/track?jobId={job_id}"
                 self.email_svc.send_started_email(email, tracking_url)
             

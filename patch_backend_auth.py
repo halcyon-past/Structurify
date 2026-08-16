@@ -1,4 +1,9 @@
-from typing import Generator
+import re
+
+with open("backend/src/api/dependencies.py", "r") as f:
+    content = f.read()
+
+new_deps = """from typing import Generator
 from fastapi import Request, HTTPException, Security, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth
@@ -41,3 +46,7 @@ def get_current_admin(
     if role not in ["admin", "owner"]:
         raise HTTPException(status_code=403, detail="Admin privileges required")
     return decoded_token
+"""
+
+with open("backend/src/api/dependencies.py", "w") as f:
+    f.write(new_deps)

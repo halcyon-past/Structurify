@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { JobState } from "./useJobListener";
 
 export interface HistoryJob extends JobState {
@@ -63,8 +63,12 @@ export function useUserHistory(userId: string | undefined) {
 
   const cancelJob = async (jobId: string) => {
     try {
+      const token = await auth.currentUser?.getIdToken();
       await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/jobs/${jobId}/cancel`, {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       setJobs(prev => prev.map(job => job.job_id === jobId ? { ...job, status: "cancelled" } : job));
     } catch (e) {

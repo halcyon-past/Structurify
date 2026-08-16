@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import { useAdminData, AdminJob, SystemSettings } from "@/hooks/useAdminData";
 import { useAuth } from "@/hooks/useAuth";
+import { auth } from "@/lib/firebase";
 import { 
   Users, Activity, Database, CheckCircle2, 
   Clock, XCircle, ShieldAlert, RefreshCw, 
@@ -30,13 +31,20 @@ export default function AdminPage() {
     if (!window.confirm("CRITICAL WARNING: This will immediately purge ALL active queues and forcefully terminate all running processing jobs across the entire system. Are you absolutely sure?")) return;
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/jobs/kill-switch`, { method: "POST" });
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/jobs/kill-switch`, { 
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Failed to engage kill switch");
       alert(`Kill switch engaged. System purged: ${data.message || "Success"}`);
       window.location.reload();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Failed to engage kill switch.");
+      alert(e.message || "Failed to engage kill switch.");
     }
   };
 
