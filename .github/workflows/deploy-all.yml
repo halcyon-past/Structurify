@@ -87,19 +87,23 @@ jobs:
             --topic=schema-transformation-jobs \
             --push-endpoint="${WORKER_URL}/process-job" \
             --push-auth-service-account="${PUBSUB_SA_EMAIL}" \
+            --push-auth-token-audience="${WORKER_URL}" \
             --ack-deadline=600 || \
           gcloud pubsub subscriptions update schema-transformation-sub-push \
             --push-endpoint="${WORKER_URL}/process-job" \
-            --push-auth-service-account="${PUBSUB_SA_EMAIL}"
+            --push-auth-service-account="${PUBSUB_SA_EMAIL}" \
+            --push-auth-token-audience="${WORKER_URL}"
             
           gcloud pubsub subscriptions create chunk-processing-sub-push \
             --topic=chunk-processing-jobs \
             --push-endpoint="${WORKER_URL}/process-chunk" \
             --push-auth-service-account="${PUBSUB_SA_EMAIL}" \
+            --push-auth-token-audience="${WORKER_URL}" \
             --ack-deadline=600 || \
           gcloud pubsub subscriptions update chunk-processing-sub-push \
             --push-endpoint="${WORKER_URL}/process-chunk" \
-            --push-auth-service-account="${PUBSUB_SA_EMAIL}"
+            --push-auth-service-account="${PUBSUB_SA_EMAIL}" \
+            --push-auth-token-audience="${WORKER_URL}"
 
   deploy-frontend:
     name: Deploy Frontend to Firebase

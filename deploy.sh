@@ -76,10 +76,12 @@ gcloud pubsub subscriptions create schema-transformation-sub-push \
   --topic=schema-transformation-jobs \
   --push-endpoint="${WORKER_URL}/process-job" \
   --push-auth-service-account="${PUBSUB_SA_EMAIL}" \
+  --push-auth-token-audience="${WORKER_URL}" \
   --ack-deadline=600 || \
 gcloud pubsub subscriptions update schema-transformation-sub-push \
   --push-endpoint="${WORKER_URL}/process-job" \
-  --push-auth-service-account="${PUBSUB_SA_EMAIL}"
+  --push-auth-service-account="${PUBSUB_SA_EMAIL}" \
+  --push-auth-token-audience="${WORKER_URL}"
 
 echo "5. Setting up Chunk Processing Pub/Sub Push Subscription..."
 gcloud pubsub topics create chunk-processing-jobs || true
@@ -88,10 +90,12 @@ gcloud pubsub subscriptions create chunk-processing-sub-push \
   --topic=chunk-processing-jobs \
   --push-endpoint="${WORKER_URL}/process-chunk" \
   --push-auth-service-account="${PUBSUB_SA_EMAIL}" \
+  --push-auth-token-audience="${WORKER_URL}" \
   --ack-deadline=600 || \
 gcloud pubsub subscriptions update chunk-processing-sub-push \
   --push-endpoint="${WORKER_URL}/process-chunk" \
-  --push-auth-service-account="${PUBSUB_SA_EMAIL}"
+  --push-auth-service-account="${PUBSUB_SA_EMAIL}" \
+  --push-auth-token-audience="${WORKER_URL}"
 
 echo "6. Building and Deploying Frontend to Firebase Hosting..."
 cd frontend
