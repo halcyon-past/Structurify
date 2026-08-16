@@ -68,10 +68,13 @@ Structurify features robust observability and administrative controls via an int
    - Every job execution is rigorously tracked via the `AuditService`. 
    - The system decouple identity (`user_id`) from origin (`ip_address`) for guest rate-limiting.
    - We track exact compute costs (LLM tokens burned) extracted from Gemini API responses and safely increment them in Firestore via atomic transactions.
-4. **Editable Documentation System (`/docs`)**:
+4. **History & Job Management**:
+   - Both registered users and unauthenticated guests can view a complete history of their past extractions.
+   - Users can securely cancel runaway jobs mid-flight directly from their dashboard.
+5. **Editable Documentation System (`/docs`)`**:
    - A public, real-time documentation page backed directly by Firestore.
    - Admins have access to a split-pane live Markdown editor (with Mermaid.js support) to rewrite and persist docs instantly.
-   - Features a dynamic `Changelog` tab that autonomously pulls public release notes directly from the GitHub API.
+   - Features a dynamic `Releases` tab that autonomously pulls public release notes directly from the GitHub API.
 
 ---
 

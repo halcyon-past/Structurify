@@ -64,11 +64,13 @@ export function useUserHistory(userId: string | undefined) {
   const cancelJob = async (jobId: string) => {
     try {
       const token = await auth.currentUser?.getIdToken();
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/jobs/${jobId}/cancel`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers
       });
       setJobs(prev => prev.map(job => job.job_id === jobId ? { ...job, status: "cancelled" } : job));
     } catch (e) {
