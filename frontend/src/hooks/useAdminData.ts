@@ -158,7 +158,7 @@ export const useAdminData = () => {
     });
   };
 
-  const updateSystemSetting = async (key: keyof SystemSettings, value: any) => {
+  const updateSystemSetting = async (key: keyof SystemSettings, value: string | number) => {
     await setDoc(doc(db, "settings", "system"), { [key]: value }, { merge: true });
   };
 
