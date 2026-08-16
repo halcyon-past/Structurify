@@ -75,21 +75,21 @@ export const useAdminData = () => {
     });
 
     // Audit Logs Realtime Listener (limit to 500)
-    const qAudit = query(collection(db, "job_audits"), orderBy("started_at", "desc"), limit(500));
+    const qAudit = query(collection(db, "job_audits"), limit(500));
     const unsubAudit = onSnapshot(qAudit, (snapshot) => {
       const auditData = snapshot.docs.map(doc => {
         const data = doc.data();
         return { 
           id: doc.id, 
-          action: data.status === 'processing' ? 'started' : data.status,
+          action: data.status === 'processing' ? 'started' : (data.status || 'unknown'),
           job_id: doc.id,
           user_id: data.user_id || 'guest',
           timestamp: data.completed_at || data.started_at || data.created_at || new Date().toISOString(),
-          status: data.status,
+          status: data.status || 'unknown',
           duration_seconds: data.job_runtime_seconds,
           total_tokens: data.total_tokens
         } as AuditLog;
-      });
+      }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setAuditLogs(auditData);
     });
 
