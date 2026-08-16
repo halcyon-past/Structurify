@@ -85,9 +85,19 @@ export default function AdminPage() {
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 relative z-10">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold mb-4 tracking-wider uppercase">
-                <ShieldAlert className="w-3.5 h-3.5" />
-                Command Center
+              <div className="flex items-center gap-4 mb-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold tracking-wider uppercase">
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  Command Center
+                </div>
+                <button 
+                  onClick={killSwitch}
+                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase text-red-400 bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 transition-all shadow-[0_0_15px_rgba(239,68,68,0.15)] hover:shadow-red-500/30"
+                  title="Purge all queues and abort active jobs"
+                >
+                  <Skull className="w-3.5 h-3.5" />
+                  ENGAGE KILL SWITCH
+                </button>
               </div>
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500">
                 Platform Admin
@@ -97,16 +107,7 @@ export default function AdminPage() {
               </p>
             </div>
             
-            <div className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-2xl p-1.5 backdrop-blur-xl shadow-2xl">
-              <button 
-                onClick={killSwitch}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-red-400 bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 transition-all shadow-[0_0_15px_rgba(239,68,68,0.15)] hover:shadow-red-500/30"
-                title="Purge all queues and abort active jobs"
-              >
-                <Skull className="w-4 h-4" />
-                ENGAGE KILL SWITCH
-              </button>
-              <div className="w-px h-8 bg-white/10 mx-1"></div>
+            <div className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-2xl p-1.5 backdrop-blur-xl shadow-2xl overflow-x-auto max-w-full">
               <button 
                 onClick={() => window.location.reload()}
                 className="p-3 rounded-xl hover:bg-white/10 text-gray-400 hover:text-white transition-all"
