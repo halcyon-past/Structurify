@@ -75,7 +75,7 @@ class ChunkProcessorService:
             return "success"
         return "retry"
         
-    def process_chunk(self, chunk_data: str, target_schema: Dict[str, Any]) -> tuple[List[Dict[str, Any]], int]:
+    def process_chunk(self, chunk_data: str, target_schema: Dict[str, Any]) -> tuple[List[Dict[str, Any]], int, List[str]]:
         initial_state = {
             "chunk_data": chunk_data,
             "target_schema": target_schema,
@@ -86,4 +86,4 @@ class ChunkProcessorService:
         }
         
         final_state = self.app.invoke(initial_state)
-        return final_state["result"], final_state.get("total_tokens", 0)
+        return final_state["result"], final_state.get("total_tokens", 0), final_state.get("errors", [])

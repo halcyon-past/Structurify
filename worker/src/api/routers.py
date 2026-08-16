@@ -28,13 +28,13 @@ reducer_svc = ReducerService(storage_svc, firestore_svc, llm_engine, audit_svc)
 CACHE_TTL_SECONDS = 15
 _job_status_cache = {}
 
-def _is_job_cancelled(job_id: str, db: firestore.Client) -> bool:
+def _is_job_aborted(job_id: str, db: firestore.Client) -> bool:
     now = time.time()
     
     # 1. Check Cache
     cached = _job_status_cache.get(job_id)
     if cached and (now - cached["timestamp"]) < CACHE_TTL_SECONDS:
-        return cached["status"] == "cancelled"
+        return cached["status"] in ["cancelled", "failed"]
         
     # 2. Cache Miss: Read Firestore
     job_ref = db.collection("jobs").document(job_id)
@@ -48,7 +48,7 @@ def _is_job_cancelled(job_id: str, db: firestore.Client) -> bool:
         "timestamp": now
     }
     
-    return status == "cancelled"
+    return status in ["cancelled", "failed"]
 
 from typing import Dict, Any, Optional
 from pydantic import BaseModel
@@ -80,9 +80,9 @@ def process_job(envelope: PubSubEnvelope):
             raise ValueError("Missing required fields in payload")
             
         db = firestore_svc.db
-        if _is_job_cancelled(job_id, db):
-            print(f"Job {job_id} is cancelled. Aborting process-job.")
-            return {"status": "success", "message": "aborted due to cancellation"}
+        if _is_job_aborted(job_id, db):
+            print(f"Job {job_id} is cancelled/failed. Aborting process-job.")
+            return {"status": "success", "message": "aborted due to cancellation or failure"}
             
         file_parser_svc.process_file(job_id, file_path, target_schema, email)
             
@@ -109,12 +109,20 @@ def process_chunk(envelope: PubSubEnvelope):
             
         # 0. Check if job was cancelled
         db = firestore_svc.db
-        if _is_job_cancelled(job_id, db):
-            print(f"Job {job_id} is cancelled. Aborting chunk {chunk_id}.")
-            return {"status": "success", "message": "aborted due to cancellation"}
+        if _is_job_aborted(job_id, db):
+            print(f"Job {job_id} is cancelled/failed. Aborting chunk {chunk_id}.")
+            return {"status": "success", "message": "aborted due to cancellation or failure"}
             
         # 1. Map: Extract and self-correct using LangGraph
-        results, chunk_tokens = chunk_processor_svc.process_chunk(chunk_data, target_schema)
+        results, chunk_tokens, errors = chunk_processor_svc.process_chunk(chunk_data, target_schema)
+        
+        if errors:
+            print(f"Job {job_id} chunk {chunk_id} failed with errors: {errors}")
+            db.collection("jobs").document(job_id).update({
+                "status": "failed",
+                "error_message": f"Processing aborted due to fatal chunk error: {errors[-1]}"
+            })
+            return {"status": "success", "message": "aborted due to fatal error"}
         
         # 2. Save result to GCS
         result_json = json.dumps(results)
