@@ -21,10 +21,10 @@ export default function AdminPage() {
   const [localSettings, setLocalSettings] = useState<SystemSettings | null>(null);
 
   useEffect(() => {
-    if (settings && !localSettings) {
+    if (!loading && settings && !localSettings) {
       setLocalSettings(settings);
     }
-  }, [settings, localSettings]);
+  }, [loading, settings, localSettings]);
 
   const killSwitch = async () => {
     if (!window.confirm("CRITICAL WARNING: This will immediately purge ALL active queues and forcefully terminate all running processing jobs across the entire system. Are you absolutely sure?")) return;
