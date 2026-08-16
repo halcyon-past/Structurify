@@ -11,7 +11,7 @@ class EmailService:
         self.smtp_password = settings.SMTP_PASSWORD
         self.smtp_from_email = settings.SMTP_FROM_EMAIL or self.smtp_username
 
-    def send_success_email(self, to_email: str, download_url: str):
+    def send_success_email(self, to_email: str, download_url: str, metadata: dict = None):
         if not all([self.smtp_server, self.smtp_port, self.smtp_username, self.smtp_password]):
             print(f"Skipping email to {to_email} because SMTP credentials are not fully configured.")
             return
@@ -21,16 +21,31 @@ class EmailService:
         msg["From"] = self.smtp_from_email
         msg["To"] = to_email
 
+        metadata = metadata or {}
+        file_name = metadata.get("file_name", "your dataset")
+        rows = metadata.get("rows_processed", "Unknown")
+        duration = metadata.get("duration_seconds", "Unknown")
+        desc = metadata.get("global_description", "Data successfully structured.")
+        
         html = f"""\
+        <!DOCTYPE html>
         <html>
-          <body style="font-family: Arial, sans-serif; background-color: #09090b; color: #ffffff; padding: 40px; text-align: center;">
-            <div style="max-w-2xl; margin: 0 auto; background-color: #1a1a24; padding: 30px; border-radius: 12px; border: 1px solid #333;">
-              <h1 style="color: #8b5cf6;">Structurify</h1>
-              <p style="font-size: 16px; color: #d1d5db;">Great news! Your messy data has been successfully cleaned and compiled.</p>
-              <br>
-              <a href="{download_url}" style="background-color: #8b5cf6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">Download Processed File</a>
-              <br><br>
-              <p style="font-size: 12px; color: #6b7280; margin-top: 30px;">This is an automated message from the Structurify ETL Pipeline.</p>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #09090b; color: #ffffff; padding: 40px; text-align: center; margin: 0;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #1a1a24; border-radius: 16px; border: 1px solid #2d2d3a; overflow: hidden; box-shadow: 0 4px 30px rgba(0,0,0,0.5);">
+              <div style="background: linear-gradient(90deg, #3b82f6, #8b5cf6); padding: 30px 20px;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; tracking: tight;">Structurify</h1>
+              </div>
+              <div style="padding: 40px 30px;">
+                <h2 style="color: #f8fafc; font-size: 20px; margin-top: 0; margin-bottom: 20px;">Processing Started ⚡</h2>
+                <p style="font-size: 16px; color: #d1d5db; line-height: 1.6; margin-bottom: 25px;">
+                  We have successfully queued your dataset. Our AI worker nodes are currently mapping, cleaning, and structuring your data in the background.
+                </p>
+                <div style="background-color: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; padding: 15px; margin-bottom: 30px;">
+                  <p style="color: #93c5fd; font-size: 14px; margin: 0;">Since your file is large, this may take a few minutes. You can safely close your browser; we'll email you again when it's done!</p>
+                </div>
+                <a href="{tracking_url}" style="background-color: #3b82f6; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">Track Live Progress</a>
+                <p style="font-size: 13px; color: #6b7280; margin-top: 40px; margin-bottom: 0;">This is an automated message from the Structurify AI Pipeline.</p>
+              </div>
             </div>
           </body>
         </html>
@@ -94,16 +109,26 @@ class EmailService:
         msg["To"] = to_email
 
         html_body = f"""
+        <!DOCTYPE html>
         <html>
-        <body style="font-family: sans-serif; color: #333;">
-            <h2>Structurify Job Cancelled</h2>
-            <p>Your data extraction job was successfully cancelled.</p>
-            <p>No further processing will be done, and any intermediate resources have been cleaned up.</p>
-            <p>You can view the final status here:</p>
-            <p><a href="{tracking_url}" style="background-color: #ef4444; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Job Details</a></p>
-            <br/>
-            <p>Thanks,<br/>The Structurify Team</p>
-        </body>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #09090b; color: #ffffff; padding: 40px; text-align: center; margin: 0;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #1a1a24; border-radius: 16px; border: 1px solid #2d2d3a; overflow: hidden; box-shadow: 0 4px 30px rgba(0,0,0,0.5);">
+              <div style="background: linear-gradient(90deg, #ef4444, #f97316); padding: 30px 20px;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; tracking: tight;">Structurify</h1>
+              </div>
+              <div style="padding: 40px 30px;">
+                <h2 style="color: #f8fafc; font-size: 20px; margin-top: 0; margin-bottom: 20px;">Job Cancelled 🛑</h2>
+                <p style="font-size: 16px; color: #d1d5db; line-height: 1.6; margin-bottom: 25px;">
+                  Your data extraction job was successfully aborted. All processing has been halted, and intermediate cloud resources have been permanently purged.
+                </p>
+                <div style="background-color: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 15px; margin-bottom: 30px;">
+                  <p style="color: #fca5a5; font-size: 14px; margin: 0;">No tokens were billed for the uncompleted chunks. You may safely re-upload a new file whenever you're ready.</p>
+                </div>
+                <a href="{tracking_url}" style="background-color: #ef4444; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">View Extraction Log</a>
+                <p style="font-size: 13px; color: #6b7280; margin-top: 40px; margin-bottom: 0;">This is an automated message from the Structurify AI Pipeline.</p>
+              </div>
+            </div>
+          </body>
         </html>
         """
 

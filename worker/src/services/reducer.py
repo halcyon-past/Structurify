@@ -203,6 +203,12 @@ class ReducerService:
             try:
                 from src.services.email_service import EmailService
                 email_svc = EmailService()
-                email_svc.send_success_email(job_data["email"], download_url)
+                metadata_for_email = {
+                    "file_name": original_name,
+                    "rows_processed": processed_rows,
+                    "duration_seconds": round(duration, 2),
+                    "global_description": semantic_meta.get("global_description", "Data successfully structured.")
+                }
+                email_svc.send_success_email(job_data["email"], download_url, metadata_for_email)
             except Exception as e:
                 print(f"Failed to initialize or send email: {e}")
