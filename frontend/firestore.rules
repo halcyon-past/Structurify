@@ -22,8 +22,12 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    match /audit_logs/{logId} {
+    match /job_audits/{logId} {
       allow read: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow read: if isAdmin();
+    }
+    
+    match /deployments/{deploymentId} {
       allow read: if isAdmin();
     }
 

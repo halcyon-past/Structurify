@@ -164,3 +164,27 @@ sequenceDiagram
 - When the UI triggers a cancellation, the Firestore document is instantly marked as `cancelled`.
 - Before hitting the Gemini API (which costs tokens), each worker checks if the job is cancelled.
 - To prevent excessive Firestore reads, the worker caches the status check in its local memory for 15 seconds. If a burst of 50 chunks arrives simultaneously, the worker queries Firestore exactly *once* and relies on the memory cache for the remaining chunks, cutting read costs by over 95%.
+
+## 4. Firestore Data Model & Collections
+
+Structurify uses a NoSQL document database (Firestore) to track real-time state, telemetry, and settings. Below are the core collections and their roles:
+
+1. **`users`**
+   - **Purpose:** Stores user profiles, authentication metadata, subscription tier (`plan`), and role (`admin`, `owner`, `guest`).
+   - **Usage:** Queried by the Next.js frontend to enforce role-based access control and limits.
+
+2. **`jobs`**
+   - **Purpose:** Tracks the real-time lifecycle of a data transformation job.
+   - **Usage:** Contains fields like `status` (`queued`, `processing`, `completed`), `processed_rows`, and `download_url`. The frontend subscribes to this collection via `onSnapshot` to render the live loading timeline.
+
+3. **`job_audits`**
+   - **Purpose:** Stores rich telemetry, token usage, and performance profiling for every job.
+   - **Usage:** Written to by the Cloud Run Worker. Tracks exactly how many Gemini tokens were used for billing, how long the job took in seconds, and captures any hard crash logs. Read by the Admin Portal's Live System Feed.
+
+4. **`deployments`**
+   - **Purpose:** An append-only audit trail of system deployments.
+   - **Usage:** Whenever `deploy.sh` or GitHub Actions triggers a rollout, a new document is POSTed here containing the commit hash, actor, and a direct link to the Cloud Build / Firebase logs. Read by the Admin Portal's Deployment History table.
+
+5. **`settings`**
+   - **Purpose:** Global platform configuration.
+   - **Usage:** Can be used to store global banners, maintenance mode toggles, or dynamic configuration flags that update the frontend instantly without a redeployment.
