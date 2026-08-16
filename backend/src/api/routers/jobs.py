@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, status, Depends, Request, Security
 from src.models.schemas import JobRequest, JobResponse, JobStatusResponse
-from src.api.dependencies import get_pubsub_service, get_firestore_service, get_current_user, get_current_admin
+from src.api.dependencies import get_pubsub_service, get_firestore_service, get_current_user_optional, get_current_admin
 from src.services.pubsub import PubSubService
 from src.services.firestore import FirestoreService
 
@@ -84,7 +84,7 @@ async def cancel_job(
     job_id: str,
     firestore_svc: FirestoreService = Depends(get_firestore_service),
     pubsub_svc: PubSubService = Depends(get_pubsub_service),
-    decoded_token: dict = Security(get_current_user)
+    decoded_token: Optional[dict] = Depends(get_current_user_optional)
 ):
     """
     Cancels a job by updating the Firestore job and audit documents.
@@ -94,12 +94,20 @@ async def cancel_job(
     if not data:
         raise HTTPException(status_code=404, detail="Job not found")
         
-    uid = decoded_token.get("uid")
-    user_doc = firestore_svc.db.collection("users").document(uid).get().to_dict() or {}
-    role = user_doc.get("role", "").lower()
+    job_user_id = data.get("user_id")
+    job_role = data.get("role", "guest")
     
-    if data.get("user_id") != uid and role not in ["admin", "owner"]:
-        raise HTTPException(status_code=403, detail="Not authorized to cancel this job")
+    # If the job belongs to a registered user, mandate authentication
+    if job_role != "guest":
+        if not decoded_token:
+            raise HTTPException(status_code=401, detail="Authentication required to cancel a registered user's job")
+            
+        uid = decoded_token.get("uid")
+        user_doc = firestore_svc.db.collection("users").document(uid).get().to_dict() if firestore_svc.db.collection("users").document(uid).get().exists else {}
+        role = user_doc.get("role", "").lower()
+        
+        if job_user_id != uid and role not in ["admin", "owner"]:
+            raise HTTPException(status_code=403, detail="Not authorized to cancel this job")
         
     if data.get("status") in ["completed", "failed", "cancelled"]:
         raise HTTPException(status_code=400, detail=f"Job cannot be cancelled because it is already {data.get('status')}")
