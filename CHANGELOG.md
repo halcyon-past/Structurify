@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Average Extraction Speed KPI**: Added a new platform health metric calculating the true average time to process a successful row across the entire system.
 - Comprehensive `DEPLOYMENT.md` architecture guide detailing the CI/CD pipeline and observability stack.
 ### Changed
+- **Refined Global Header**: Redesigned the main navigation header to utilize a sticky frosted glassmorphism effect (`fixed`, `backdrop-blur-xl`), and exposed the 'Docs' button to all users, including unauthenticated guests.
 - Refactored the **Admin Settings UI** to utilize a local state and a dedicated "Save Changes" button, preventing accidental live configuration updates.
 - Restyled the **Global Kill Switch** into a highly prominent primary action button below the main header to prevent navbar overflow on mobile devices and emphasize its destructive nature.
 - `deploy.sh` script rewritten to accept optional target services (`frontend`, `backend`, `worker`) and seamlessly log local deployments directly to Firestore.

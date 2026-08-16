@@ -76,7 +76,7 @@ function TrackContent() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground relative flex flex-col items-center justify-center overflow-hidden p-6">
+    <main className="min-h-screen bg-background text-foreground relative flex flex-col items-center justify-center overflow-hidden p-6 pt-24">
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-600/20 rounded-full blur-[120px] mix-blend-screen animate-blob"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] mix-blend-screen animate-blob" style={{ animationDelay: '2s' }}></div>
       
