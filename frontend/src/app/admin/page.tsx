@@ -7,14 +7,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { 
   Users, Activity, Database, CheckCircle2, 
   Clock, XCircle, ShieldAlert, RefreshCw, 
-  Zap, ChevronRight, BarChart3, Info, Skull
+  Zap, ChevronRight, BarChart3, Info, Skull, Server
 } from "lucide-react";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"dashboard" | "jobs" | "users">("dashboard");
   const [selectedJob, setSelectedJob] = useState<AdminJob | null>(null);
   const [currentTime, setCurrentTime] = useState(Date.now());
-  const { users, jobs, auditLogs, loading, updateUserRole, updateUserPlan, cancelJob } = useAdminData();
+  const { users, jobs, auditLogs, deployments, loading, updateUserRole, updateUserPlan, cancelJob } = useAdminData();
   const { userData } = useAuth();
 
   const killSwitch = async () => {
@@ -201,6 +201,31 @@ export default function AdminPage() {
                           <div className="text-xl font-bold text-gray-200">{formatNumber(jobs.length)}</div>
                         </div>
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-b from-white/[0.05] to-transparent border border-white/10 rounded-3xl p-6 backdrop-blur-md">
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-3">
+                      <Server className="w-5 h-5 text-indigo-400"/> 
+                      Latest Deployments
+                    </h3>
+                    <div className="space-y-3">
+                      {["frontend", "backend", "worker"].map(service => {
+                        const dep = deployments?.find(d => d.id === service);
+                        if (!dep) return null;
+                        return (
+                          <div key={service} className="flex items-center justify-between p-3 bg-black/40 rounded-xl border border-white/5">
+                            <div>
+                              <div className="text-sm font-bold capitalize text-gray-200">{service}</div>
+                              <div className="text-xs text-gray-500 font-mono mt-0.5">{dep.commit.substring(0, 7)} • {new Date(dep.timestamp).toLocaleTimeString()}</div>
+                            </div>
+                            <div className={`p-1.5 rounded-lg ${dep.status === 'success' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                              {dep.status === 'success' ? <CheckCircle2 className="w-4 h-4"/> : <XCircle className="w-4 h-4"/>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {deployments?.length === 0 && <div className="text-xs text-gray-500 text-center py-2">No deployments recorded yet</div>}
                     </div>
                   </div>
                 </div>

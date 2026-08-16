@@ -42,10 +42,20 @@ export interface AuditLog {
   total_tokens?: number;
 }
 
+export interface DeploymentLog {
+  id: string; // The service name (frontend, backend, worker)
+  service: string;
+  status: string;
+  commit: string;
+  actor: string;
+  timestamp: string;
+}
+
 export const useAdminData = () => {
   const [users, setUsers] = useState<(UserData & { id: string })[]>([]);
   const [jobs, setJobs] = useState<AdminJob[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [deployments, setDeployments] = useState<DeploymentLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -68,6 +78,13 @@ export const useAdminData = () => {
     const unsubAudit = onSnapshot(qAudit, (snapshot) => {
       const auditData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditLog));
       setAuditLogs(auditData);
+    });
+
+    // Deployments Realtime Listener
+    const qDeployments = query(collection(db, "deployments"));
+    const unsubDeployments = onSnapshot(qDeployments, (snapshot) => {
+      const depData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DeploymentLog));
+      setDeployments(depData);
       setLoading(false);
     });
 
@@ -75,6 +92,7 @@ export const useAdminData = () => {
       unsubUsers();
       unsubJobs();
       unsubAudit();
+      unsubDeployments();
     };
   }, []);
 
@@ -87,11 +105,10 @@ export const useAdminData = () => {
   };
 
   const cancelJob = async (jobId: string) => {
-    // Call the backend API instead of raw firestore to trigger the full abort
-    await fetch(`https://structurify-worker-592450361494.us-central1.run.app/api/jobs/${jobId}/cancel`, {
+    await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/jobs/${jobId}/cancel`, {
       method: 'POST'
     });
   };
 
-  return { users, jobs, auditLogs, loading, updateUserRole, updateUserPlan, cancelJob };
+  return { users, jobs, auditLogs, deployments, loading, updateUserRole, updateUserPlan, cancelJob };
 };
