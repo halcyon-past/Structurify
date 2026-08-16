@@ -9,7 +9,7 @@ class DynamicConfigService:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(DynamicConfigService, cls).__new__(cls)
-            cls._instance.db = firestore.Client(project=settings.GOOGLE_CLOUD_PROJECT)
+            cls._instance.db = None
             cls._instance.cache = {}
             cls._instance.last_fetch = 0
             cls._instance.cache_ttl = 60 # 60 seconds
@@ -19,6 +19,8 @@ class DynamicConfigService:
         now = time.time()
         if now - self.last_fetch > self.cache_ttl:
             try:
+                if self.db is None:
+                    self.db = firestore.Client(project=settings.GOOGLE_CLOUD_PROJECT)
                 doc = self.db.collection('settings').document('system').get()
                 if doc.exists:
                     self.cache = doc.to_dict()
