@@ -32,18 +32,15 @@ class LLMEngine:
     def call_gemini_api(self, chunk_data: str, target_schema: Dict[str, Any]) -> tuple[List[Dict[str, Any]], int]:
         # Handle Auto-Clean Mode (Empty Schema)
         if not target_schema:
-            system_instruction = (
-                "You are a strict data transformation engine. "
-                "Your task is to take the provided raw, messy CSV data, dynamically infer the schema "
-                "from the headers, and clean the messy data (fixing capitalization, removing extra whitespace, "
-                "standardizing formats) while keeping ALL the original columns. "
-                "Rules:\n"
-                "1. NO data loss: Every raw row must be mapped to a target row.\n"
-                "2. Retain all original columns from the CSV.\n"
-                "3. Clean up the messy formatting in the values.\n"
-                "4. Output must be a valid JSON array of objects, where each object represents a row."
-            )
-            prompt = f"Clean the following CSV data and return it as a JSON array of objects:\n\n{chunk_data}"
+            system_instruction = config_service.get("prompt_auto_clean_system", """You are a strict data transformation engine. Your task is to take the provided raw, messy CSV data, dynamically infer the schema from the headers, and clean the messy data (fixing capitalization, removing extra whitespace, standardizing formats) while keeping ALL the original columns. Rules:
+1. NO data loss: Every raw row must be mapped to a target row.
+2. Retain all original columns from the CSV.
+3. Clean up the messy formatting in the values.
+4. Output must be a valid JSON array of objects, where each object represents a row.""")
+            prompt_template = config_service.get("prompt_auto_clean_user", "Clean the following CSV data and return it as a JSON array of objects:
+
+{chunk_data}")
+            prompt = prompt_template.format(chunk_data=chunk_data)
             
             model = config_service.get('llm_model', 'gemini-2.5-flash')
 
@@ -81,19 +78,17 @@ class LLMEngine:
             }
         }
 
-        system_instruction = (
-            "You are a strict data transformation engine. "
-            "Your task is to take the provided raw, messy CSV data and map it EXACTLY "
-            "to the required target JSON schema. "
-            "Rules:\n"
-            "1. NO data loss: Every raw row must be mapped to a target row.\n"
-            "2. Do not omit rows.\n"
-            "3. Cast types correctly based on the target schema.\n"
-            "4. If a field cannot be mapped or data is missing, provide a sensible default or null.\n"
-            "5. Output must be valid JSON."
-        )
+        system_instruction = config_service.get("prompt_schema_map_system", """You are a strict data transformation engine. Your task is to take the provided raw, messy CSV data and map it EXACTLY to the required target JSON schema. Rules:
+1. NO data loss: Every raw row must be mapped to a target row.
+2. Do not omit rows.
+3. Cast types correctly based on the target schema.
+4. If a field cannot be mapped or data is missing, provide a sensible default or null.
+5. Output must be valid JSON.""")
 
-        prompt = f"Map the following CSV data to the target schema:\n\n{chunk_data}"
+        prompt_template = config_service.get("prompt_schema_map_user", "Map the following CSV data to the target schema:
+
+{chunk_data}")
+        prompt = prompt_template.format(chunk_data=chunk_data)
         model = config_service.get('llm_model', 'gemini-2.5-flash')
 
         response = self.client.models.generate_content(
@@ -111,11 +106,7 @@ class LLMEngine:
         return json.loads(response.text), token_count
 
     def generate_metadata_descriptions(self, target_schema: Dict[str, Any], duckdb_stats: Dict[str, Any]) -> Dict[str, Any]:
-        system_instruction = (
-            "You are a data analyst. Based on the provided target schema and statistical metadata, "
-            "write a concise, high-level description of the entire dataset (global_description), "
-            "and a brief 1-sentence description for each column (column_descriptions)."
-        )
+        system_instruction = config_service.get("prompt_metadata_system", "You are a data analyst. Based on the provided target schema and statistical metadata, write a concise, high-level description of the entire dataset (global_description), and a brief 1-sentence description for each column (column_descriptions).")
         
         response_schema = {
             "type": "object",
@@ -136,7 +127,9 @@ class LLMEngine:
             "required": ["global_description", "column_descriptions"]
         }
         
-        prompt = f"Schema: {json.dumps(target_schema)}\nStats: {json.dumps(duckdb_stats)}"
+        prompt_template = config_service.get("prompt_metadata_user", "Schema: {schema}
+Stats: {stats}")
+        prompt = prompt_template.format(schema=json.dumps(target_schema), stats=json.dumps(duckdb_stats))
         
         model = config_service.get('llm_model', 'gemini-2.5-flash')
 
