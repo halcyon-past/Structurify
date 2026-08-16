@@ -37,9 +37,7 @@ class LLMEngine:
 2. Retain all original columns from the CSV.
 3. Clean up the messy formatting in the values.
 4. Output must be a valid JSON array of objects, where each object represents a row.""")
-            prompt_template = config_service.get("prompt_auto_clean_user", "Clean the following CSV data and return it as a JSON array of objects:
-
-{chunk_data}")
+            prompt_template = config_service.get("prompt_auto_clean_user", "Clean the following CSV data and return it as a JSON array of objects:\n\n{chunk_data}")
             prompt = prompt_template.format(chunk_data=chunk_data)
             
             model = config_service.get('llm_model', 'gemini-2.5-flash')
@@ -85,9 +83,7 @@ class LLMEngine:
 4. If a field cannot be mapped or data is missing, provide a sensible default or null.
 5. Output must be valid JSON.""")
 
-        prompt_template = config_service.get("prompt_schema_map_user", "Map the following CSV data to the target schema:
-
-{chunk_data}")
+        prompt_template = config_service.get("prompt_schema_map_user", "Map the following CSV data to the target schema:\n\n{chunk_data}")
         prompt = prompt_template.format(chunk_data=chunk_data)
         model = config_service.get('llm_model', 'gemini-2.5-flash')
 
@@ -127,8 +123,7 @@ class LLMEngine:
             "required": ["global_description", "column_descriptions"]
         }
         
-        prompt_template = config_service.get("prompt_metadata_user", "Schema: {schema}
-Stats: {stats}")
+        prompt_template = config_service.get("prompt_metadata_user", "Schema: {schema}\nStats: {stats}")
         prompt = prompt_template.format(schema=json.dumps(target_schema), stats=json.dumps(duckdb_stats))
         
         model = config_service.get('llm_model', 'gemini-2.5-flash')
