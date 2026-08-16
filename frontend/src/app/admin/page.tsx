@@ -290,7 +290,8 @@ export default function AdminPage() {
                     <Clock className="w-6 h-6 text-blue-400"/> 
                     Live System Feed
                   </h3>
-                  <div className="space-y-3 overflow-y-auto pr-4 custom-scrollbar flex-1 relative min-h-0">
+                  <div className="flex-1 relative min-h-0">
+                    <div className="absolute inset-0 overflow-y-auto pr-4 custom-scrollbar space-y-3">
                     {auditLogs.length === 0 ? (
                       <div className="absolute inset-0 flex items-center justify-center text-gray-500">No recent activity found.</div>
                     ) : (
