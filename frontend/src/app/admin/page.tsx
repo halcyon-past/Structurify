@@ -7,12 +7,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { 
   Users, Activity, Database, CheckCircle2, 
   Clock, XCircle, ShieldAlert, RefreshCw, 
-  Zap, ChevronRight, BarChart3, Info, Skull, Server
+  Zap, ChevronRight, BarChart3, Info, Skull, Server, Terminal
 } from "lucide-react";
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "jobs" | "users">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "jobs" | "users" | "deployments">("dashboard");
   const [selectedJob, setSelectedJob] = useState<AdminJob | null>(null);
+  const [depServiceFilter, setDepServiceFilter] = useState<string>("all");
+  const [depStatusFilter, setDepStatusFilter] = useState<string>("all");
   const [currentTime, setCurrentTime] = useState(Date.now());
   const { users, jobs, auditLogs, deployments, loading, updateUserRole, updateUserPlan, cancelJob } = useAdminData();
   const { userData } = useAuth();
@@ -113,7 +115,7 @@ export default function AdminPage() {
                 <RefreshCw className="w-5 h-5" />
               </button>
               <div className="w-px h-8 bg-white/10 mx-1"></div>
-              {(["dashboard", "jobs", "users"] as const).map((tab) => (
+              {(["dashboard", "jobs", "users", "deployments"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -211,7 +213,7 @@ export default function AdminPage() {
                     </h3>
                     <div className="space-y-3">
                       {["frontend", "backend", "worker"].map(service => {
-                        const dep = deployments?.find(d => d.id === service);
+                        const dep = deployments?.find(d => d.service === service);
                         if (!dep) return null;
                         
                         // Handle Firestore Timestamp vs string
@@ -472,6 +474,111 @@ export default function AdminPage() {
                         </tr>
                       );
                     })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "deployments" && (
+            <div className="bg-gradient-to-b from-white/[0.05] to-transparent border border-white/10 rounded-3xl p-6 overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 shadow-2xl backdrop-blur-md">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                  <Terminal className="w-6 h-6 text-indigo-400" />
+                  Deployment History
+                </h3>
+                <div className="flex gap-4">
+                  <select 
+                    value={depServiceFilter}
+                    onChange={(e) => setDepServiceFilter(e.target.value)}
+                    className="bg-black/60 border border-white/10 rounded-xl text-sm font-medium text-gray-200 px-4 py-2 focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="all">All Services</option>
+                    <option value="frontend">Frontend</option>
+                    <option value="backend">Backend</option>
+                    <option value="worker">Worker</option>
+                  </select>
+                  <select 
+                    value={depStatusFilter}
+                    onChange={(e) => setDepStatusFilter(e.target.value)}
+                    className="bg-black/60 border border-white/10 rounded-xl text-sm font-medium text-gray-200 px-4 py-2 focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="success">Success</option>
+                    <option value="failed">Failed</option>
+                  </select>
+                </div>
+              </div>
+              <div className="overflow-x-auto rounded-xl border border-white/5 bg-black/20">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/10 bg-white/5">
+                      <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Service</th>
+                      <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                      <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Commit</th>
+                      <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Actor</th>
+                      <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deployments?.filter(d => 
+                      (depServiceFilter === "all" || d.service === depServiceFilter) &&
+                      (depStatusFilter === "all" || d.status === depStatusFilter)
+                    ).map((dep, i) => {
+                      let dateString = "Unknown Date";
+                      if (dep.timestamp) {
+                        const ts = dep.timestamp as { toDate?: () => Date } | string;
+                        if (typeof ts === 'object' && ts !== null && 'toDate' in ts && typeof ts.toDate === 'function') {
+                          dateString = ts.toDate().toLocaleString();
+                        } else {
+                          dateString = new Date(ts as string).toLocaleString();
+                        }
+                      }
+                      
+                      return (
+                        <tr key={dep.id || i} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+                          <td className="p-4 font-mono text-sm">
+                            <div className="flex items-center gap-2">
+                              {dep.service === "frontend" && <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]"></span>}
+                              {dep.service === "backend" && <span className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.8)]"></span>}
+                              {dep.service === "worker" && <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]"></span>}
+                              <span className="text-gray-300 font-bold capitalize">{dep.service}</span>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                              dep.status === "success" 
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                                : "bg-red-500/10 text-red-400 border-red-500/20"
+                            }`}>
+                              {dep.status.toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="p-4 font-mono text-sm text-gray-400">
+                            {dep.commit}
+                          </td>
+                          <td className="p-4 text-sm text-gray-400">
+                            {dep.actor}
+                          </td>
+                          <td className="p-4 text-right">
+                            {dep.log_url ? (
+                              <a href={dep.log_url} target="_blank" rel="noopener noreferrer" className="text-sm font-mono text-indigo-400 hover:text-indigo-300 hover:underline">
+                                {dateString}
+                              </a>
+                            ) : (
+                              <span className="text-sm font-mono text-gray-500">{dateString}</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {(!deployments || deployments.length === 0) && (
+                      <tr>
+                        <td colSpan={5} className="p-8 text-center text-gray-500 text-sm">
+                          No deployment history found.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

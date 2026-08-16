@@ -16,7 +16,7 @@ fi
 TOKEN=$(gcloud auth print-access-token)
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-curl -s -X PATCH \
+curl -s -X POST \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -29,6 +29,6 @@ curl -s -X PATCH \
       "timestamp": { "timestampValue": "'"$TIMESTAMP"'" }
     }
   }' \
-  "https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/deployments/${SERVICE}" > /dev/null
+  "https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/deployments" > /dev/null
 
 echo "✅ Logged deployment for $SERVICE: $STATUS"

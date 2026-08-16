@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, orderBy, updateDoc, doc, limit } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, updateDoc, doc, limit, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { UserData } from './useAuth';
 
@@ -49,7 +49,7 @@ export interface DeploymentLog {
   commit: string;
   actor: string;
   log_url?: string;
-  timestamp: any;
+  timestamp: Timestamp | string | { toDate?: () => Date, _seconds?: number };
 }
 
 export const useAdminData = () => {
@@ -75,14 +75,26 @@ export const useAdminData = () => {
     });
 
     // Audit Logs Realtime Listener (limit to 500)
-    const qAudit = query(collection(db, "audit_logs"), orderBy("timestamp", "desc"), limit(500));
+    const qAudit = query(collection(db, "job_audits"), orderBy("started_at", "desc"), limit(500));
     const unsubAudit = onSnapshot(qAudit, (snapshot) => {
-      const auditData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditLog));
+      const auditData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+          id: doc.id, 
+          action: data.status === 'processing' ? 'started' : data.status,
+          job_id: doc.id,
+          user_id: data.user_id || 'guest',
+          timestamp: data.completed_at || data.started_at || data.created_at || new Date().toISOString(),
+          status: data.status,
+          duration_seconds: data.job_runtime_seconds,
+          total_tokens: data.total_tokens
+        } as AuditLog;
+      });
       setAuditLogs(auditData);
     });
 
     // Deployments Realtime Listener
-    const qDeployments = query(collection(db, "deployments"));
+    const qDeployments = query(collection(db, "deployments"), orderBy("timestamp", "desc"), limit(200));
     const unsubDeployments = onSnapshot(qDeployments, (snapshot) => {
       const depData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DeploymentLog));
       setDeployments(depData);
