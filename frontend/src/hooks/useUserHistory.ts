@@ -61,5 +61,16 @@ export function useUserHistory(userId: string | undefined) {
     fetchHistory();
   }, [userId]);
 
-  return { jobs, loading };
+  const cancelJob = async (jobId: string) => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/jobs/${jobId}/cancel`, {
+        method: 'POST'
+      });
+      setJobs(prev => prev.map(job => job.job_id === jobId ? { ...job, status: "cancelled" } : job));
+    } catch (e) {
+      console.error("Failed to cancel job", e);
+    }
+  };
+
+  return { jobs, loading, cancelJob };
 }

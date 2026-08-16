@@ -436,7 +436,7 @@ export default function AdminPage() {
                               <Info className="w-3.5 h-3.5" />
                               Details
                             </button>
-                            {(job.status === "queued" || job.status === "processing") && (
+                            {(job.status === "queued" || job.status === "processing" || job.status === "processing_chunks") && (
                               <button
                                 onClick={() => cancelJob(job.id)}
                                 className="inline-flex items-center gap-1.5 text-xs font-bold text-red-400 hover:text-white bg-red-500/10 hover:bg-red-500 border border-red-500/20 hover:border-red-500 px-3 py-2 rounded-xl transition-all shadow-lg hover:shadow-red-500/20"

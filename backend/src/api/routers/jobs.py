@@ -147,7 +147,7 @@ async def kill_switch(
         count = 0
         now = datetime.utcnow().isoformat()
         
-        for job_status in ["queued", "processing"]:
+        for job_status in ["queued", "processing", "processing_chunks"]:
             query = jobs_ref.where("status", "==", job_status).stream()
             for doc in query:
                 batch.update(doc.reference, {
