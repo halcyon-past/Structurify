@@ -44,10 +44,10 @@ if [ "$TARGET_SERVICE" == "all" ] || [ "$TARGET_SERVICE" == "backend" ]; then
        --service-account ${SA_EMAIL} \
        --update-env-vars GOOGLE_CLOUD_PROJECT=${PROJECT_ID},RAW_BUCKET_NAME=raw-uploads-${PROJECT_ID},PUBSUB_TOPIC_ID=schema-transformation-jobs; then
     cd ..
-    ./scripts/log_deployment.sh $PROJECT_ID backend success $COMMIT_HASH $LOCAL_ACTOR "https://console.cloud.google.com/run/detail/${REGION}/structurify-backend/logs?project=${PROJECT_ID}"
+    ./scripts/log_deployment.sh $PROJECT_ID backend success $COMMIT_HASH $LOCAL_ACTOR "https://console.cloud.google.com/cloud-build/builds?project=${PROJECT_ID}"
   else
     cd ..
-    ./scripts/log_deployment.sh $PROJECT_ID backend failed $COMMIT_HASH $LOCAL_ACTOR "https://console.cloud.google.com/run/detail/${REGION}/structurify-backend/logs?project=${PROJECT_ID}"
+    ./scripts/log_deployment.sh $PROJECT_ID backend failed $COMMIT_HASH $LOCAL_ACTOR "https://console.cloud.google.com/cloud-build/builds?project=${PROJECT_ID}"
     exit 1
   fi
 fi
@@ -83,10 +83,10 @@ if [ "$TARGET_SERVICE" == "all" ] || [ "$TARGET_SERVICE" == "worker" ]; then
     gcloud pubsub subscriptions create chunk-processing-sub-push --topic=chunk-processing-jobs --push-endpoint="${WORKER_URL}/process-chunk" --push-auth-service-account="${PUBSUB_SA_EMAIL}" --push-auth-token-audience="${WORKER_URL}" --ack-deadline=600 2>/dev/null || \
     gcloud pubsub subscriptions update chunk-processing-sub-push --push-endpoint="${WORKER_URL}/process-chunk" --push-auth-service-account="${PUBSUB_SA_EMAIL}" --push-auth-token-audience="${WORKER_URL}"
     
-    ./scripts/log_deployment.sh $PROJECT_ID worker success $COMMIT_HASH $LOCAL_ACTOR "https://console.cloud.google.com/run/detail/${REGION}/structurify-worker/logs?project=${PROJECT_ID}"
+    ./scripts/log_deployment.sh $PROJECT_ID worker success $COMMIT_HASH $LOCAL_ACTOR "https://console.cloud.google.com/cloud-build/builds?project=${PROJECT_ID}"
   else
     cd ..
-    ./scripts/log_deployment.sh $PROJECT_ID worker failed $COMMIT_HASH $LOCAL_ACTOR "https://console.cloud.google.com/run/detail/${REGION}/structurify-worker/logs?project=${PROJECT_ID}"
+    ./scripts/log_deployment.sh $PROJECT_ID worker failed $COMMIT_HASH $LOCAL_ACTOR "https://console.cloud.google.com/cloud-build/builds?project=${PROJECT_ID}"
     exit 1
   fi
 fi
