@@ -8,6 +8,11 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      
+      fontFamily: {
+        sans: ['var(--font-space-grotesk)'],
+        mono: ['var(--font-jetbrains-mono)'],
+      },
       colors: {
         background: "#09090b", // Deep dark background
         foreground: "#f8fafc", // Light foreground

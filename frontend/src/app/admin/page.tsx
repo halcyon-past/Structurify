@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
-import { useAdminData, AdminJob } from "@/hooks/useAdminData";
+import { useAdminData, AdminJob, SystemSettings } from "@/hooks/useAdminData";
 import { useAuth } from "@/hooks/useAuth";
+import { auth } from "@/lib/firebase";
 import { 
   Users, Activity, Database, CheckCircle2, 
   Clock, XCircle, ShieldAlert, RefreshCw, 
@@ -11,25 +12,39 @@ import {
 } from "lucide-react";
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "jobs" | "users" | "deployments">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "jobs" | "users" | "deployments" | "settings">("dashboard");
   const [selectedJob, setSelectedJob] = useState<AdminJob | null>(null);
   const [depServiceFilter, setDepServiceFilter] = useState<string>("all");
   const [depStatusFilter, setDepStatusFilter] = useState<string>("all");
   const [currentTime, setCurrentTime] = useState(Date.now());
-  const { users, jobs, auditLogs, deployments, loading, updateUserRole, updateUserPlan, cancelJob } = useAdminData();
+  const { users, jobs, auditLogs, deployments, settings, loading, updateUserRole, updateUserPlan, cancelJob, saveSystemSettings } = useAdminData();
   const { userData } = useAuth();
+  const [localSettings, setLocalSettings] = useState<SystemSettings | null>(null);
+
+  useEffect(() => {
+    if (!loading && settings && !localSettings) {
+      setLocalSettings(settings);
+    }
+  }, [loading, settings, localSettings]);
 
   const killSwitch = async () => {
     if (!window.confirm("CRITICAL WARNING: This will immediately purge ALL active queues and forcefully terminate all running processing jobs across the entire system. Are you absolutely sure?")) return;
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/jobs/kill-switch`, { method: "POST" });
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/jobs/kill-switch`, { 
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Failed to engage kill switch");
       alert(`Kill switch engaged. System purged: ${data.message || "Success"}`);
       window.location.reload();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Failed to engage kill switch.");
+      alert(e.message || "Failed to engage kill switch.");
     }
   };
 
@@ -128,7 +143,7 @@ export default function AdminPage() {
                 <RefreshCw className="w-5 h-5" />
               </button>
               <div className="w-px h-8 bg-white/10 mx-1"></div>
-              {(["dashboard", "jobs", "users", "deployments"] as const).map((tab) => (
+              {(["dashboard", "jobs", "users", "deployments", "settings"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -283,7 +298,8 @@ export default function AdminPage() {
                     <Clock className="w-6 h-6 text-blue-400"/> 
                     Live System Feed
                   </h3>
-                  <div className="space-y-3 overflow-y-auto pr-4 custom-scrollbar flex-1 relative min-h-0">
+                  <div className="flex-1 relative min-h-0">
+                    <div className="absolute inset-0 overflow-y-auto pr-4 custom-scrollbar space-y-3">
                     {auditLogs.length === 0 ? (
                       <div className="absolute inset-0 flex items-center justify-center text-gray-500">No recent activity found.</div>
                     ) : (
@@ -351,6 +367,7 @@ export default function AdminPage() {
                         </div>
                       ))
                     )}
+                  </div>
                   </div>
                 </div>
               </div>
@@ -427,7 +444,7 @@ export default function AdminPage() {
                               <Info className="w-3.5 h-3.5" />
                               Details
                             </button>
-                            {(job.status === "queued" || job.status === "processing") && (
+                            {(job.status === "queued" || job.status === "processing" || job.status === "processing_chunks") && (
                               <button
                                 onClick={() => cancelJob(job.id)}
                                 className="inline-flex items-center gap-1.5 text-xs font-bold text-red-400 hover:text-white bg-red-500/10 hover:bg-red-500 border border-red-500/20 hover:border-red-500 px-3 py-2 rounded-xl transition-all shadow-lg hover:shadow-red-500/20"
@@ -644,6 +661,146 @@ export default function AdminPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+                    {activeTab === "settings" && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+              <div className="bg-gradient-to-b from-white/[0.05] to-transparent border border-white/10 rounded-3xl p-8 backdrop-blur-md">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold flex items-center gap-3">
+                    <Server className="w-6 h-6 text-purple-400"/> 
+                    System Configuration
+                  </h3>
+                  <button 
+                    onClick={async () => {
+                      if (localSettings) {
+                        await saveSystemSettings(localSettings);
+                        alert("Settings and Prompts have been saved and applied dynamically!");
+                      }
+                    }}
+                    className="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-colors flex items-center gap-2"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+                
+                {localSettings ? (
+                  <div className="space-y-8 max-w-4xl">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-3">
+                        <label className="text-sm font-bold text-gray-300 uppercase tracking-wider">Gemini LLM Model</label>
+                        <p className="text-sm text-gray-500 mb-2">Select the underlying Gemini model used by the ETL worker for data transformation.</p>
+                        <select 
+                          value={localSettings.llm_model || 'gemini-3.6-flash'}
+                          onChange={(e) => setLocalSettings({...localSettings, llm_model: e.target.value})}
+                          className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                        >
+                          <option value="gemini-3.6-flash">Gemini 3.6 Flash (Recommended)</option>
+                          <option value="gemini-2.5-flash">Gemini 2.5 Flash (Legacy/Working)</option>
+                          <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite (Fast/Cost Efficient)</option>
+                          <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview (Complex Reasoning)</option>
+                          <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite (Ultra Fast)</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-3">
+                        <label className="text-sm font-bold text-gray-300 uppercase tracking-wider">Max Rows Per Chunk</label>
+                        <p className="text-sm text-gray-500 mb-2">The absolute maximum number of rows a worker will send to Gemini in a single prompt.</p>
+                        <input 
+                          type="number"
+                          value={localSettings.max_rows_per_chunk || 500}
+                          onChange={(e) => setLocalSettings({...localSettings, max_rows_per_chunk: parseInt(e.target.value) || 500})}
+                          className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                        />
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <label className="text-sm font-bold text-gray-300 uppercase tracking-wider">Target Cells Per Chunk</label>
+                        <p className="text-sm text-gray-500 mb-2">Target cell threshold (rows × columns). Used to dynamically scale down chunk size for wide CSVs.</p>
+                        <input 
+                          type="number"
+                          value={localSettings.target_cells_per_chunk || 5000}
+                          onChange={(e) => setLocalSettings({...localSettings, target_cells_per_chunk: parseInt(e.target.value) || 5000})}
+                          className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    <hr className="border-white/10" />
+                    
+                    <h4 className="text-lg font-bold text-white mb-4">Prompt Management</h4>
+                    
+                    <div className="space-y-6">
+                      <div className="space-y-3">
+                        <label className="text-sm font-bold text-gray-300 uppercase tracking-wider">Auto-Clean System Prompt</label>
+                        <textarea 
+                          rows={6}
+                          value={localSettings.prompt_auto_clean_system || ''}
+                          onChange={(e) => setLocalSettings({...localSettings, prompt_auto_clean_system: e.target.value})}
+                          placeholder="You are a strict data transformation engine..."
+                          className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors custom-scrollbar"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-sm font-bold text-gray-300 uppercase tracking-wider">Auto-Clean User Prompt</label>
+                        <textarea 
+                          rows={2}
+                          value={localSettings.prompt_auto_clean_user || ''}
+                          onChange={(e) => setLocalSettings({...localSettings, prompt_auto_clean_user: e.target.value})}
+                          placeholder="Clean the following CSV data... 
+
+{chunk_data}"
+                          className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors custom-scrollbar"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-sm font-bold text-gray-300 uppercase tracking-wider">Schema Map System Prompt</label>
+                        <textarea 
+                          rows={6}
+                          value={localSettings.prompt_schema_map_system || ''}
+                          onChange={(e) => setLocalSettings({...localSettings, prompt_schema_map_system: e.target.value})}
+                          className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors custom-scrollbar"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-sm font-bold text-gray-300 uppercase tracking-wider">Schema Map User Prompt</label>
+                        <textarea 
+                          rows={2}
+                          value={localSettings.prompt_schema_map_user || ''}
+                          onChange={(e) => setLocalSettings({...localSettings, prompt_schema_map_user: e.target.value})}
+                          placeholder="Map the following CSV data... 
+
+{chunk_data}"
+                          className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors custom-scrollbar"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-sm font-bold text-gray-300 uppercase tracking-wider">Metadata System Prompt</label>
+                        <textarea 
+                          rows={4}
+                          value={localSettings.prompt_metadata_system || ''}
+                          onChange={(e) => setLocalSettings({...localSettings, prompt_metadata_system: e.target.value})}
+                          className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors custom-scrollbar"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-sm font-bold text-gray-300 uppercase tracking-wider">Metadata User Prompt</label>
+                        <textarea 
+                          rows={2}
+                          value={localSettings.prompt_metadata_user || ''}
+                          onChange={(e) => setLocalSettings({...localSettings, prompt_metadata_user: e.target.value})}
+                          placeholder="Schema: {schema}
+Stats: {stats}"
+                          className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors custom-scrollbar"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-10 text-gray-500">Loading settings...</div>
+                )}
               </div>
             </div>
           )}

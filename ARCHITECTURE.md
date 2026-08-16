@@ -161,7 +161,8 @@ sequenceDiagram
 ### 7. Cost Mitigation & Graceful Cancellation
 **Problem:** If a user submits a massive file by mistake, they need a way to cancel the job mid-flight. Merely purging the Pub/Sub queue orphans the database records ("ghost jobs"). Furthermore, checking Firestore for a cancellation signal before processing every chunk would generate massive read volumes, eating into database quotas.
 **Solution:** Structurify employs a Graceful Cancellation API coupled with an **In-Memory TTL Cache**.
-- When the UI triggers a cancellation, the Firestore document is instantly marked as `cancelled`.
+- When the UI triggers a cancellation, the Firestore document is instantly marked as `cancelled`, and a notification is published to Pub/Sub to instantly dispatch a 'Job Cancelled' email to the user.
+- The backend also features an **Emergency Kill Switch** that purges the entire Pub/Sub backlog by seeking the cursors to the current timestamp, gracefully halting thousands of chunks instantaneously while firing off email notifications to the affected users.
 - Before hitting the Gemini API (which costs tokens), each worker checks if the job is cancelled.
 - To prevent excessive Firestore reads, the worker caches the status check in its local memory for 15 seconds. If a burst of 50 chunks arrives simultaneously, the worker queries Firestore exactly *once* and relies on the memory cache for the remaining chunks, cutting read costs by over 95%.
 
@@ -186,5 +187,5 @@ Structurify uses a NoSQL document database (Firestore) to track real-time state,
    - **Usage:** Whenever `deploy.sh` or GitHub Actions triggers a rollout, a new document is POSTed here containing the commit hash, actor, and a direct link to the Cloud Build / Firebase logs. Read by the Admin Portal's Deployment History table.
 
 5. **`settings`**
-   - **Purpose:** Global platform configuration.
-   - **Usage:** Can be used to store global banners, maintenance mode toggles, or dynamic configuration flags that update the frontend instantly without a redeployment.
+   - **Purpose:** Global platform configuration, runtime settings, and dynamic AI Prompt Management.
+   - **Usage:** Contains dynamic configurations like the `system` document (which controls the active `llm_model`, chunk sizes, and editable system instructions / user prompts for the AI extraction engines). The Admin Portal writes to this collection via the Settings tab using a "Save Changes" bulk-commit strategy. Backend workers globally cache these settings (via `DynamicConfigService`) and instantly adapt their behavior without requiring code redeployments.

@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-08-16
+### Added
+- **Automated Cancellation Emails**: The backend now seamlessly triggers a graceful Pub/Sub task to send users a "Job Cancelled" email whenever they manually cancel an extraction, or when the Admin Global Kill Switch purges the system.
+- **Enhanced Documentation**: Overhauled the Live Markdown Documentation with updated Mermaid.js architecture diagrams, and explicitly detailed email triggers and admin portal capabilities.
+- Renamed the 'Changelog' tab inside the Documentation portal to **Releases**.
+- **Dynamic Prompt Management**: All AI system instructions and user prompts (Auto-Clean, Schema Mapping, Metadata Generation) have been moved to Firestore, allowing admins to edit AI behavior directly from the Admin portal.
+- **Dynamic Configuration Engine**: Moved critical runtime settings (Gemini LLM model, chunk sizes) to Firestore, allowing admins to instantly hot-swap models directly from the UI without redeploying code.
+- **Deployment History Dashboard**: Added a new tab in the Admin Portal to track all frontend, backend, and worker deployments with direct links to Cloud Build/Firebase logs.
+- **Detailed Audit Context**: The Live System Feed now dynamically drops down to reveal fatal error stack traces, processed filenames, used tokens, and Cloud Run revision hashes for crashed jobs.
+- **Average Extraction Speed KPI**: Added a new platform health metric calculating the true average time to process a successful row across the entire system.
+- Comprehensive `DEPLOYMENT.md` architecture guide detailing the CI/CD pipeline and observability stack.
+### Changed
+- **Refined Global Header**: Redesigned the main navigation header to utilize a sticky frosted glassmorphism effect (`fixed`, `backdrop-blur-xl`), and exposed the 'Docs' button to all users, including unauthenticated guests.
+- Refactored the **Admin Settings UI** to utilize a local state and a dedicated "Save Changes" button, preventing accidental live configuration updates.
+- Restyled the **Global Kill Switch** into a highly prominent primary action button below the main header to prevent navbar overflow on mobile devices and emphasize its destructive nature.
+- `deploy.sh` script rewritten to accept optional target services (`frontend`, `backend`, `worker`) and seamlessly log local deployments directly to Firestore.
+- Firestore Security Rules updated to grant Admins explicit read access to `job_audits` and `deployments` collections.
+### Fixed
+- Fixed an invisible Firestore query index filtering bug that caused the Live System Feed to silently return "No recent activity found".
+- Bypassed strict `updateMask` errors on the Firestore REST API by appending to deployment history instead of overwriting.
+- Fixed layout bug causing the Live System Feed to not stretch to the bottom of the container.
+- Cleaned up Next.js unused import warnings that triggered strict ESLint build failures.
+
 ## [2.0.0] - 2026-08-15
 ### Added
 - Comprehensive **Admin Dashboard** (`/admin`) featuring animated metrics, gradient borders, glassmorphism, and live data aggregation.
