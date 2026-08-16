@@ -2,6 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.api.routers import uploads, jobs
 
+
+import firebase_admin
+from firebase_admin import credentials
+
+# Initialize Firebase Admin if not already initialized
+if not firebase_admin._apps:
+    firebase_admin.initialize_app()
+
 app = FastAPI(title="Structurify Backend API")
 
 # Configure CORS
