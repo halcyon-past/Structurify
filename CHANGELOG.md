@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-08-16
+### Added
+- **Job Cancellation Directly from History**: Users (both registered and guests) can now seamlessly cancel running jobs directly from their extraction history dashboard.
+- **Dynamic HTML Email Redesign**: All system emails (Success, Started, Cancelled) have been redesigned into beautiful dark-mode friendly HTML templates that dynamically feature rich metadata, including files processed, duration, and AI-generated dataset summaries.
+- **Subscription Architecture Foundation**: Pre-wired the `users` Firestore collection to natively track upcoming subscription fields (`subscription_status`, `payment_date`, `validity`, etc.) to pave the way for structured payment plans.
+- **Secure Backend API Authentication**: Implemented hybrid Firebase Auth JWT verification on the backend to securely protect the `cancel_job` and `kill_switch` endpoints from unauthorized tampering, whilst safely accommodating unauthenticated guest users.
+- Added explicit domain whitelisting across all internal Google Cloud Storage bucket CORS policies.
+
+### Changed
+- **Global Typography Overhaul**: Migrated the entire application font stack to Google's `Space Grotesk` (sans-serif) and `JetBrains Mono` (monospace) for a more technical, sleek, and modern aesthetic.
+- **Seamless Global Navigation**: Refined the global header UI by removing the rigid boxed layout in favor of a seamlessly integrated relative flow. Replaced the pill-shaped UI buttons with clean rounded rectangles and introduced a user profile dropdown menu.
+- **Renamed Changelog to Releases**: The Changelog tab in the UI documentation system has been renamed to "Releases" for better clarity.
+- Lowered the threshold for triggering asynchronous email notifications from `5MB` down to `1MB` to provide users with tracking links sooner.
+
+### Fixed
+- Fixed an authentication bug that caused Cloud Run backend deployments to silently crash on startup due to uninitialized Firebase Admin SDKs.
+- Fixed a strict TypeScript ESLint build failure in the Admin Portal regarding the `any` keyword in `catch` blocks.
+
 ## [2.1.0] - 2026-08-16
 ### Added
 - **Automated Cancellation Emails**: The backend now seamlessly triggers a graceful Pub/Sub task to send users a "Job Cancelled" email whenever they manually cancel an extraction, or when the Admin Global Kill Switch purges the system.
