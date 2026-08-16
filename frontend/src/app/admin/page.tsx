@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { 
   Users, Activity, Database, CheckCircle2, 
   Clock, XCircle, ShieldAlert, RefreshCw, 
-  Zap, ChevronRight, BarChart3, Info, Skull, Server, Terminal
+  Zap, BarChart3, Info, Skull, Server, Terminal
 } from "lucide-react";
 
 export default function AdminPage() {
