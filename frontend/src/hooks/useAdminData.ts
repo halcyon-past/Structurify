@@ -91,6 +91,16 @@ export const useAdminData = () => {
         } as AuditLog;
       }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setAuditLogs(auditData);
+    }, (error) => {
+      console.error("Audit Logs Error:", error);
+      setAuditLogs([{ 
+        id: 'error', 
+        action: `ERROR: ${error.message}`, 
+        job_id: 'err-123', 
+        user_id: 'system', 
+        timestamp: new Date().toISOString(), 
+        status: 'failed' 
+      } as AuditLog]);
     });
 
     // Deployments Realtime Listener
