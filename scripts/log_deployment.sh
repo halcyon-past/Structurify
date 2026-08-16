@@ -29,6 +29,6 @@ curl -s -X PATCH \
       "timestamp": { "timestampValue": "'"$TIMESTAMP"'" }
     }
   }' \
-  "https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/deployments/${SERVICE}?updateMask=service,status,commit,actor,log_url,timestamp" > /dev/null
+  "https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/deployments/${SERVICE}" > /dev/null
 
 echo "✅ Logged deployment for $SERVICE: $STATUS"
