@@ -213,16 +213,41 @@ export default function AdminPage() {
                       {["frontend", "backend", "worker"].map(service => {
                         const dep = deployments?.find(d => d.id === service);
                         if (!dep) return null;
+                        
+                        // Handle Firestore Timestamp vs string
+                        let dateString = "Unknown Date";
+                        if (dep.timestamp) {
+                          const ts = dep.timestamp as { toDate?: () => Date } | string;
+                          if (typeof ts === 'object' && ts !== null && 'toDate' in ts && typeof ts.toDate === 'function') {
+                            dateString = ts.toDate().toLocaleString();
+                          } else {
+                            dateString = new Date(ts as string).toLocaleString();
+                          }
+                        }
+
                         return (
-                          <div key={service} className="flex items-center justify-between p-3 bg-black/40 rounded-xl border border-white/5">
+                          <a 
+                            key={service} 
+                            href={dep.log_url || "#"} 
+                            target={dep.log_url ? "_blank" : "_self"}
+                            rel="noopener noreferrer"
+                            className={`flex items-center justify-between p-3 bg-black/40 rounded-xl border border-white/5 transition-colors ${dep.log_url ? 'hover:bg-white/5 cursor-pointer' : ''}`}
+                          >
                             <div>
-                              <div className="text-sm font-bold capitalize text-gray-200">{service}</div>
-                              <div className="text-xs text-gray-500 font-mono mt-0.5">{dep.commit.substring(0, 7)} • {new Date(dep.timestamp).toLocaleTimeString()}</div>
+                              <div className="flex items-center gap-2">
+                                <div className="text-sm font-bold capitalize text-gray-200">{service}</div>
+                                <div className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-white/10 text-gray-400">
+                                  By {dep.actor}
+                                </div>
+                              </div>
+                              <div className="text-xs text-gray-500 font-mono mt-1">
+                                {dep.commit.substring(0, 7)} • {dateString}
+                              </div>
                             </div>
                             <div className={`p-1.5 rounded-lg ${dep.status === 'success' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
                               {dep.status === 'success' ? <CheckCircle2 className="w-4 h-4"/> : <XCircle className="w-4 h-4"/>}
                             </div>
-                          </div>
+                          </a>
                         );
                       })}
                       {deployments?.length === 0 && <div className="text-xs text-gray-500 text-center py-2">No deployments recorded yet</div>}

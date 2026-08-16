@@ -41,11 +41,11 @@ jobs:
 
       - name: Log Deployment Success
         if: success()
-        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} backend success ${{ github.sha }} ${{ github.actor }}
+        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} backend success ${{ github.sha }} ${{ github.actor }} "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         
       - name: Log Deployment Failure
         if: failure()
-        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} backend failed ${{ github.sha }} ${{ github.actor }}
+        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} backend failed ${{ github.sha }} ${{ github.actor }} "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
   deploy-worker:
     name: Deploy Worker to Cloud Run
@@ -115,11 +115,11 @@ jobs:
 
       - name: Log Deployment Success
         if: success()
-        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} worker success ${{ github.sha }} ${{ github.actor }}
+        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} worker success ${{ github.sha }} ${{ github.actor }} "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         
       - name: Log Deployment Failure
         if: failure()
-        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} worker failed ${{ github.sha }} ${{ github.actor }}
+        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} worker failed ${{ github.sha }} ${{ github.actor }} "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
   deploy-frontend:
     name: Deploy Frontend to Firebase
     runs-on: ubuntu-latest
@@ -156,8 +156,8 @@ jobs:
 
       - name: Log Deployment Success
         if: success()
-        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} frontend success ${{ github.sha }} ${{ github.actor }}
+        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} frontend success ${{ github.sha }} ${{ github.actor }} "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         
       - name: Log Deployment Failure
         if: failure()
-        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} frontend failed ${{ github.sha }} ${{ github.actor }}
+        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} frontend failed ${{ github.sha }} ${{ github.actor }} "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"

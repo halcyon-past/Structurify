@@ -48,7 +48,8 @@ export interface DeploymentLog {
   status: string;
   commit: string;
   actor: string;
-  timestamp: string;
+  log_url?: string;
+  timestamp: any;
 }
 
 export const useAdminData = () => {
