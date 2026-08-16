@@ -360,6 +360,7 @@ export default function AdminPage() {
                       ))
                     )}
                   </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -688,7 +689,8 @@ export default function AdminPage() {
                           onChange={(e) => setLocalSettings({...localSettings, llm_model: e.target.value})}
                           className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
                         >
-                          <option value="gemini-3.6-flash">Gemini 3.6 Flash (Default)</option>
+                          <option value="gemini-3.6-flash">Gemini 3.6 Flash (Recommended)</option>
+                          <option value="gemini-2.5-flash">Gemini 2.5 Flash (Legacy/Working)</option>
                           <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite (Fast/Cost Efficient)</option>
                           <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview (Complex Reasoning)</option>
                           <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite (Ultra Fast)</option>
