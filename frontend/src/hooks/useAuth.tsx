@@ -81,7 +81,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           name: loggedInUser.displayName,
           role: "member",
           plan: "free",
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          subscription_status: "none",
+          subscription_id: null,
+          customer_id: null,
+          current_period_start: null,
+          current_period_end: null,
+          cancel_at_period_end: false,
+          payment_date: null
         });
       }
     } catch (error) {

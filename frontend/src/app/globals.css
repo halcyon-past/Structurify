@@ -5,7 +5,7 @@
 @layer base {
   body {
     @apply bg-background text-foreground antialiased selection:bg-accent-500 selection:text-white;
-    font-family: 'Inter', sans-serif;
+    
   }
 }
 

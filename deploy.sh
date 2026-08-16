@@ -62,7 +62,7 @@ if [ "$TARGET_SERVICE" == "all" ] || [ "$TARGET_SERVICE" == "worker" ]; then
        --region ${REGION} \
        --no-allow-unauthenticated \
        --service-account ${SA_EMAIL} \
-       --update-env-vars GOOGLE_CLOUD_PROJECT=${PROJECT_ID},RAW_BUCKET_NAME=raw-uploads-${PROJECT_ID},PROCESSED_BUCKET_NAME=processed-outputs-${PROJECT_ID},FRONTEND_URL=https://structurify.web.app \
+       --update-env-vars GOOGLE_CLOUD_PROJECT=${PROJECT_ID},RAW_BUCKET_NAME=raw-uploads-${PROJECT_ID},PROCESSED_BUCKET_NAME=processed-outputs-${PROJECT_ID},FRONTEND_URL=https://structurify.aritro.cloud \
        --set-secrets=GEMINI_API_KEY=gemini-api-key:latest \
        --memory=2Gi \
        --timeout=3600s; then

@@ -47,7 +47,7 @@ graph TD;
     E --> F[Upload to Google Cloud Storage];
     F --> G[Pub/Sub Job Queue];
     G --> H[Cloud Run AI Workers];
-    H --> I[Gemini 2.5 Flash Map-Reduce];
+    H --> I[Gemini AI Map-Reduce];
     I --> J[DuckDB Data Aggregation];
     J --> K[Zip Creation data.csv + metadata.json];
     K --> L[Firestore Job Updated];
@@ -59,6 +59,17 @@ graph TD;
 2. **Define your Target Schema**: Use the UI Builder or paste a raw JSON schema.
 3. **Submit the Job**: Our asynchronous MapReduce pipeline processes your data using Google Gemini.
 4. **Download Results**: Once completed, you will receive a ZIP file containing your structured data and a metadata report.
+
+## 🔔 Email Notifications
+If you provide an email address during upload, you will receive automated notifications:
+- **Job Started:** For files larger than 5MB.
+- **Job Completed:** Includes a direct, secure link to download your cleaned ZIP file.
+- **Job Cancelled:** If you manually cancel the job, or if an administrator halts the system.
+
+## 🛑 Job Management & History
+Users can view all their past jobs in the **Extraction History** tab. 
+- You can manually **Cancel** any active job directly from the History tab. 
+- Administrators have access to an **Admin Portal** and a **Global Kill Switch** that instantly terminates stuck or ghost jobs.
 
 ---
 
