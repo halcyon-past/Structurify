@@ -74,3 +74,11 @@ jobs:
             --push-endpoint="${WORKER_URL}/process-chunk" \
             --push-auth-service-account="${PUBSUB_SA_EMAIL}" \
             --push-auth-token-audience="${WORKER_URL}"
+
+      - name: Log Deployment Success
+        if: success()
+        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} worker success ${{ github.sha }} ${{ github.actor }}
+        
+      - name: Log Deployment Failure
+        if: failure()
+        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} worker failed ${{ github.sha }} ${{ github.actor }}

@@ -39,6 +39,14 @@ jobs:
             --service-account ${SA_EMAIL} \
             --set-env-vars GOOGLE_CLOUD_PROJECT=${PROJECT_ID},RAW_BUCKET_NAME=raw-uploads-${PROJECT_ID},PUBSUB_TOPIC_ID=schema-transformation-jobs
 
+      - name: Log Deployment Success
+        if: success()
+        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} backend success ${{ github.sha }} ${{ github.actor }}
+        
+      - name: Log Deployment Failure
+        if: failure()
+        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} backend failed ${{ github.sha }} ${{ github.actor }}
+
   deploy-worker:
     name: Deploy Worker to Cloud Run
     runs-on: ubuntu-latest
@@ -105,6 +113,13 @@ jobs:
             --push-auth-service-account="${PUBSUB_SA_EMAIL}" \
             --push-auth-token-audience="${WORKER_URL}"
 
+      - name: Log Deployment Success
+        if: success()
+        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} worker success ${{ github.sha }} ${{ github.actor }}
+        
+      - name: Log Deployment Failure
+        if: failure()
+        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} worker failed ${{ github.sha }} ${{ github.actor }}
   deploy-frontend:
     name: Deploy Frontend to Firebase
     runs-on: ubuntu-latest
@@ -138,3 +153,11 @@ jobs:
           npm ci
           npm run build
           npx firebase deploy --only hosting --project ${PROJECT_ID}
+
+      - name: Log Deployment Success
+        if: success()
+        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} frontend success ${{ github.sha }} ${{ github.actor }}
+        
+      - name: Log Deployment Failure
+        if: failure()
+        run: chmod +x scripts/log_deployment.sh && ./scripts/log_deployment.sh ${{ env.PROJECT_ID }} frontend failed ${{ github.sha }} ${{ github.actor }}
