@@ -270,31 +270,64 @@ export default function AdminPage() {
                       auditLogs.slice(0, 50).map((log, i) => (
                         <div 
                           key={log.id} 
-                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-black/40 hover:bg-black/60 rounded-2xl border border-white/5 transition-all group"
+                          className="flex flex-col gap-3 p-4 bg-black/40 hover:bg-black/60 rounded-2xl border border-white/5 transition-all group"
                           style={{ animationDelay: `${i * 50}ms` }}
                         >
-                          <div className="flex items-center gap-4">
-                            <div className={`p-2 rounded-xl ${
-                              log.status === "success" ? "bg-emerald-500/10 text-emerald-400" :
-                              log.status === "failed" ? "bg-red-500/10 text-red-400" :
-                              "bg-gray-500/10 text-gray-400"
-                            }`}>
-                              {log.status === "success" ? <CheckCircle2 className="w-5 h-5"/> : 
-                               log.status === "failed" ? <XCircle className="w-5 h-5"/> : 
-                               <Activity className="w-5 h-5"/>}
-                            </div>
-                            <div>
-                              <div className="text-sm font-bold text-gray-200 group-hover:text-white transition-colors">
-                                {log.action.replace(/_/g, ' ').toUpperCase()}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-4">
+                              <div className={`p-2 rounded-xl ${
+                                log.status === "success" ? "bg-emerald-500/10 text-emerald-400" :
+                                log.status === "failed" ? "bg-red-500/10 text-red-400" :
+                                "bg-gray-500/10 text-gray-400"
+                              }`}>
+                                {log.status === "success" ? <CheckCircle2 className="w-5 h-5"/> : 
+                                 log.status === "failed" ? <XCircle className="w-5 h-5"/> : 
+                                 <Activity className="w-5 h-5"/>}
                               </div>
-                              <div className="text-xs text-gray-500 mt-1 font-mono">Job: {log.job_id.split('-')[0]}...</div>
+                              <div>
+                                <div className="text-sm font-bold text-gray-200 group-hover:text-white transition-colors">
+                                  {log.action.replace(/_/g, ' ').toUpperCase()}
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1 font-mono">Job: {log.job_id.split('-')[0]}...</div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex sm:flex-col items-end justify-between sm:justify-center gap-1 text-xs">
+                              <span className="text-gray-400 bg-white/5 px-2.5 py-1 rounded-full">{log.user_id.substring(0, 8)}</span>
+                              <span className="text-gray-600">{new Date(log.timestamp).toLocaleTimeString()}</span>
                             </div>
                           </div>
-                          
-                          <div className="flex sm:flex-col items-end justify-between sm:justify-center gap-1 text-xs">
-                            <span className="text-gray-400 bg-white/5 px-2.5 py-1 rounded-full">{log.user_id.substring(0, 8)}</span>
-                            <span className="text-gray-600">{new Date(log.timestamp).toLocaleTimeString()}</span>
-                          </div>
+
+                          {(log.error_message || log.file_name || log.cloud_run_revision) && (
+                            <div className="pl-14 pr-2">
+                              <div className="pt-3 border-t border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {log.error_message && (
+                                  <div className="col-span-1 sm:col-span-2 bg-red-500/5 border border-red-500/10 rounded-lg p-3">
+                                    <div className="text-[10px] uppercase tracking-wider text-red-500/70 font-bold mb-1">Error Reason</div>
+                                    <div className="text-sm text-red-400 font-mono break-words">{log.error_message}</div>
+                                  </div>
+                                )}
+                                {log.file_name && (
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">File Processed</div>
+                                    <div className="text-xs text-gray-300 font-mono truncate" title={log.file_name}>{log.file_name}</div>
+                                  </div>
+                                )}
+                                {log.cloud_run_revision && (
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Worker Revision</div>
+                                    <div className="text-xs text-gray-300 font-mono">{log.cloud_run_revision.split('-').pop()}</div>
+                                  </div>
+                                )}
+                                {log.total_tokens !== undefined && (
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Tokens Used</div>
+                                    <div className="text-xs text-emerald-400 font-mono">{log.total_tokens.toLocaleString()}</div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))
                     )}

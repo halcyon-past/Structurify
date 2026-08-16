@@ -40,6 +40,9 @@ export interface AuditLog {
   status: string;
   duration_seconds?: number;
   total_tokens?: number;
+  error_message?: string;
+  file_name?: string;
+  cloud_run_revision?: string;
 }
 
 export interface DeploymentLog {
@@ -87,7 +90,10 @@ export const useAdminData = () => {
           timestamp: data.completed_at || data.started_at || data.created_at || new Date().toISOString(),
           status: data.status || 'unknown',
           duration_seconds: data.job_runtime_seconds,
-          total_tokens: data.total_tokens
+          total_tokens: data.total_tokens,
+          error_message: data.error_message,
+          file_name: data.file_name,
+          cloud_run_revision: data.cloud_run_revision
         } as AuditLog;
       }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setAuditLogs(auditData);
