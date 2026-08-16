@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.0] - 2026-08-16
 ### Added
+- **Automated Cancellation Emails**: The backend now seamlessly triggers a graceful Pub/Sub task to send users a "Job Cancelled" email whenever they manually cancel an extraction, or when the Admin Global Kill Switch purges the system.
+- **Enhanced Documentation**: Overhauled the Live Markdown Documentation with updated Mermaid.js architecture diagrams, and explicitly detailed email triggers and admin portal capabilities.
+- Renamed the 'Changelog' tab inside the Documentation portal to **Releases**.
 - **Dynamic Prompt Management**: All AI system instructions and user prompts (Auto-Clean, Schema Mapping, Metadata Generation) have been moved to Firestore, allowing admins to edit AI behavior directly from the Admin portal.
 - **Dynamic Configuration Engine**: Moved critical runtime settings (Gemini LLM model, chunk sizes) to Firestore, allowing admins to instantly hot-swap models directly from the UI without redeploying code.
 - **Deployment History Dashboard**: Added a new tab in the Admin Portal to track all frontend, backend, and worker deployments with direct links to Cloud Build/Firebase logs.

@@ -82,7 +82,8 @@ async def get_job_status(
 @router.post("/{job_id}/cancel")
 async def cancel_job(
     job_id: str,
-    firestore_svc: FirestoreService = Depends(get_firestore_service)
+    firestore_svc: FirestoreService = Depends(get_firestore_service),
+    pubsub_svc: PubSubService = Depends(get_pubsub_service)
 ):
     """
     Cancels a job by updating the Firestore job and audit documents.
@@ -96,12 +97,15 @@ async def cancel_job(
         raise HTTPException(status_code=400, detail=f"Job cannot be cancelled because it is already {data.get('status')}")
         
     firestore_svc.cancel_job(job_id)
+    if data.get("email"):
+        pubsub_svc.publish_cancel_email(job_id, data.get("email"))
     
     return {"status": "cancelled", "message": "Job cancelled successfully"}
 
 @router.post("/kill-switch")
 async def kill_switch(
-    firestore_svc: FirestoreService = Depends(get_firestore_service)
+    firestore_svc: FirestoreService = Depends(get_firestore_service),
+    pubsub_svc: PubSubService = Depends(get_pubsub_service)
 ):
     """
     Emergency Kill Switch: 
@@ -150,12 +154,22 @@ async def kill_switch(
         for job_status in ["queued", "processing", "processing_chunks"]:
             query = jobs_ref.where("status", "==", job_status).stream()
             for doc in query:
+                
                 batch.update(doc.reference, {
                     "status": "cancelled",
                     "updated_at": now,
                     "error_message": "Global Kill Switch Activated by Admin"
                 })
+                
+                doc_data = doc.to_dict()
+                if doc_data and doc_data.get("email"):
+                    try:
+                        pubsub_svc.publish_cancel_email(doc.id, doc_data.get("email"))
+                    except Exception as e:
+                        pass
+                
                 count += 1
+
                 if count % 400 == 0:
                     batch.commit()
                     batch = db.batch()
