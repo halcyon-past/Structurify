@@ -1,6 +1,6 @@
 # Structurify <img src="./docs/icons/logo.svg" width="36" align="absbottom" alt="logo" />
 
-**Live Demo**: [structurify.web.app](https://structurify.web.app)
+**Live Demo**: [structurify.web.app](https://structurify.aritro.cloud)
 
 **Structurify** is a production-ready, event-driven B2B SaaS platform that automates the transformation of unstructured, messy spreadsheet data (CSV, XLSX) into a standardized master schema using **Google Gemini 2.5 Flash**.
 

@@ -16,13 +16,14 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://structurify.aritro.cloud"),
   title: "Structurify | AI-Powered Data Extraction & Schema Enforcement",
   description: "Transform messy, unstructured spreadsheets into strict, machine-readable JSON or Excel schemas using Google Gemini 2.5 Flash. The ultimate automated ETL pipeline.",
   keywords: ["ETL", "Data Engineering", "Data Transformation", "AI", "Gemini", "Schema Enforcement", "CSV to JSON"],
   openGraph: {
     title: "Structurify | AI-Powered Data Extraction",
     description: "Transform unstructured spreadsheets into strict schemas instantly using AI.",
-    url: "https://structurify.web.app",
+    url: "https://structurify.aritro.cloud",
     siteName: "Structurify",
     images: [
       {
