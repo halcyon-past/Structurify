@@ -222,22 +222,4 @@ The script will output `generated_clean_50000.csv` and `generated_messy_50000.cs
 
 ## <img src="./docs/icons/cloud.svg" width="28" align="absbottom" alt="cloud deployment" /> Cloud Deployment
 
-Structurify is designed for seamless, automated deployment to Google Cloud Run. 
-
-### 1. Initial Infrastructure Setup
-Use Terraform to provision Storage Buckets, Firestore, Secret Manager, Pub/Sub, and IAM rules.
-```bash
-cd terraform
-terraform init
-terraform apply -var="project_id=your-gcp-project-id" -var="region=us-central1" -var="gemini_api_key=your-gemini-api-key"
-cd ..
-```
-
-### 2. Service Deployment
-Whenever you make changes to the code, simply run the deployment script to build the Docker images via Cloud Build and deploy them directly to Cloud Run.
-```bash
-chmod +x deploy.sh
-./deploy.sh your-gcp-project-id us-central1
-```
-
-*(Once deployed, update your `frontend/.env.local`'s `NEXT_PUBLIC_BACKEND_URL` to point to the live Backend Cloud Run URL).*
+👉 **See [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment instructions and architecture.**

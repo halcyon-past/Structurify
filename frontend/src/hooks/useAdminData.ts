@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, orderBy, updateDoc, doc, limit } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, updateDoc, doc, limit, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { UserData } from './useAuth';
 
@@ -40,12 +40,26 @@ export interface AuditLog {
   status: string;
   duration_seconds?: number;
   total_tokens?: number;
+  error_message?: string;
+  file_name?: string;
+  cloud_run_revision?: string;
+}
+
+export interface DeploymentLog {
+  id: string; // The service name (frontend, backend, worker)
+  service: string;
+  status: string;
+  commit: string;
+  actor: string;
+  log_url?: string;
+  timestamp: Timestamp | string | { toDate?: () => Date, _seconds?: number };
 }
 
 export const useAdminData = () => {
   const [users, setUsers] = useState<(UserData & { id: string })[]>([]);
   const [jobs, setJobs] = useState<AdminJob[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [deployments, setDeployments] = useState<DeploymentLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -64,10 +78,42 @@ export const useAdminData = () => {
     });
 
     // Audit Logs Realtime Listener (limit to 500)
-    const qAudit = query(collection(db, "audit_logs"), orderBy("timestamp", "desc"), limit(500));
+    const qAudit = query(collection(db, "job_audits"), limit(500));
     const unsubAudit = onSnapshot(qAudit, (snapshot) => {
-      const auditData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuditLog));
+      const auditData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+          id: doc.id, 
+          action: data.status === 'processing' ? 'started' : (data.status || 'unknown'),
+          job_id: doc.id,
+          user_id: data.user_id || 'guest',
+          timestamp: data.completed_at || data.started_at || data.created_at || new Date().toISOString(),
+          status: data.status || 'unknown',
+          duration_seconds: data.job_runtime_seconds,
+          total_tokens: data.total_tokens,
+          error_message: data.error_message,
+          file_name: data.file_name,
+          cloud_run_revision: data.cloud_run_revision
+        } as AuditLog;
+      }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setAuditLogs(auditData);
+    }, (error) => {
+      console.error("Audit Logs Error:", error);
+      setAuditLogs([{ 
+        id: 'error', 
+        action: `ERROR: ${error.message}`, 
+        job_id: 'err-123', 
+        user_id: 'system', 
+        timestamp: new Date().toISOString(), 
+        status: 'failed' 
+      } as AuditLog]);
+    });
+
+    // Deployments Realtime Listener
+    const qDeployments = query(collection(db, "deployments"), orderBy("timestamp", "desc"), limit(200));
+    const unsubDeployments = onSnapshot(qDeployments, (snapshot) => {
+      const depData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DeploymentLog));
+      setDeployments(depData);
       setLoading(false);
     });
 
@@ -75,6 +121,7 @@ export const useAdminData = () => {
       unsubUsers();
       unsubJobs();
       unsubAudit();
+      unsubDeployments();
     };
   }, []);
 
@@ -87,11 +134,10 @@ export const useAdminData = () => {
   };
 
   const cancelJob = async (jobId: string) => {
-    // Call the backend API instead of raw firestore to trigger the full abort
-    await fetch(`https://structurify-worker-592450361494.us-central1.run.app/api/jobs/${jobId}/cancel`, {
+    await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/jobs/${jobId}/cancel`, {
       method: 'POST'
     });
   };
 
-  return { users, jobs, auditLogs, loading, updateUserRole, updateUserPlan, cancelJob };
+  return { users, jobs, auditLogs, deployments, loading, updateUserRole, updateUserPlan, cancelJob };
 };
