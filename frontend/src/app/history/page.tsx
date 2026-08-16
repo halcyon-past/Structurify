@@ -6,7 +6,7 @@ import { useUserHistory, HistoryJob } from "@/hooks/useUserHistory";
 import { FileText, Clock, CheckCircle, AlertCircle, Loader2, ChevronDown, Download, Hash, Info, Table } from "lucide-react";
 import Link from "next/link";
 
-function JobCard({ job }: { job: HistoryJob }) {
+function JobCard({ job, onCancel }: { job: HistoryJob, onCancel: (id: string) => void }) {
   const [expanded, setExpanded] = useState(false);
 
   const getStatusConfig = (status: string) => {
@@ -49,6 +49,14 @@ function JobCard({ job }: { job: HistoryJob }) {
             <p className="text-sm font-medium text-gray-300 capitalize">{job.status}</p>
             <p className="text-xs text-gray-500">{dateStr}</p>
           </div>
+                    {(job.status === "queued" || job.status === "processing" || job.status === "processing_chunks") && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onCancel(job.job_id); }}
+              className="text-xs font-bold text-red-400 hover:text-white bg-red-500/10 hover:bg-red-500 border border-red-500/20 hover:border-red-500 px-3 py-1.5 rounded-lg transition-all"
+            >
+              Cancel
+            </button>
+          )}
           <ChevronDown size={20} className={`text-gray-400 transition-transform duration-300 ${expanded ? "rotate-180" : ""}`} />
         </div>
       </div>
@@ -166,7 +174,7 @@ function JobCard({ job }: { job: HistoryJob }) {
 
 export default function HistoryPage() {
   const { user, loading: authLoading } = useAuth();
-  const { jobs, loading: jobsLoading } = useUserHistory(user?.uid);
+  const { jobs, loading: jobsLoading, cancelJob } = useUserHistory(user?.uid);
 
   if (authLoading) {
     return (
@@ -225,7 +233,7 @@ export default function HistoryPage() {
         ) : (
           <div className="flex flex-col gap-2">
             {jobs.map((job) => (
-              <JobCard key={job.job_id} job={job} />
+              <JobCard key={job.job_id} job={job} onCancel={cancelJob} />
             ))}
           </div>
         )}

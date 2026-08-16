@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, status, Depends, Request
+from fastapi import APIRouter, HTTPException, status, Depends, Request, Security
 from src.models.schemas import JobRequest, JobResponse, JobStatusResponse
-from src.api.dependencies import get_pubsub_service, get_firestore_service
+from src.api.dependencies import get_pubsub_service, get_firestore_service, get_current_user, get_current_admin
 from src.services.pubsub import PubSubService
 from src.services.firestore import FirestoreService
 
@@ -82,7 +82,9 @@ async def get_job_status(
 @router.post("/{job_id}/cancel")
 async def cancel_job(
     job_id: str,
-    firestore_svc: FirestoreService = Depends(get_firestore_service)
+    firestore_svc: FirestoreService = Depends(get_firestore_service),
+    pubsub_svc: PubSubService = Depends(get_pubsub_service),
+    decoded_token: dict = Security(get_current_user)
 ):
     """
     Cancels a job by updating the Firestore job and audit documents.
@@ -92,16 +94,27 @@ async def cancel_job(
     if not data:
         raise HTTPException(status_code=404, detail="Job not found")
         
+    uid = decoded_token.get("uid")
+    user_doc = firestore_svc.db.collection("users").document(uid).get().to_dict() or {}
+    role = user_doc.get("role", "").lower()
+    
+    if data.get("user_id") != uid and role not in ["admin", "owner"]:
+        raise HTTPException(status_code=403, detail="Not authorized to cancel this job")
+        
     if data.get("status") in ["completed", "failed", "cancelled"]:
         raise HTTPException(status_code=400, detail=f"Job cannot be cancelled because it is already {data.get('status')}")
         
     firestore_svc.cancel_job(job_id)
+    if data.get("email"):
+        pubsub_svc.publish_cancel_email(job_id, data.get("email"))
     
     return {"status": "cancelled", "message": "Job cancelled successfully"}
 
 @router.post("/kill-switch")
 async def kill_switch(
-    firestore_svc: FirestoreService = Depends(get_firestore_service)
+    firestore_svc: FirestoreService = Depends(get_firestore_service),
+    pubsub_svc: PubSubService = Depends(get_pubsub_service),
+    decoded_token: dict = Security(get_current_admin)
 ):
     """
     Emergency Kill Switch: 
@@ -147,15 +160,25 @@ async def kill_switch(
         count = 0
         now = datetime.utcnow().isoformat()
         
-        for job_status in ["queued", "processing"]:
+        for job_status in ["queued", "processing", "processing_chunks"]:
             query = jobs_ref.where("status", "==", job_status).stream()
             for doc in query:
+                
                 batch.update(doc.reference, {
                     "status": "cancelled",
                     "updated_at": now,
                     "error_message": "Global Kill Switch Activated by Admin"
                 })
+                
+                doc_data = doc.to_dict()
+                if doc_data and doc_data.get("email"):
+                    try:
+                        pubsub_svc.publish_cancel_email(doc.id, doc_data.get("email"))
+                    except Exception as e:
+                        pass
+                
                 count += 1
+
                 if count % 400 == 0:
                     batch.commit()
                     batch = db.batch()

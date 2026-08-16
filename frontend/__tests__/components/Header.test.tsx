@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { Header } from '../../src/components/Header';
 import { useAuth } from '../../src/hooks/useAuth';
 
@@ -12,27 +12,29 @@ describe('Header Component', () => {
       user: null, 
       loading: false, 
       signInWithGoogle: jest.fn(), 
-      logout: jest.fn() 
+      logOut: jest.fn() 
     });
     
     render(<Header />);
     
-    expect(screen.getByText('Sign in with Google')).toBeInTheDocument();
-    expect(screen.queryByText('Sign out')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
+    expect(screen.queryByText(/sign out/i)).not.toBeInTheDocument();
   });
 
   it('renders user info and sign out button when logged in', () => {
     (useAuth as jest.Mock).mockReturnValue({ 
-      user: { displayName: 'John Doe', photoURL: 'http://example.com/photo.jpg' }, 
+      user: { displayName: 'John Doe', photoURL: 'http://example.com/photo.jpg', email: 'john@example.com' },
+      userData: { role: 'user' },
       loading: false, 
       signInWithGoogle: jest.fn(), 
-      logout: jest.fn() 
+      logOut: jest.fn() 
     });
     
     render(<Header />);
     
     expect(screen.getByText('John Doe')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /john doe/i }));
     expect(screen.getByText(/Sign Out/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Sign in with Google/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /sign in/i })).not.toBeInTheDocument();
   });
 });

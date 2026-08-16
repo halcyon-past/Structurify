@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, orderBy, updateDoc, doc, limit, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, query, onSnapshot, orderBy, updateDoc, setDoc, doc, limit, Timestamp } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
 import { UserData } from './useAuth';
 
 export interface AdminJob {
@@ -55,11 +55,28 @@ export interface DeploymentLog {
   timestamp: Timestamp | string | { toDate?: () => Date, _seconds?: number };
 }
 
+export interface SystemSettings {
+  llm_model: string;
+  max_rows_per_chunk: number;
+  target_cells_per_chunk: number;
+  prompt_auto_clean_system?: string;
+  prompt_auto_clean_user?: string;
+  prompt_schema_map_system?: string;
+  prompt_schema_map_user?: string;
+  prompt_metadata_system?: string;
+  prompt_metadata_user?: string;
+}
+
 export const useAdminData = () => {
   const [users, setUsers] = useState<(UserData & { id: string })[]>([]);
   const [jobs, setJobs] = useState<AdminJob[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [deployments, setDeployments] = useState<DeploymentLog[]>([]);
+  const [settings, setSettings] = useState<SystemSettings>({
+    llm_model: "gemini-3.6-flash",
+    max_rows_per_chunk: 500,
+    target_cells_per_chunk: 5000,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -68,6 +85,13 @@ export const useAdminData = () => {
     const unsubUsers = onSnapshot(qUsers, (snapshot) => {
       const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserData & { id: string }));
       setUsers(usersData);
+    });
+
+    // Settings Realtime Listener
+    const unsubSettings = onSnapshot(doc(db, "settings", "system"), (docSnap) => {
+      if (docSnap.exists()) {
+        setSettings(prev => ({ ...prev, ...docSnap.data() as SystemSettings }));
+      }
     });
 
     // Jobs Realtime Listener (limit to 100 for performance)
@@ -119,6 +143,7 @@ export const useAdminData = () => {
 
     return () => {
       unsubUsers();
+      unsubSettings();
       unsubJobs();
       unsubAudit();
       unsubDeployments();
@@ -134,10 +159,22 @@ export const useAdminData = () => {
   };
 
   const cancelJob = async (jobId: string) => {
+    const token = await auth.currentUser?.getIdToken();
     await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/jobs/${jobId}/cancel`, {
-      method: 'POST'
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     });
   };
 
-  return { users, jobs, auditLogs, deployments, loading, updateUserRole, updateUserPlan, cancelJob };
+  const updateSystemSetting = async (key: keyof SystemSettings, value: string | number) => {
+    await setDoc(doc(db, "settings", "system"), { [key]: value }, { merge: true });
+  };
+
+  const saveSystemSettings = async (newSettings: SystemSettings) => {
+    await setDoc(doc(db, "settings", "system"), newSettings, { merge: true });
+  };
+
+  return { users, jobs, auditLogs, deployments, settings, loading, updateUserRole, updateUserPlan, cancelJob, updateSystemSetting, saveSystemSettings };
 };
