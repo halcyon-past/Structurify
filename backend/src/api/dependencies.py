@@ -1,12 +1,19 @@
 from typing import Generator
 from fastapi import Request, HTTPException, Security, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from firebase_admin import auth
 from src.services.storage import StorageService
 from src.services.pubsub import PubSubService
 from src.services.firestore import FirestoreService
 
 # Dependency injection for FastAPI routes
+
+def _get_firebase_auth():
+    try:
+        from firebase_admin import auth
+        return auth
+    except ImportError:
+        return None
+
 
 def get_storage_service() -> StorageService:
     return StorageService()
@@ -20,11 +27,15 @@ def get_firestore_service() -> FirestoreService:
 security = HTTPBearer()
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Security(security)):
+    auth = _get_firebase_auth()
+    if auth is None:
+        raise HTTPException(status_code=503, detail="Firebase authentication is not configured")
+
     token = credentials.credentials
     try:
         decoded_token = auth.verify_id_token(token)
         return decoded_token
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=401, detail="Invalid authentication token")
 
 def get_current_admin(

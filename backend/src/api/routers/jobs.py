@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, status, Depends, Request
+from fastapi import APIRouter, HTTPException, status, Depends, Request, Security
 from src.models.schemas import JobRequest, JobResponse, JobStatusResponse
-from src.api.dependencies import get_pubsub_service, get_firestore_service
+from src.api.dependencies import get_pubsub_service, get_firestore_service, get_current_user, get_current_admin
 from src.services.pubsub import PubSubService
 from src.services.firestore import FirestoreService
 

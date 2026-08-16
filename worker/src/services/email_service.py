@@ -26,7 +26,8 @@ class EmailService:
         rows = metadata.get("rows_processed", "Unknown")
         duration = metadata.get("duration_seconds", "Unknown")
         desc = metadata.get("global_description", "Data successfully structured.")
-        
+
+        plain_text = f"Your dataset {file_name} is ready. Download it here: {download_url}"
         html = f"""\
         <!DOCTYPE html>
         <html>
@@ -36,14 +37,14 @@ class EmailService:
                 <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; tracking: tight;">Structurify</h1>
               </div>
               <div style="padding: 40px 30px;">
-                <h2 style="color: #f8fafc; font-size: 20px; margin-top: 0; margin-bottom: 20px;">Processing Started ⚡</h2>
+                <h2 style="color: #f8fafc; font-size: 20px; margin-top: 0; margin-bottom: 20px;">Data Ready ✅</h2>
                 <p style="font-size: 16px; color: #d1d5db; line-height: 1.6; margin-bottom: 25px;">
-                  We have successfully queued your dataset. Our AI worker nodes are currently mapping, cleaning, and structuring your data in the background.
+                  Your dataset <strong>{file_name}</strong> has been successfully cleaned and structured.
                 </p>
                 <div style="background-color: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; padding: 15px; margin-bottom: 30px;">
-                  <p style="color: #93c5fd; font-size: 14px; margin: 0;">Since your file is large, this may take a few minutes. You can safely close your browser; we'll email you again when it's done!</p>
+                  <p style="color: #93c5fd; font-size: 14px; margin: 0;">Processed rows: {rows} • Duration: {duration}s • Summary: {desc}</p>
                 </div>
-                <a href="{tracking_url}" style="background-color: #3b82f6; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">Track Live Progress</a>
+                <a href="{download_url}" style="background-color: #3b82f6; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">Download Your File</a>
                 <p style="font-size: 13px; color: #6b7280; margin-top: 40px; margin-bottom: 0;">This is an automated message from the Structurify AI Pipeline.</p>
               </div>
             </div>
@@ -51,6 +52,7 @@ class EmailService:
         </html>
         """
 
+        msg.attach(MIMEText(plain_text, "plain"))
         msg.attach(MIMEText(html, "html"))
 
         try:
@@ -72,6 +74,7 @@ class EmailService:
         msg["From"] = self.smtp_from_email
         msg["To"] = to_email
 
+        plain_text = f"We are processing your dataset. Track progress here: {tracking_url}"
         html = f"""\
         <html>
           <body style="font-family: Arial, sans-serif; background-color: #09090b; color: #ffffff; padding: 40px; text-align: center;">
@@ -87,6 +90,7 @@ class EmailService:
         </html>
         """
 
+        msg.attach(MIMEText(plain_text, "plain"))
         msg.attach(MIMEText(html, "html"))
 
         try:
@@ -108,6 +112,7 @@ class EmailService:
         msg["From"] = self.smtp_from_email
         msg["To"] = to_email
 
+        plain_text = f"Your Structurify job was cancelled. View the extraction log: {tracking_url}"
         html_body = f"""
         <!DOCTYPE html>
         <html>
@@ -132,6 +137,7 @@ class EmailService:
         </html>
         """
 
+        msg.attach(MIMEText(plain_text, "plain"))
         msg.attach(MIMEText(html_body, "html"))
 
         try:
