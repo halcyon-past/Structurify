@@ -59,6 +59,12 @@ export interface SystemSettings {
   llm_model: string;
   max_rows_per_chunk: number;
   target_cells_per_chunk: number;
+  prompt_auto_clean_system?: string;
+  prompt_auto_clean_user?: string;
+  prompt_schema_map_system?: string;
+  prompt_schema_map_user?: string;
+  prompt_metadata_system?: string;
+  prompt_metadata_user?: string;
 }
 
 export const useAdminData = () => {
@@ -162,5 +168,9 @@ export const useAdminData = () => {
     await setDoc(doc(db, "settings", "system"), { [key]: value }, { merge: true });
   };
 
-  return { users, jobs, auditLogs, deployments, settings, loading, updateUserRole, updateUserPlan, cancelJob, updateSystemSetting };
+  const saveSystemSettings = async (newSettings: SystemSettings) => {
+    await setDoc(doc(db, "settings", "system"), newSettings, { merge: true });
+  };
+
+  return { users, jobs, auditLogs, deployments, settings, loading, updateUserRole, updateUserPlan, cancelJob, updateSystemSetting, saveSystemSettings };
 };
