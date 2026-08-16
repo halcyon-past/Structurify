@@ -93,6 +93,7 @@ class LLMEngine:
             "5. Output must be valid JSON."
         )
 
+        prompt = f"Map the following CSV data to the target schema:\n\n{chunk_data}"
         model = config_service.get('llm_model', 'gemini-2.5-flash')
 
         response = self.client.models.generate_content(
