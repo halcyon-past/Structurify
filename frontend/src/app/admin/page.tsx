@@ -85,19 +85,9 @@ export default function AdminPage() {
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 relative z-10">
             <div>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold tracking-wider uppercase">
-                  <ShieldAlert className="w-3.5 h-3.5" />
-                  Command Center
-                </div>
-                <button 
-                  onClick={killSwitch}
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase text-red-400 bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 transition-all shadow-[0_0_15px_rgba(239,68,68,0.15)] hover:shadow-red-500/30"
-                  title="Purge all queues and abort active jobs"
-                >
-                  <Skull className="w-3.5 h-3.5" />
-                  ENGAGE KILL SWITCH
-                </button>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold mb-4 tracking-wider uppercase">
+                <ShieldAlert className="w-3.5 h-3.5" />
+                Command Center
               </div>
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500">
                 Platform Admin
@@ -105,6 +95,16 @@ export default function AdminPage() {
               <p className="text-gray-400 mt-3 text-lg max-w-xl">
                 Real-time oversight of global infrastructure, AI processing streams, and user subscriptions.
               </p>
+              <div className="mt-6">
+                <button 
+                  onClick={killSwitch}
+                  className="inline-flex items-center gap-3 px-6 py-3 rounded-xl font-black tracking-widest uppercase text-white bg-red-600 hover:bg-red-500 border border-red-400/50 transition-all shadow-[0_0_30px_rgba(220,38,38,0.4)] hover:shadow-[0_0_40px_rgba(239,68,68,0.6)] hover:-translate-y-0.5 active:translate-y-0"
+                  title="Purge all queues and abort active jobs"
+                >
+                  <Skull className="w-5 h-5 animate-pulse" />
+                  ENGAGE KILL SWITCH
+                </button>
+              </div>
             </div>
             
             <div className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-2xl p-1.5 backdrop-blur-xl shadow-2xl overflow-x-auto max-w-full">
