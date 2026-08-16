@@ -59,6 +59,18 @@ export default function AdminPage() {
   const totalRowsProcessed = jobs.reduce((acc, job) => acc + (job.processed_rows || 0), 0);
   const successRate = jobs.length > 0 ? Math.round(((jobs.length - failedJobs) / jobs.length) * 100) : 100;
 
+  const successfulJobs = jobs.filter(j => j.status === "completed" && j.processed_rows && j.processed_rows > 0);
+  let totalSuccessfulTime = 0;
+  let totalSuccessfulRows = 0;
+  successfulJobs.forEach(j => {
+    const start = new Date(j.created_at).getTime();
+    const end = new Date(j.updated_at || j.created_at).getTime();
+    totalSuccessfulTime += (end - start) / 1000;
+    totalSuccessfulRows += j.processed_rows || 0;
+  });
+  const avgTimePerRow = totalSuccessfulRows > 0 ? (totalSuccessfulTime / totalSuccessfulRows) : 0;
+  const formattedAvgTime = avgTimePerRow > 0 ? `${avgTimePerRow.toFixed(2)}s` : "N/A";
+
   const formatNumber = (num: number) => new Intl.NumberFormat('en-US').format(num);
 
   const calculateDuration = (job: AdminJob) => {
@@ -134,7 +146,7 @@ export default function AdminPage() {
 
           {activeTab === "dashboard" && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
                 <MetricCard 
                   icon={<Users className="w-6 h-6"/>} 
                   title="Total Users" 
@@ -166,6 +178,14 @@ export default function AdminPage() {
                   sub="Gemini LLM inference"
                   gradient="from-emerald-500/20 to-teal-500/5"
                   iconColor="text-emerald-400"
+                />
+                <MetricCard 
+                  icon={<Clock className="w-6 h-6"/>} 
+                  title="Avg Speed" 
+                  value={formattedAvgTime} 
+                  sub="Time per successful row"
+                  gradient="from-indigo-500/20 to-blue-500/5"
+                  iconColor="text-indigo-400"
                 />
               </div>
 
@@ -258,12 +278,12 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <div className="lg:col-span-2 bg-gradient-to-b from-white/[0.05] to-transparent border border-white/10 rounded-3xl p-8 backdrop-blur-md flex flex-col h-[500px]">
-                  <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
+                <div className="lg:col-span-2 bg-gradient-to-b from-white/[0.05] to-transparent border border-white/10 rounded-3xl p-8 backdrop-blur-md flex flex-col h-full min-h-0">
+                  <h3 className="text-xl font-bold mb-6 flex items-center gap-3 shrink-0">
                     <Clock className="w-6 h-6 text-blue-400"/> 
                     Live System Feed
                   </h3>
-                  <div className="space-y-3 overflow-y-auto pr-4 custom-scrollbar flex-1 relative">
+                  <div className="space-y-3 overflow-y-auto pr-4 custom-scrollbar flex-1 relative min-h-0">
                     {auditLogs.length === 0 ? (
                       <div className="absolute inset-0 flex items-center justify-center text-gray-500">No recent activity found.</div>
                     ) : (
@@ -738,11 +758,10 @@ function MetricCard({ icon, title, value, sub, gradient, iconColor }: { icon: Re
     <div className="relative group rounded-3xl p-[1px] overflow-hidden">
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50 group-hover:opacity-100 transition-opacity duration-500`}></div>
       <div className="relative h-full bg-black/80 backdrop-blur-xl border border-white/5 rounded-3xl p-6 transition-all duration-300 hover:bg-black/60">
-        <div className="flex justify-between items-start mb-6">
-          <div className={`p-3 bg-white/5 rounded-2xl border border-white/5 shadow-inner ${iconColor}`}>
+        <div className="mb-6">
+          <div className={`inline-block p-3 bg-white/5 rounded-2xl border border-white/5 shadow-inner ${iconColor}`}>
             {icon}
           </div>
-          <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-gray-300 group-hover:translate-x-1 transition-all" />
         </div>
         <div>
           <h4 className="text-gray-400 text-sm font-semibold tracking-wide uppercase mb-2">{title}</h4>
