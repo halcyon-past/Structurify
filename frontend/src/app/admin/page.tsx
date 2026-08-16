@@ -11,12 +11,12 @@ import {
 } from "lucide-react";
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "jobs" | "users" | "deployments">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "jobs" | "users" | "deployments" | "settings">("dashboard");
   const [selectedJob, setSelectedJob] = useState<AdminJob | null>(null);
   const [depServiceFilter, setDepServiceFilter] = useState<string>("all");
   const [depStatusFilter, setDepStatusFilter] = useState<string>("all");
   const [currentTime, setCurrentTime] = useState(Date.now());
-  const { users, jobs, auditLogs, deployments, loading, updateUserRole, updateUserPlan, cancelJob } = useAdminData();
+  const { users, jobs, auditLogs, deployments, settings, loading, updateUserRole, updateUserPlan, cancelJob, updateSystemSetting } = useAdminData();
   const { userData } = useAuth();
 
   const killSwitch = async () => {
@@ -128,7 +128,7 @@ export default function AdminPage() {
                 <RefreshCw className="w-5 h-5" />
               </button>
               <div className="w-px h-8 bg-white/10 mx-1"></div>
-              {(["dashboard", "jobs", "users", "deployments"] as const).map((tab) => (
+              {(["dashboard", "jobs", "users", "deployments", "settings"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -644,6 +644,59 @@ export default function AdminPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "settings" && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+              <div className="bg-gradient-to-b from-white/[0.05] to-transparent border border-white/10 rounded-3xl p-8 backdrop-blur-md">
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
+                  <Server className="w-6 h-6 text-purple-400"/> 
+                  System Configuration
+                </h3>
+                
+                <div className="space-y-8 max-w-2xl">
+                  {/* LLM Model Config */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-bold text-gray-300 uppercase tracking-wider">Gemini LLM Model</label>
+                    <p className="text-sm text-gray-500 mb-2">Select the underlying Gemini model used by the ETL worker for data transformation.</p>
+                    <select 
+                      value={settings.llm_model || 'gemini-2.5-flash'}
+                      onChange={(e) => updateSystemSetting('llm_model', e.target.value)}
+                      className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                    >
+                      <option value="gemini-2.5-flash">Gemini 2.5 Flash (Default)</option>
+                      <option value="gemini-2.5-pro">Gemini 2.5 Pro (High Accuracy)</option>
+                      <option value="gemini-2.0-flash">Gemini 2.0 Flash (Legacy)</option>
+                      <option value="gemini-2.0-pro-exp-02-05">Gemini 2.0 Pro Experimental</option>
+                    </select>
+                  </div>
+
+                  {/* Max Rows Per Chunk Config */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-bold text-gray-300 uppercase tracking-wider">Max Rows Per Chunk</label>
+                    <p className="text-sm text-gray-500 mb-2">The absolute maximum number of rows a worker will send to Gemini in a single prompt. Higher limits reduce pubsub overhead but increase token size.</p>
+                    <input 
+                      type="number"
+                      value={settings.max_rows_per_chunk || 500}
+                      onChange={(e) => updateSystemSetting('max_rows_per_chunk', parseInt(e.target.value) || 500)}
+                      className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                    />
+                  </div>
+                  
+                  {/* Target Cells Per Chunk Config */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-bold text-gray-300 uppercase tracking-wider">Target Cells Per Chunk</label>
+                    <p className="text-sm text-gray-500 mb-2">Target cell threshold (rows × columns). Used to dynamically scale down chunk size for wide CSVs.</p>
+                    <input 
+                      type="number"
+                      value={settings.target_cells_per_chunk || 5000}
+                      onChange={(e) => updateSystemSetting('target_cells_per_chunk', parseInt(e.target.value) || 5000)}
+                      className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}

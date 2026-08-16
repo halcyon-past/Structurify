@@ -11,6 +11,7 @@ from src.services.storage import StorageService
 from src.services.firestore import FirestoreService
 from src.services.email_service import EmailService
 from src.services.audit import AuditService
+from src.services.config_service import config_service
 
 class FileParserService:
     def __init__(self, storage_svc: StorageService, firestore_svc: FirestoreService, email_svc: EmailService, audit_svc: AuditService = None):
@@ -36,7 +37,9 @@ class FileParserService:
             # With gemini-3.6-flash (65K output token limit), we can safely process 500 rows per chunk.
             # Fewer chunks = fewer Pub/Sub push deliveries = no push window throttling.
             num_fields = len(target_schema.keys()) if target_schema else 1
-            chunk_size = max(250, min(500, 5000 // num_fields))
+            max_chunk_size = config_service.get('max_rows_per_chunk', 500)
+            target_cells = config_service.get('target_cells_per_chunk', 5000)
+            chunk_size = max(250, min(max_chunk_size, target_cells // num_fields))
             chunks = []
             
             if file_path.lower().endswith(".csv"):

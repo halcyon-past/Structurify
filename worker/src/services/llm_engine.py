@@ -4,6 +4,7 @@ from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_excep
 from google import genai
 from google.genai import types
 from src.core.config import settings
+from src.services.config_service import config_service
 
 def is_retryable_exception(exception: Exception) -> bool:
     err_str = str(exception)
@@ -18,8 +19,9 @@ def is_retryable_exception(exception: Exception) -> bool:
     return True
 
 class LLMEngine:
-    def __init__(self, client: genai.Client = None):
+    def __init__(self, client: genai.Client = None, model: str = 'gemini-2.5-flash'):
         self.client = client or genai.Client(api_key=settings.GEMINI_API_KEY)
+        self.model = model
 
     @retry(
         wait=wait_exponential(multiplier=2, min=10, max=120),
@@ -43,8 +45,10 @@ class LLMEngine:
             )
             prompt = f"Clean the following CSV data and return it as a JSON array of objects:\n\n{chunk_data}"
             
+            model = config_service.get('llm_model', 'gemini-2.5-flash')
+
             response = self.client.models.generate_content(
-                model='gemini-2.5-flash',
+                model=model,
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     system_instruction=system_instruction,
@@ -89,10 +93,10 @@ class LLMEngine:
             "5. Output must be valid JSON."
         )
 
-        prompt = f"Map the following CSV data to the target schema:\n\n{chunk_data}"
+        model = config_service.get('llm_model', 'gemini-2.5-flash')
 
         response = self.client.models.generate_content(
-            model='gemini-2.5-flash',
+            model=model,
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -133,8 +137,10 @@ class LLMEngine:
         
         prompt = f"Schema: {json.dumps(target_schema)}\nStats: {json.dumps(duckdb_stats)}"
         
+        model = config_service.get('llm_model', 'gemini-2.5-flash')
+
         response = self.client.models.generate_content(
-            model='gemini-2.5-flash',
+            model=model,
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,

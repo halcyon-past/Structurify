@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, orderBy, updateDoc, doc, limit, Timestamp } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, updateDoc, setDoc, doc, limit, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { UserData } from './useAuth';
 
@@ -55,11 +55,22 @@ export interface DeploymentLog {
   timestamp: Timestamp | string | { toDate?: () => Date, _seconds?: number };
 }
 
+export interface SystemSettings {
+  llm_model: string;
+  max_rows_per_chunk: number;
+  target_cells_per_chunk: number;
+}
+
 export const useAdminData = () => {
   const [users, setUsers] = useState<(UserData & { id: string })[]>([]);
   const [jobs, setJobs] = useState<AdminJob[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [deployments, setDeployments] = useState<DeploymentLog[]>([]);
+  const [settings, setSettings] = useState<SystemSettings>({
+    llm_model: "gemini-2.5-flash",
+    max_rows_per_chunk: 500,
+    target_cells_per_chunk: 5000,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -68,6 +79,13 @@ export const useAdminData = () => {
     const unsubUsers = onSnapshot(qUsers, (snapshot) => {
       const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserData & { id: string }));
       setUsers(usersData);
+    });
+
+    // Settings Realtime Listener
+    const unsubSettings = onSnapshot(doc(db, "settings", "system"), (docSnap) => {
+      if (docSnap.exists()) {
+        setSettings(prev => ({ ...prev, ...docSnap.data() as SystemSettings }));
+      }
     });
 
     // Jobs Realtime Listener (limit to 100 for performance)
@@ -119,6 +137,7 @@ export const useAdminData = () => {
 
     return () => {
       unsubUsers();
+      unsubSettings();
       unsubJobs();
       unsubAudit();
       unsubDeployments();
@@ -139,5 +158,9 @@ export const useAdminData = () => {
     });
   };
 
-  return { users, jobs, auditLogs, deployments, loading, updateUserRole, updateUserPlan, cancelJob };
+  const updateSystemSetting = async (key: keyof SystemSettings, value: any) => {
+    await setDoc(doc(db, "settings", "system"), { [key]: value }, { merge: true });
+  };
+
+  return { users, jobs, auditLogs, deployments, settings, loading, updateUserRole, updateUserPlan, cancelJob, updateSystemSetting };
 };
