@@ -1,3 +1,4 @@
+from typing import Optional
 import uuid
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, status, Depends, Request, Security
