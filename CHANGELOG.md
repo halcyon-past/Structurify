@@ -7,12 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.0] - 2026-08-16
 ### Added
+- **Dynamic Prompt Management**: All AI system instructions and user prompts (Auto-Clean, Schema Mapping, Metadata Generation) have been moved to Firestore, allowing admins to edit AI behavior directly from the Admin portal.
 - **Dynamic Configuration Engine**: Moved critical runtime settings (Gemini LLM model, chunk sizes) to Firestore, allowing admins to instantly hot-swap models directly from the UI without redeploying code.
 - **Deployment History Dashboard**: Added a new tab in the Admin Portal to track all frontend, backend, and worker deployments with direct links to Cloud Build/Firebase logs.
 - **Detailed Audit Context**: The Live System Feed now dynamically drops down to reveal fatal error stack traces, processed filenames, used tokens, and Cloud Run revision hashes for crashed jobs.
 - **Average Extraction Speed KPI**: Added a new platform health metric calculating the true average time to process a successful row across the entire system.
 - Comprehensive `DEPLOYMENT.md` architecture guide detailing the CI/CD pipeline and observability stack.
 ### Changed
+- Refactored the **Admin Settings UI** to utilize a local state and a dedicated "Save Changes" button, preventing accidental live configuration updates.
 - Restyled the **Global Kill Switch** into a highly prominent primary action button below the main header to prevent navbar overflow on mobile devices and emphasize its destructive nature.
 - `deploy.sh` script rewritten to accept optional target services (`frontend`, `backend`, `worker`) and seamlessly log local deployments directly to Firestore.
 - Firestore Security Rules updated to grant Admins explicit read access to `job_audits` and `deployments` collections.

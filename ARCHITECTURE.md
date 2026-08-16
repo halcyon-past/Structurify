@@ -186,5 +186,5 @@ Structurify uses a NoSQL document database (Firestore) to track real-time state,
    - **Usage:** Whenever `deploy.sh` or GitHub Actions triggers a rollout, a new document is POSTed here containing the commit hash, actor, and a direct link to the Cloud Build / Firebase logs. Read by the Admin Portal's Deployment History table.
 
 5. **`settings`**
-   - **Purpose:** Global platform configuration and runtime settings.
-   - **Usage:** Contains dynamic configurations like the `system` document (which controls the active `llm_model`, `max_rows_per_chunk`, and `target_cells_per_chunk`) and UI content like the `docs` document. The Admin Portal writes to this collection, and backend workers read it periodically or per-request to adapt behavior without requiring code redeployments.
+   - **Purpose:** Global platform configuration, runtime settings, and dynamic AI Prompt Management.
+   - **Usage:** Contains dynamic configurations like the `system` document (which controls the active `llm_model`, chunk sizes, and editable system instructions / user prompts for the AI extraction engines). The Admin Portal writes to this collection via the Settings tab using a "Save Changes" bulk-commit strategy. Backend workers globally cache these settings (via `DynamicConfigService`) and instantly adapt their behavior without requiring code redeployments.
