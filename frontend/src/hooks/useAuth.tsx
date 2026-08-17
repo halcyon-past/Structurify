@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { User, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, SAMLAuthProvider, OAuthProvider, fetchSignInMethodsForEmail, linkWithPopup, AuthError } from "firebase/auth";
+import { User, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, SAMLAuthProvider, OAuthProvider, linkWithPopup } from "firebase/auth";
 import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       // Preserve roles but update tenant if needed
       const existingData = userSnap.data();
-      const updates: any = {};
+      const updates: Record<string, unknown> = {};
       let needsUpdate = false;
       
       if (tenantId && existingData.tenant_id !== tenantId) {
@@ -110,9 +110,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const handleAuthError = async (error: any) => {
-    if (error.code === 'auth/account-exists-with-different-credential') {
-      const email = error.customData?.email;
+  const handleAuthError = async (error: unknown) => {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'auth/account-exists-with-different-credential') {
+      const email = (error as { customData?: { email?: string } }).customData?.email;
       if (email) {
         alert(`An account already exists with ${email}. Please sign in using your original provider to link accounts.`);
       }
