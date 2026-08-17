@@ -42,9 +42,9 @@ export default function AdminPage() {
       if (!res.ok) throw new Error(data.detail || "Failed to engage kill switch");
       alert(`Kill switch engaged. System purged: ${data.message || "Success"}`);
       window.location.reload();
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      alert(e.message || "Failed to engage kill switch.");
+      alert((e as Error).message || "Failed to engage kill switch.");
     }
   };
 

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-08-17
+### Added
+- **Enterprise SSO Support**: Introduced support for Enterprise SSO via SAML and OIDC through Firebase Identity Platform.
+- **Multi-Tenant Workspaces**: Integrated `tenantId` mapping into the authentication flow. Enterprise SSO users will have their tenant IDs injected into their session, automatically preserving multi-tenant isolation and securely mapping them into the `workspaces` array in their user profile.
+- **Explicit Account Linking**: Implemented `linkAccount` functionality and enhanced error handling to proactively detect identity conflicts (`auth/account-exists-with-different-credential`). The system now prompts users for proper conflict resolution and account merging.
+- **Comprehensive Jest Coverage**: Added full unit test coverage for the Next.js `useAuth` hook, rigorously testing Google login, SAML/SSO tenant logins, and authorization data mapping.
+
 ## [2.2.0] - 2026-08-16
 ### Added
 - **Job Cancellation Directly from History**: Users (both registered and guests) can now seamlessly cancel running jobs directly from their extraction history dashboard.
