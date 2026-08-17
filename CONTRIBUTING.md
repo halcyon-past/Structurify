@@ -18,7 +18,7 @@ Our CI/CD pipeline enforces strict branch naming. Direct pushes to `main`, `dev`
 
 ## 2. Setting Up Locally
 
-See the `README.md` for a comprehensive setup guide. Ensure you have Node.js 20+ and Python 3.12+ installed. 
+See the `README.md` for a comprehensive setup guide. Ensure you have Node.js >= 20 and Python >= 3.10 installed. 
 You will also need to authenticate with Google Cloud via the `gcloud` CLI to interact with local emulators or deploy to development projects.
 
 ## 3. Pull Request Requirements
