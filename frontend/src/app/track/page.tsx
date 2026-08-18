@@ -59,6 +59,7 @@ function TrackContent() {
 
   const currentState = jobState || fallbackData;
   const status = String(currentState?.status || "queued");
+  const isPreview = searchParams.get("preview") === "true" || !!currentState?.is_preview;
   
   const totalChunks = Number(currentState?.total_chunks) || 0;
   const completedChunks = Number(currentState?.completed_chunks) || 0;
@@ -96,7 +97,7 @@ function TrackContent() {
             <h1 className="text-3xl font-bold text-gray-100">
               Job Status Pipeline
             </h1>
-            {currentState?.is_preview && (
+            {isPreview && (
               <span className="px-3 py-1 text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full">
                 PREVIEW
               </span>
@@ -118,7 +119,7 @@ function TrackContent() {
         </header>
 
         {/* TIMELINE OR PREVIEW TABLE */}
-        {currentState?.is_preview ? (
+        {isPreview ? (
           <div className="relative mb-12">
             {status !== 'completed' && status !== 'failed' && (
               <div className="flex flex-col items-center justify-center py-12 gap-4 animate-in fade-in">
@@ -248,7 +249,7 @@ function TrackContent() {
               </div>
             </div>
             
-            {!currentState?.is_preview && (
+            {!isPreview && (
               <a 
                 href={String(currentState?.download_url)} 
                 target="_blank" 
@@ -260,7 +261,7 @@ function TrackContent() {
               </a>
             )}
             
-            {currentState?.is_preview && (
+            {isPreview && (
               <button 
                 onClick={() => router.push("/")}
                 className="group relative flex items-center justify-center gap-2 w-full overflow-hidden rounded-xl bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 py-4 px-4 font-bold transition-all duration-300 border border-accent-500/20 hover:border-accent-500/40 hover:shadow-[0_0_30px_rgba(139,92,246,0.15)] active:scale-[0.98]"
