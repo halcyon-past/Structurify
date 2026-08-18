@@ -21,6 +21,46 @@ function TrackContent() {
   // Fallback Polling (in case Firebase onSnapshot is blocked)
   const [fallbackData, setFallbackData] = useState<JobState | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  const handleProcessJob = async () => {
+    if (!currentState?.file_path || !currentState?.file_name) return;
+    
+    try {
+      setIsProcessing(true);
+      const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      const payload = {
+        file_path: currentState.file_path,
+        file_name: currentState.file_name,
+        target_schema: currentState.target_schema || {},
+        email: currentState.email || "",
+        role: currentState.role || "guest",
+        plan: currentState.plan || "free",
+        user_id: currentState.user_id || "",
+        is_preview: false
+      };
+      
+      const res = await fetch(`${BACKEND_URL}/api/v1/jobs`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        router.push(`/track?jobId=${data.job_id}`);
+      } else {
+        alert("Failed to start full job.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error starting job.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
   
   const handleCancel = async () => {
     try {
@@ -265,13 +305,26 @@ function TrackContent() {
             )}
             
             {isPreview && (
-              <button 
-                onClick={() => router.push("/")}
-                className="group relative flex items-center justify-center gap-2 w-full overflow-hidden rounded-xl bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 py-4 px-4 font-bold transition-all duration-300 border border-accent-500/20 hover:border-accent-500/40 hover:shadow-[0_0_30px_rgba(139,92,246,0.15)] active:scale-[0.98]"
-              >
-                <Sparkles size={22} />
-                Looks Good? Run Full Job
-              </button>
+              <div className="flex flex-col gap-4">
+                <button 
+                  onClick={handleProcessJob}
+                  disabled={isProcessing}
+                  className="group relative flex items-center justify-center gap-2 w-full overflow-hidden rounded-xl bg-accent-500 hover:bg-accent-600 text-white py-4 px-4 font-bold transition-all duration-300 border border-accent-400 hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100"
+                >
+                  {isProcessing ? (
+                    <><Loader2 size={22} className="animate-spin" /> Starting Job...</>
+                  ) : (
+                    <><Sparkles size={22} className="group-hover:scale-110 transition-transform" /> Process Job</>
+                  )}
+                </button>
+                <button 
+                  onClick={() => router.push("/")}
+                  className="group relative flex items-center justify-center gap-2 w-full overflow-hidden rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 py-4 px-4 font-bold transition-all duration-300 border border-white/10 active:scale-[0.98]"
+                >
+                  <ArrowLeft size={22} className="group-hover:-translate-x-1 transition-transform" />
+                  Back to Dashboard
+                </button>
+              </div>
             )}
           </div>
         )}
