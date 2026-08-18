@@ -12,6 +12,22 @@ def test_process_file_success(file_parser):
     assert file_parser.publisher.publish.called
     assert file_parser.audit_svc.log_job_start.called
 
+def test_process_file_preview(file_parser):
+    job_id = "test-job-preview"
+    file_path = "uploads/test.csv"
+    target_schema = {"name": "String", "age": "Integer"}
+    
+    file_parser.process_file(job_id, file_path, target_schema, is_preview=True)
+    
+    # Preview bypasses pipeline, updates status directly to completed
+    status_doc = file_parser.firestore_svc.statuses[job_id]
+    assert status_doc["status"] == "completed"
+    assert "preview_data" in status_doc
+    assert len(status_doc["preview_data"]) > 0
+    
+    # Should not publish chunks for preview
+    assert file_parser.publisher.publish.call_count == 0
+
 def test_process_dirty_csv(file_parser):
     job_id = "test-job-dirty"
     file_path = "uploads/dirty_data.csv"

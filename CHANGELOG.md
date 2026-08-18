@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-08-18
+### Added
+- **Sandbox Preview Mode**: Added a preview-only mode that processes just the first 10 rows of a file so users can validate schema fit and transformation quality before committing to a full long-running job. This significantly reduces wasted tokens and improves trust for first-time users.
+  - The UI now features a "Run Preview" action.
+  - Preview jobs are flagged in the pipeline UI, skipping heavy processing.
+  - The completion screen for preview mode prompts users to launch a full job if the results are satisfactory.
+- **Custom Toast Notifications**: Replaced all native browser `alert()` and `confirm()` dialogues across the application with non-blocking, stylish `react-hot-toast` notifications.
+- **Admin Dashboard UI Update**: Moved the Admin button out of the main header and into the profile dropdown menu to streamline navigation and keep administrative functions discreetly accessible to verified admins and owners.
+
+## [2.3.0] - 2026-08-17
+### Added
+- **Enterprise SSO Support**: Introduced support for Enterprise SSO via SAML and OIDC through Firebase Identity Platform.
+- **Multi-Tenant Workspaces**: Integrated `tenantId` mapping into the authentication flow. Enterprise SSO users will have their tenant IDs injected into their session, automatically preserving multi-tenant isolation and securely mapping them into the `workspaces` array in their user profile.
+- **Explicit Account Linking**: Implemented `linkAccount` functionality and enhanced error handling to proactively detect identity conflicts (`auth/account-exists-with-different-credential`). The system now prompts users for proper conflict resolution and account merging.
+- **Comprehensive Jest Coverage**: Added full unit test coverage for the Next.js `useAuth` hook, rigorously testing Google login, SAML/SSO tenant logins, and authorization data mapping.
+
 ## [2.2.0] - 2026-08-16
 ### Added
 - **Job Cancellation Directly from History**: Users (both registered and guests) can now seamlessly cancel running jobs directly from their extraction history dashboard.

@@ -30,7 +30,7 @@ async def create_job(
     try:
         firestore_svc.create_job(
             job_id, request.file_path, request.file_name, request.target_schema, now, 
-            request.email, request.role, request.plan, user_id, ip_address
+            request.email, request.role, request.plan, user_id, ip_address, request.is_preview
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create job document: {str(e)}")
@@ -39,7 +39,7 @@ async def create_job(
     try:
         pubsub_svc.publish_job(
             job_id, request.file_path, request.target_schema, 
-            request.email, request.role, request.plan, user_id, ip_address
+            request.email, request.role, request.plan, user_id, ip_address, request.is_preview
         )
     except Exception as e:
         # Mark as failed if publish fails
@@ -54,7 +54,8 @@ async def create_job(
     return {
         "job_id": job_id,
         "status": "queued",
-        "message": "Job accepted and queued for processing."
+        "message": "Job accepted and queued for processing.",
+        "is_preview": request.is_preview
     }
 
 @router.get("/{job_id}", response_model=JobStatusResponse)
@@ -77,7 +78,8 @@ async def get_job_status(
         processed_rows=data.get("processed_rows"),
         error_message=data.get("error_message"),
         total_chunks=data.get("total_chunks"),
-        completed_chunks=data.get("completed_chunks")
+        completed_chunks=data.get("completed_chunks"),
+        is_preview=data.get("is_preview", False)
     )
 
 @router.post("/{job_id}/cancel")

@@ -11,11 +11,14 @@ Built on a completely decoupled **Serverless Fan-Out Architecture** on Google Cl
 ## <img src="./docs/icons/architecture.svg" width="28" align="absbottom" alt="architecture" /> Core Features
 
 - **Strict Schema Enforcement**: Define exactly the JSON/Excel schema you need, and Structurify will enforce strict type-casting and structure.
+- **Sandbox Preview Mode**: Process just the first 10 rows of a dataset to validate schema fit and AI transformation quality before committing to a full long-running job.
 - **Auto-Clean Mode**: Don't know the schema? Structurify will automatically infer the schema from the file headers and repair capitalization, trim whitespace, and standardize date formats across the board.
-- **Email Notifications**: Upload a massive dataset (over 5MB), and Structurify will immediately email you a tracking link to watch the live progress, followed by a final success email with your secure download URL.
+- **Email Notifications**: Upload a massive dataset (over 1MB), and Structurify will immediately email you a tracking link to watch the live progress, followed by a final success email with your secure download URL.
+- **Enterprise SSO & Multi-Tenant Authentication**: Provides robust authentication via Firebase Identity Platform, supporting Google OAuth, SAML, and OIDC enterprise SSO. Features automatic account linking for identity conflict resolution and maps users to isolated multi-tenant workspaces based on their provider `tenantId`.
 - **Massive Scalability**: The backend acts as a lightweight router while heavy data processing is handled by scalable workers via Cloud Pub/Sub, preventing Gateway Timeouts on long jobs.
 - **Dynamic Configuration & Prompt Management**: An integrated Admin UI backed by a real-time Firestore synchronization engine allows operators to hot-swap Gemini LLM models, tune chunk sizes, and edit system AI prompts entirely on the fly without ever redeploying code.
 - **Graceful Job Cancellation**: Safely halt massive in-flight jobs via a UI cancel button. In-memory TTL caching on workers ensures instant cancellation without generating "ghost jobs" or burning Firestore read quotas.
+- **Custom Toast Notifications**: Uses non-blocking `react-hot-toast` popups instead of native browser alerts to provide users with a clean, modern experience when editing settings or executing administrative actions.
 - **Enterprise Observability & Billing**: Logs rich telemetry into Firestore (`job_audits`), tracking LLM Token Usage via atomic transactions, File Sizes, IP Addresses, and exact Job Runtimes to power strict rate limits and future billing models.
 
 ---
@@ -37,7 +40,7 @@ The architecture utilizes a robust asynchronous data pipeline:
 ```mermaid
 graph TD;
     A[User Uploads File] --> B[Next.js Frontend];
-    B --> C{File > 5MB?};
+    B --> C{File > 1MB?};
     C -- Yes --> D[Send 'Job Started' Email];
     C -- No --> E[Bypass Email];
     D --> E;
@@ -71,7 +74,7 @@ Structurify features robust observability and administrative controls via an int
 4. **History & Job Management**:
    - Both registered users and unauthenticated guests can view a complete history of their past extractions.
    - Users can securely cancel runaway jobs mid-flight directly from their dashboard.
-5. **Editable Documentation System (`/docs`)`**:
+5. **Editable Documentation System (`/docs`)**:
    - A public, real-time documentation page backed directly by Firestore.
    - Admins have access to a split-pane live Markdown editor (with Mermaid.js support) to rewrite and persist docs instantly.
    - Features a dynamic `Releases` tab that autonomously pulls public release notes directly from the GitHub API.
@@ -141,7 +144,7 @@ Structurify/
 ## <img src="./docs/icons/laptop.svg" width="28" align="absbottom" alt="local dev" /> Local Development Setup
 
 ### 1. Prerequisites
-- Node.js >= 18
+- Node.js >= 20
 - Python >= 3.10
 - Google Cloud CLI (`gcloud`) installed and authenticated
 - A Firebase Project (for the frontend client)

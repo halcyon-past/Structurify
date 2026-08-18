@@ -136,15 +136,16 @@ sequenceDiagram
 - **Map:** Each chunk is mapped over Gemini concurrently via Pub/Sub. If a chunk fails extraction, a LangGraph state machine catches the error and loops back for up to 3 self-correction retries.
 - **Reduce:** A Firestore transactional counter tracks chunk completions and eventually merges them into a unified `.xlsx` file.
 
-### 3. Strict Schema Enforcement & Auto-Clean
-**Problem:** LLMs are prone to hallucinating formats or omitting columns.
+### 3. Strict Schema Enforcement, Auto-Clean, & Preview Mode
+**Problem:** LLMs are prone to hallucinating formats or omitting columns. Running a full pipeline on an invalid schema is costly.
 **Solution:** 
-- If a target schema is provided, Gemini is forced to map the data directly to a JSON Schema object (`response_schema`).
+- **Sandbox Preview Mode:** The system can be triggered in a preview mode where the split phase instantly cuts the input to exactly 10 rows. This allows rapid validation of the extraction quality without wasting excessive compute tokens on dead runs.
+- **Schema Mapping:** If a target schema is provided, Gemini is forced to map the data directly to a JSON Schema object (`response_schema`).
 - **Auto-Clean Mode:** If no target schema is provided, Structurify dynamically infers the schema, cleans up the mess (capitalization, whitespaces, date formats), and returns the entire spreadsheet as a valid JSON array.
 
 ### 4. Asynchronous Email Notifications
 **Problem:** Large files can take several minutes to process. Users might close the browser tab.
-**Solution:** If a file is larger than 5 MB, the Worker instantly sends an HTML email containing a tracking link (`/track?jobId=...`) the moment the file begins chunking. A secondary success email delivers the final download link, guaranteeing the user never loses their data.
+**Solution:** If a file is larger than 1 MB, the Worker instantly sends an HTML email containing a tracking link (`/track?jobId=...`) the moment the file begins chunking. A secondary success email delivers the final download link, guaranteeing the user never loses their data.
 
 ### 5. Rate Limits & Cloud Run Concurrency
 **Problem:** Gemini Free Tier limits allow a maximum of 15 Requests Per Minute (RPM) and 1,500 Requests Per Day. A 50-chunk file processed completely in parallel by Cloud Run will instantly trigger a `429 RESOURCE_EXHAUSTED` error.
@@ -172,8 +173,8 @@ sequenceDiagram
 Structurify uses a NoSQL document database (Firestore) to track real-time state, telemetry, and settings. Below are the core collections and their roles:
 
 1. **`users`**
-   - **Purpose:** Stores user profiles, authentication metadata, subscription tier (`plan`), and role (`admin`, `owner`, `guest`).
-   - **Usage:** Queried by the Next.js frontend to enforce role-based access control and limits.
+   - **Purpose:** Stores user profiles, authentication metadata, subscription tiers (`plan`), Enterprise SSO context (`tenant_id`, `workspaces`), and Stripe-ready billing attributes (`subscription_status`, `payment_date`).
+   - **Usage:** Queried by the Next.js frontend to enforce role-based access control, workspace isolation, and usage limits.
 
 2. **`jobs`**
    - **Purpose:** Tracks the real-time lifecycle of a data transformation job.
