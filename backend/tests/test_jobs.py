@@ -9,7 +9,7 @@ def test_create_and_get_job(client, mock_firestore):
         "plan": "pro"
     }
     response = client.post("/api/v1/jobs/", json=payload)
-    assert response.status_code == 202
+    assert response.status_code == 202, response.text
     data = response.json()
     assert "job_id" in data
     assert data["status"] == "queued"
@@ -36,7 +36,7 @@ def test_create_and_get_job_preview(client, mock_firestore):
         "is_preview": True
     }
     response = client.post("/api/v1/jobs/", json=payload)
-    assert response.status_code == 202
+    assert response.status_code == 202, response.text
     data = response.json()
     assert "job_id" in data
     assert data["status"] == "queued"

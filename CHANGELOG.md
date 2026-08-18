@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The UI now features a "Run Preview" action.
   - Preview jobs are flagged in the pipeline UI, skipping heavy processing.
   - The completion screen for preview mode prompts users to launch a full job if the results are satisfactory.
+- **Custom Toast Notifications**: Replaced all native browser `alert()` and `confirm()` dialogues across the application with non-blocking, stylish `react-hot-toast` notifications.
+- **Admin Dashboard UI Update**: Moved the Admin button out of the main header and into the profile dropdown menu to streamline navigation and keep administrative functions discreetly accessible to verified admins and owners.
 
 ## [2.3.0] - 2026-08-17
 ### Added

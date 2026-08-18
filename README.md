@@ -18,6 +18,7 @@ Built on a completely decoupled **Serverless Fan-Out Architecture** on Google Cl
 - **Massive Scalability**: The backend acts as a lightweight router while heavy data processing is handled by scalable workers via Cloud Pub/Sub, preventing Gateway Timeouts on long jobs.
 - **Dynamic Configuration & Prompt Management**: An integrated Admin UI backed by a real-time Firestore synchronization engine allows operators to hot-swap Gemini LLM models, tune chunk sizes, and edit system AI prompts entirely on the fly without ever redeploying code.
 - **Graceful Job Cancellation**: Safely halt massive in-flight jobs via a UI cancel button. In-memory TTL caching on workers ensures instant cancellation without generating "ghost jobs" or burning Firestore read quotas.
+- **Custom Toast Notifications**: Uses non-blocking `react-hot-toast` popups instead of native browser alerts to provide users with a clean, modern experience when editing settings or executing administrative actions.
 - **Enterprise Observability & Billing**: Logs rich telemetry into Firestore (`job_audits`), tracking LLM Token Usage via atomic transactions, File Sizes, IP Addresses, and exact Job Runtimes to power strict rate limits and future billing models.
 
 ---

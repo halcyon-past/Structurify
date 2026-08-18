@@ -2,10 +2,16 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { UploadZone } from '../../src/components/UploadZone';
 import '@testing-library/jest-dom';
+import toast from 'react-hot-toast';
+
+jest.mock('react-hot-toast', () => ({
+  error: jest.fn(),
+  success: jest.fn(),
+}));
 
 describe('UploadZone Component', () => {
   beforeEach(() => {
-    window.alert = jest.fn();
+    jest.clearAllMocks();
   });
 
   it('renders correctly with default UI', () => {
@@ -45,6 +51,6 @@ describe('UploadZone Component', () => {
     
     // It should not call onFileSelect for invalid types (not CSV/XLSX)
     expect(handleFileSelect).not.toHaveBeenCalled();
-    expect(window.alert).toHaveBeenCalledWith("Only CSV and XLSX files are supported.");
+    expect(toast.error).toHaveBeenCalledWith("Only CSV and XLSX files are supported.");
   });
 });
