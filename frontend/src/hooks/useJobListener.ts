@@ -10,6 +10,7 @@ export interface JobState {
   error_message?: string;
   total_chunks?: number;
   completed_chunks?: number;
+  is_preview?: boolean;
 }
 
 export function useJobListener(activeJobId: string | null) {

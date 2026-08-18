@@ -19,7 +19,7 @@ function TrackContent() {
   const jobState = useJobListener(jobId);
 
   // Fallback Polling (in case Firebase onSnapshot is blocked)
-  const [fallbackData, setFallbackData] = useState<Record<string, unknown> | null>(null);
+  const [fallbackData, setFallbackData] = useState<JobState | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
   
   const handleCancel = async () => {
