@@ -147,7 +147,7 @@ function TrackContent() {
                   <tbody>
                     {currentState.preview_data.map((row, i) => (
                       <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
-                        {Object.values(row).map((val: any, j) => (
+                        {Object.values(row).map((val: unknown, j) => (
                           <td key={j} className="px-4 py-3 text-gray-300 max-w-[200px] truncate">
                             {val !== null && val !== undefined ? String(val) : <span className="text-gray-600 italic">null</span>}
                           </td>
