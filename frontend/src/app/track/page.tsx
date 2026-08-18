@@ -123,8 +123,8 @@ function TrackContent() {
             {status !== 'completed' && status !== 'failed' && (
               <div className="flex flex-col items-center justify-center py-12 gap-4 animate-in fade-in">
                 <Loader2 className="animate-spin text-accent-500" size={48} />
-                <p className="text-gray-400 font-medium text-lg">Generating Preview (approx 5-10s)...</p>
-                <p className="text-sm text-gray-500">Transforming the first 10 rows with Gemini Flash</p>
+                <p className="text-gray-400 font-medium text-lg">Fetching Data Preview...</p>
+                <p className="text-sm text-gray-500">Extracting raw rows from your uploaded file</p>
               </div>
             )}
             {status === 'failed' && (

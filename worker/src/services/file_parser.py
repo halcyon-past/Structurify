@@ -33,6 +33,26 @@ class FileParserService:
                 tracking_url = f"{settings.FRONTEND_URL}/track?jobId={job_id}"
                 self.email_svc.send_started_email(email, tracking_url)
             
+            if is_preview:
+                if file_path.lower().endswith(".csv"):
+                    df = pd.read_csv(io.BytesIO(file_bytes), nrows=10, on_bad_lines='skip')
+                elif file_path.lower().endswith((".xlsx", ".xls")):
+                    df = pd.read_excel(io.BytesIO(file_bytes), nrows=10)
+                else:
+                    raise ValueError("Unsupported file format. Must be CSV or XLSX.")
+                    
+                df = df.astype(str)
+                df = df.replace({"nan": None, "NaT": None, "<NA>": None})
+                preview_data = df.to_dict(orient="records")
+                
+                self.firestore_svc.update_job_status(job_id, "completed", {
+                    "preview_data": preview_data,
+                    "processed_rows": len(df),
+                    "duration_seconds": 0,
+                    "download_url": None
+                })
+                return
+
             # Dynamically calculate chunk size based on target schema.
             # With gemini-3.6-flash (65K output token limit), we can safely process 500 rows per chunk.
             # Fewer chunks = fewer Pub/Sub push deliveries = no push window throttling.
@@ -42,13 +62,11 @@ class FileParserService:
             chunk_size = max(250, min(max_chunk_size, target_cells // num_fields))
             chunks = []
             
-            nrows_limit = 10 if is_preview else None
-            
             if file_path.lower().endswith(".csv"):
-                for chunk_df in pd.read_csv(io.BytesIO(file_bytes), on_bad_lines='skip', chunksize=chunk_size, nrows=nrows_limit):
+                for chunk_df in pd.read_csv(io.BytesIO(file_bytes), on_bad_lines='skip', chunksize=chunk_size):
                     chunks.append(chunk_df.to_csv(index=False))
             elif file_path.lower().endswith((".xlsx", ".xls")):
-                df = pd.read_excel(io.BytesIO(file_bytes), nrows=nrows_limit)
+                df = pd.read_excel(io.BytesIO(file_bytes))
                 total_rows = len(df)
                 for start_idx in range(0, total_rows, chunk_size):
                     end_idx = min(start_idx + chunk_size, total_rows)
