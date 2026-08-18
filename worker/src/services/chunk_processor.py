@@ -86,4 +86,32 @@ class ChunkProcessorService:
         }
         
         final_state = self.app.invoke(initial_state)
-        return final_state["result"], final_state.get("total_tokens", 0), final_state.get("errors", [])
+        result = final_state["result"]
+        
+        # --- POST-PROCESSING: Deterministic Date Standardization ---
+        # Ensures that across all independent parallel workers, dates are strictly standardized
+        # regardless of LLM hallucinations or variations.
+        if result:
+            try:
+                import pandas as pd
+                df = pd.DataFrame(result)
+                for col in df.columns:
+                    if df[col].dtype == 'object':
+                        sample = df[col].dropna()
+                        if sample.empty: continue
+                        
+                        # Use mixed format parsing to handle both LLM ISO outputs and raw messy formats
+                        parsed = pd.to_datetime(sample, errors='coerce', format='mixed')
+                        
+                        # If more than 50% of the non-null strings are valid dates, it's a date column
+                        if parsed.notna().sum() / len(sample) >= 0.5:
+                            df[col] = pd.to_datetime(df[col], errors='coerce', format='mixed')
+                            df[col] = df[col].dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+                            
+                # Convert back to dict, replacing NaNs with None
+                df = df.where(pd.notnull(df), None)
+                result = df.to_dict(orient='records')
+            except Exception as e:
+                print(f"Post-processing date standardization failed: {e}")
+                
+        return result, final_state.get("total_tokens", 0), final_state.get("errors", [])
