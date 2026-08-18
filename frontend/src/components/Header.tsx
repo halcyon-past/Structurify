@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import { LogOut, Shield } from "lucide-react";
 
 export function Header() {
   const { user, userData, loading, signInWithGoogle, logOut } = useAuth();
@@ -44,16 +44,6 @@ export function Header() {
         {!loading && (
           user ? (
             <div className="flex items-center gap-2 sm:gap-4">
-              
-              {(userData?.role?.toLowerCase() === "admin" || userData?.role?.toLowerCase() === "owner") && (
-                <Link 
-                  href="/admin"
-                  className="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors px-3 py-2 rounded-md hover:bg-white/5"
-                >
-                  Admin
-                </Link>
-              )}
-              
               <Link 
                 href="/history"
                 className="text-sm font-medium text-gray-400 hover:text-white transition-colors px-3 py-2 rounded-md hover:bg-white/5 hidden sm:block"
@@ -91,6 +81,17 @@ export function Header() {
                       <p className="text-sm font-medium text-white truncate">{user.displayName}</p>
                       <p className="text-xs text-gray-400 truncate">{user.email}</p>
                     </div>
+
+                    {(userData?.role?.toLowerCase() === "admin" || userData?.role?.toLowerCase() === "owner") && (
+                      <Link 
+                        href="/admin"
+                        onClick={() => setDropdownOpen(false)}
+                        className="w-full text-left px-4 py-3 text-sm font-medium text-emerald-400 hover:bg-white/5 hover:text-emerald-300 transition-colors flex items-center gap-2 border-b border-white/10"
+                      >
+                        <Shield size={16} />
+                        Admin Dashboard
+                      </Link>
+                    )}
                     
                     <button 
                       onClick={() => {
