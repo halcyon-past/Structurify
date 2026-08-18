@@ -1,5 +1,7 @@
 "use client";
 
+import toast from "react-hot-toast";
+
 import { useState, useEffect } from "react";
 import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import { useAdminData, AdminJob, SystemSettings } from "@/hooks/useAdminData";
@@ -27,9 +29,7 @@ export default function AdminPage() {
     }
   }, [loading, settings, localSettings]);
 
-  const killSwitch = async () => {
-    if (!window.confirm("CRITICAL WARNING: This will immediately purge ALL active queues and forcefully terminate all running processing jobs across the entire system. Are you absolutely sure?")) return;
-    
+  const executeKillSwitch = async () => {
     try {
       const token = await auth.currentUser?.getIdToken();
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/jobs/kill-switch`, { 
@@ -40,12 +40,40 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Failed to engage kill switch");
-      alert(`Kill switch engaged. System purged: ${data.message || "Success"}`);
-      window.location.reload();
+      toast.success(`Kill switch engaged. System purged: ${data.message || "Success"}`);
+      setTimeout(() => window.location.reload(), 1500);
     } catch (e: unknown) {
       console.error(e);
-      alert((e as Error).message || "Failed to engage kill switch.");
+      toast.error((e as Error).message || "Failed to engage kill switch.");
     }
+  };
+
+  const killSwitch = async () => {
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <div>
+          <p className="font-bold text-red-600 text-sm mb-1">CRITICAL WARNING</p>
+          <p className="text-xs text-gray-700">This will immediately purge ALL active queues and forcefully terminate all running processing jobs across the entire system. Are you absolutely sure?</p>
+        </div>
+        <div className="flex gap-2 justify-end">
+          <button 
+            className="px-3 py-1.5 bg-gray-100 text-gray-800 rounded-md text-xs font-medium hover:bg-gray-200 transition-colors"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Cancel
+          </button>
+          <button 
+            className="px-3 py-1.5 bg-red-600 text-white rounded-md text-xs font-medium hover:bg-red-700 transition-colors"
+            onClick={async () => {
+              toast.dismiss(t.id);
+              await executeKillSwitch();
+            }}
+          >
+            Confirm Purge
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity, style: { maxWidth: '400px' } });
   };
 
   useEffect(() => {
@@ -677,7 +705,7 @@ export default function AdminPage() {
                     onClick={async () => {
                       if (localSettings) {
                         await saveSystemSettings(localSettings);
-                        alert("Settings and Prompts have been saved and applied dynamically!");
+                        toast.success("Settings and Prompts have been saved and applied dynamically!");
                       }
                     }}
                     className="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-colors flex items-center gap-2"

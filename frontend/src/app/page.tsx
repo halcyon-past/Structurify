@@ -1,5 +1,7 @@
 "use client";
 
+import toast from "react-hot-toast";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { UploadZone } from "@/components/UploadZone";
@@ -25,11 +27,11 @@ export default function Home() {
   const router = useRouter();
 
   const handleSubmit = async (isPreview: boolean = false) => {
-    if (!file) return alert("Please select a file.");
+    if (!file) return toast.error("Please select a file.");
     
     const targetSchema: Record<string, string> = {};
     for (const field of schemaFields) {
-      if (!field.name.trim()) return alert("Field names cannot be empty.");
+      if (!field.name.trim()) return toast.error("Field names cannot be empty.");
       targetSchema[field.name] = field.type;
     }
 
@@ -37,7 +39,7 @@ export default function Home() {
       const jobId = await uploadAndSubmitJob(file, targetSchema, email, user?.uid, isPreview);
       router.push(`/track?jobId=${jobId}${isPreview ? '&preview=true' : ''}`);
     } catch (error: unknown) {
-      alert(error instanceof Error ? error.message : "An error occurred.");
+      toast.error(error instanceof Error ? error.message : "An error occurred.");
     }
   };
 

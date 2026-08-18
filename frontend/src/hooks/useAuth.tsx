@@ -1,5 +1,7 @@
 "use client";
 
+import toast from "react-hot-toast";
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, SAMLAuthProvider, OAuthProvider, linkWithPopup } from "firebase/auth";
 import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
@@ -114,7 +116,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'auth/account-exists-with-different-credential') {
       const email = (error as { customData?: { email?: string } }).customData?.email;
       if (email) {
-        alert(`An account already exists with ${email}. Please sign in using your original provider to link accounts.`);
+        toast.error(`An account already exists with ${email}. Please sign in using your original provider to link accounts.`);
       }
     }
     console.error("Authentication error:", error);

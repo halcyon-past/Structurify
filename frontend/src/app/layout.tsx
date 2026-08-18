@@ -3,6 +3,7 @@ import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
+import { Toaster } from "react-hot-toast";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -67,6 +68,7 @@ export default function RootLayout({
             <Header />
           </div>
           {children}
+          <Toaster position="bottom-right" />
         </AuthProvider>
       </body>
     </html>

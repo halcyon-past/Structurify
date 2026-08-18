@@ -1,5 +1,7 @@
 "use client";
 
+import toast from "react-hot-toast";
+
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useJobListener, JobState } from "@/hooks/useJobListener";
@@ -52,11 +54,11 @@ function TrackContent() {
         const data = await res.json();
         router.push(`/track?jobId=${data.job_id}`);
       } else {
-        alert("Failed to start full job.");
+        toast.error("Failed to start full job.");
       }
     } catch (e) {
       console.error(e);
-      alert("Error starting job.");
+      toast.error("Error starting job.");
     } finally {
       setIsProcessing(false);
     }

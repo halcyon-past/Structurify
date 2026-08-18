@@ -1,5 +1,7 @@
 "use client";
 
+import toast from "react-hot-toast";
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { db } from "@/lib/firebase";
@@ -195,10 +197,10 @@ export default function DocsPage() {
       await setDoc(docRef, { content: editedMarkdown }, { merge: true });
       setMarkdown(editedMarkdown);
       setIsEditing(false);
-      alert("Documentation saved successfully!");
+      toast.success("Documentation saved successfully!");
     } catch (e) {
       console.error(e);
-      alert("Failed to save documentation. Ensure you have admin permissions.");
+      toast.error("Failed to save documentation. Ensure you have admin permissions.");
     } finally {
       setSaving(false);
     }

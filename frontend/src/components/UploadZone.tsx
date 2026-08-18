@@ -1,5 +1,7 @@
 import { useRef, useState } from "react";
 import { UploadCloud } from "lucide-react";
+import toast from "react-hot-toast";
+
 
 interface UploadZoneProps {
   file: File | null;
@@ -33,7 +35,7 @@ export function UploadZone({ file, onFileSelect, isUploading, uploadProgress }: 
     if (selectedFile.name.endsWith('.csv') || selectedFile.name.match(/\.xlsx?$/)) {
       onFileSelect(selectedFile);
     } else {
-      alert("Only CSV and XLSX files are supported.");
+      toast.error("Only CSV and XLSX files are supported.");
     }
   };
 
