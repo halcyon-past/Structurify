@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useJobListener } from "@/hooks/useJobListener";
+import { useJobListener, JobState } from "@/hooks/useJobListener";
 import { ArrowLeft, Download, CheckCircle2, AlertCircle, RefreshCw, UploadCloud, Cpu, Sparkles, FileCheck2, Loader2, XCircle } from "lucide-react";
 
 const STEPS = [
