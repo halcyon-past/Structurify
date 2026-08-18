@@ -43,7 +43,7 @@ describe('SchemaBuilder', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Compile Heterogeneous Data/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Process Job/i }));
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
@@ -63,7 +63,7 @@ describe('SchemaBuilder', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: /Compile Heterogeneous Data/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Process Job/i })).toBeDisabled();
   });
 
   it('calls onEmailChange when email input changes', () => {
