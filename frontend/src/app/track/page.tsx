@@ -279,7 +279,7 @@ function TrackContent() {
         )}
 
         {/* COMPLETION AREA */}
-        {status === "completed" && !!currentState?.download_url && (
+        {status === "completed" && (!!currentState?.download_url || isPreview) && (
           <div className="mt-8 pt-8 border-t border-white/10 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <div className="bg-black/30 p-4 rounded-2xl flex-1 border border-white/5 text-center flex flex-col items-center justify-center">
