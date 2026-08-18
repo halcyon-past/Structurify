@@ -284,11 +284,11 @@ function TrackContent() {
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <div className="bg-black/30 p-4 rounded-2xl flex-1 border border-white/5 text-center flex flex-col items-center justify-center">
                 <p className="text-xs text-gray-400 mb-1 uppercase tracking-wider">Rows Processed</p>
-                <p className="text-3xl font-bold text-accent-400">{Number(currentState.processed_rows) || "N/A"}</p>
+                <p className="text-3xl font-bold text-accent-400">{Number(currentState?.processed_rows) || "N/A"}</p>
               </div>
               <div className="bg-black/30 p-4 rounded-2xl flex-1 border border-white/5 text-center flex flex-col items-center justify-center">
                 <p className="text-xs text-gray-400 mb-1 uppercase tracking-wider">Total Time</p>
-                <p className="text-3xl font-bold text-blue-400">{Number(currentState.duration_seconds) || "N/A"}s</p>
+                <p className="text-3xl font-bold text-blue-400">{Number(currentState?.duration_seconds) || "N/A"}s</p>
               </div>
             </div>
             
