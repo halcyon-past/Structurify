@@ -140,7 +140,7 @@ function TrackContent() {
                 <table className="w-full text-sm text-left border-collapse font-mono">
                   <thead className="text-xs text-gray-600 uppercase bg-gray-200 border-b-2 border-gray-300">
                     <tr>
-                      {Object.keys(currentState.preview_data[0] || {}).map(key => (
+                      {(currentState.preview_columns || Object.keys(currentState.preview_data[0] || {})).map(key => (
                         <th key={key} className="px-4 py-2 border-r border-gray-300 font-bold tracking-wider whitespace-nowrap last:border-r-0">{key}</th>
                       ))}
                     </tr>
@@ -148,11 +148,14 @@ function TrackContent() {
                   <tbody>
                     {currentState.preview_data.map((row, i) => (
                       <tr key={i} className="border-b border-gray-200 last:border-0 hover:bg-blue-50 transition-colors">
-                        {Object.values(row).map((val: unknown, j) => (
-                          <td key={j} className="px-4 py-2 border-r border-gray-200 max-w-[300px] truncate last:border-r-0">
-                            {val !== null && val !== undefined ? String(val) : <span className="text-gray-400 italic">null</span>}
-                          </td>
-                        ))}
+                        {(currentState.preview_columns || Object.keys(row)).map((colName, j) => {
+                          const val = row[colName];
+                          return (
+                            <td key={j} className="px-4 py-2 border-r border-gray-200 max-w-[300px] truncate last:border-r-0">
+                              {val !== null && val !== undefined ? String(val) : <span className="text-gray-400 italic">null</span>}
+                            </td>
+                          );
+                        })}
                       </tr>
                     ))}
                   </tbody>

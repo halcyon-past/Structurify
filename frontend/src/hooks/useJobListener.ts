@@ -12,6 +12,7 @@ export interface JobState {
   completed_chunks?: number;
   is_preview?: boolean;
   preview_data?: Record<string, unknown>[];
+  preview_columns?: string[];
 }
 
 export function useJobListener(activeJobId: string | null) {

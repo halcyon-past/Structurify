@@ -44,9 +44,11 @@ class FileParserService:
                 df = df.astype(str)
                 df = df.replace({"nan": None, "NaT": None, "<NA>": None})
                 preview_data = df.to_dict(orient="records")
+                preview_columns = df.columns.tolist()
                 
                 self.firestore_svc.update_job_status(job_id, "completed", {
                     "preview_data": preview_data,
+                    "preview_columns": preview_columns,
                     "processed_rows": len(df),
                     "duration_seconds": 0,
                     "download_url": None
