@@ -75,6 +75,7 @@ def process_job(envelope: PubSubEnvelope):
         file_path = payload.get('file_path')
         target_schema = payload.get('target_schema')
         email = payload.get('email')
+        is_preview = payload.get('is_preview', False)
         
         if not job_id or not file_path or target_schema is None:
             raise ValueError("Missing required fields in payload")
@@ -84,7 +85,7 @@ def process_job(envelope: PubSubEnvelope):
             print(f"Job {job_id} is cancelled/failed. Aborting process-job.")
             return {"status": "success", "message": "aborted due to cancellation or failure"}
             
-        file_parser_svc.process_file(job_id, file_path, target_schema, email)
+        file_parser_svc.process_file(job_id, file_path, target_schema, email, is_preview)
             
     except Exception as e:
         print(f"Error processing message: {str(e)}")

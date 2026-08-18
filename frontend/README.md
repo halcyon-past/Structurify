@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Structurify Frontend
 
-## Getting Started
+This is the Next.js 14 frontend application for **Structurify**. It provides a sleek, modern, glassmorphic UI for users to upload unstructured datasets, define strict target schemas, and test them out using Sandbox Preview Mode.
 
-First, run the development server:
+## Tech Stack
+- **Framework:** Next.js 14 (App Router)
+- **Styling:** TailwindCSS
+- **State & Real-time:** Firebase Client SDK (Firestore `onSnapshot`)
+- **Authentication:** Firebase Auth (Google OAuth, SAML, OIDC)
+- **Typography:** Space Grotesk (Sans) and JetBrains Mono (Monospace)
+- **Icons:** Lucide React
 
+## Local Development
+
+Ensure you have Node.js >= 20 installed.
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Copy the environment variables:
+   ```bash
+   cp .env.example .env.local
+   ```
+   *Note: Populate `.env.local` with your Firebase project credentials and set `NEXT_PUBLIC_BACKEND_URL=http://localhost:8000` to point to the local FastAPI Gateway.*
+
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000) with your browser.
+
+## Testing
+We use Jest and React Testing Library to ensure UI components and hooks behave correctly.
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run test
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deployment
+The frontend is statically exported and deployed to **Firebase Hosting** globally.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+# In the root of the project
+./deploy.sh <PROJECT_ID> <REGION> frontend
+```
+*Note: We do not deploy to Vercel. Our pipeline leverages Firebase Hosting to keep the architecture entirely within Google Cloud.*

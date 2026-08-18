@@ -17,7 +17,8 @@ We use **Terraform** to provision the static infrastructure. This includes:
 - Google Cloud Storage buckets (`raw-uploads`, `processed-outputs`).
 - Google Cloud Pub/Sub Topics (`schema-transformation-jobs`, `chunk-processing-jobs`).
 - Firestore Database initialization.
-- Secret Manager secrets (e.g., `GEMINI_API_KEY`).
+- Secret Manager secrets (e.g., `GEMINI_API_KEY`, `SMTP_PASSWORD`).
+- Firebase Authentication initialization for Identity Platform (SSO/OAuth).
 - IAM Service Accounts and Role Bindings.
 
 To apply infrastructure changes:

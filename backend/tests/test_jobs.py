@@ -9,7 +9,7 @@ def test_create_and_get_job(client, mock_firestore):
         "plan": "pro"
     }
     response = client.post("/api/v1/jobs/", json=payload)
-    assert response.status_code == 202
+    assert response.status_code == 202, response.text
     data = response.json()
     assert "job_id" in data
     assert data["status"] == "queued"
@@ -22,6 +22,35 @@ def test_create_and_get_job(client, mock_firestore):
     job_data = response.json()
     assert job_data["job_id"] == job_id
     assert job_data["status"] == "queued"
+    assert job_data["is_preview"] is False
+
+def test_create_and_get_job_preview(client, mock_firestore):
+    # Test Create Preview Job
+    payload = {
+        "file_path": "uploads/test.csv",
+        "file_name": "test.csv",
+        "target_schema": {"name": "String"},
+        "email": "test@example.com",
+        "role": "admin",
+        "plan": "pro",
+        "is_preview": True
+    }
+    response = client.post("/api/v1/jobs/", json=payload)
+    assert response.status_code == 202, response.text
+    data = response.json()
+    assert "job_id" in data
+    assert data["status"] == "queued"
+    assert data["is_preview"] is True
+    
+    job_id = data["job_id"]
+    
+    # Test Get Job
+    response = client.get(f"/api/v1/jobs/{job_id}")
+    assert response.status_code == 200
+    job_data = response.json()
+    assert job_data["job_id"] == job_id
+    assert job_data["status"] == "queued"
+    assert job_data["is_preview"] is True
 
 def test_get_nonexistent_job(client):
     response = client.get("/api/v1/jobs/invalid-id")

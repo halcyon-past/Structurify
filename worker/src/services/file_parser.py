@@ -22,17 +22,39 @@ class FileParserService:
         self.publisher = pubsub_v1.PublisherClient()
         self.topic_path = self.publisher.topic_path(settings.GOOGLE_CLOUD_PROJECT, "chunk-processing-jobs")
 
-    def process_file(self, job_id: str, file_path: str, target_schema: Dict[str, Any], email: str = None):
+    def process_file(self, job_id: str, file_path: str, target_schema: Dict[str, Any], email: str = None, is_preview: bool = False):
         self.firestore_svc.update_job_status(job_id, "processing")
         
         try:
             file_bytes = self.storage_svc.download_file_bytes(settings.RAW_BUCKET_NAME, file_path)
             file_size_mb = len(file_bytes) / (1024 * 1024)
 
-            if file_size_mb > 1.0 and email:
+            if file_size_mb > 1.0 and email and not is_preview:
                 tracking_url = f"{settings.FRONTEND_URL}/track?jobId={job_id}"
                 self.email_svc.send_started_email(email, tracking_url)
             
+            if is_preview:
+                if file_path.lower().endswith(".csv"):
+                    df = pd.read_csv(io.BytesIO(file_bytes), nrows=10, on_bad_lines='skip')
+                elif file_path.lower().endswith((".xlsx", ".xls")):
+                    df = pd.read_excel(io.BytesIO(file_bytes), nrows=10)
+                else:
+                    raise ValueError("Unsupported file format. Must be CSV or XLSX.")
+                    
+                df = df.astype(str)
+                df = df.replace({"nan": None, "NaT": None, "<NA>": None})
+                preview_data = df.to_dict(orient="records")
+                preview_columns = df.columns.tolist()
+                
+                self.firestore_svc.update_job_status(job_id, "completed", {
+                    "preview_data": preview_data,
+                    "preview_columns": preview_columns,
+                    "processed_rows": len(df),
+                    "duration_seconds": 0,
+                    "download_url": None
+                })
+                return
+
             # Dynamically calculate chunk size based on target schema.
             # With gemini-3.6-flash (65K output token limit), we can safely process 500 rows per chunk.
             # Fewer chunks = fewer Pub/Sub push deliveries = no push window throttling.
