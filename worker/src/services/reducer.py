@@ -7,6 +7,7 @@ import csv
 import zipfile
 from datetime import datetime
 import duckdb
+import pandas as pd
 from src.core.config import settings
 from src.services.storage import StorageService
 from src.services.firestore import FirestoreService
@@ -167,12 +168,23 @@ class ReducerService:
                 except Exception as e:
                     print(f"Failed to parse created_at for duration: {e}")
 
-            self.firestore_svc.update_job_status(job_id, "completed", {
+            update_payload = {
                 "download_url": download_url,
                 "processed_rows": processed_rows,
                 "duration_seconds": round(duration, 2),
                 "columns_metadata": columns_metadata
-            })
+            }
+            
+            if job_data.get("is_preview"):
+                try:
+                    # Convert pandas DataFrame to list of dicts, replacing NaNs with None
+                    preview_df = duckdb.sql(f"SELECT * FROM '{local_csv}' LIMIT 10").df()
+                    preview_df = preview_df.where(pd.notnull(preview_df), None)
+                    update_payload["preview_data"] = preview_df.to_dict(orient="records")
+                except Exception as e:
+                    print(f"Failed to load preview data: {e}")
+
+            self.firestore_svc.update_job_status(job_id, "completed", update_payload)
             
             # Log Analytics telemetry
             if self.audit_svc:

@@ -117,79 +117,122 @@ function TrackContent() {
           )}
         </header>
 
-        {/* TIMELINE VIEW */}
-        <div className="relative mb-12">
-          {/* Vertical Connecting Line */}
-          <div className="absolute left-[27px] top-4 bottom-8 w-0.5 bg-white/5"></div>
-          
-          <div className="flex flex-col gap-8">
-            {STEPS.map((step, index) => {
-              const isCompleted = currentStepIndex > index || status === 'completed';
-              const isActive = currentStepIndex === index && status !== 'failed' && status !== 'completed';
-              const isFailedAtThisStep = status === 'failed' && currentStepIndex === index;
-              const Icon = step.icon;
-
-              return (
-                <div key={step.id} className={`relative flex gap-6 items-start ${isActive ? 'opacity-100' : isCompleted ? 'opacity-90' : 'opacity-40'}`}>
-                  {/* Status Node */}
-                  <div className="relative z-10 flex-shrink-0">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-500 ${
-                      isCompleted 
-                        ? 'bg-green-500/10 border-green-500/30 text-green-500 shadow-[0_0_20px_rgba(34,197,94,0.2)]'
-                        : isFailedAtThisStep
-                        ? 'bg-red-500/10 border-red-500/30 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)]'
-                        : isActive
-                        ? 'bg-accent-500/20 border-accent-500/50 text-accent-400 shadow-[0_0_30px_rgba(139,92,246,0.4)]'
-                        : 'bg-black/40 border-white/10 text-gray-500'
-                    }`}>
-                      {isCompleted ? <CheckCircle2 size={24} /> : isFailedAtThisStep ? <AlertCircle size={24} /> : <Icon size={24} className={isActive ? 'animate-pulse' : ''} />}
-                    </div>
-                    {/* Active Pulsating Ring */}
-                    {isActive && (
-                      <div className="absolute inset-0 border-2 border-accent-500/50 rounded-2xl animate-ping opacity-20 pointer-events-none"></div>
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-grow pt-2">
-                    <h3 className={`text-lg font-bold mb-1 ${isCompleted ? 'text-gray-200' : isFailedAtThisStep ? 'text-red-400' : isActive ? 'text-accent-400' : 'text-gray-500'}`}>
-                      {step.title}
-                    </h3>
-                    <p className="text-sm text-gray-400">{step.description}</p>
-
-                    {/* Progress Bar for active chunks step */}
-                    {isActive && step.id === 'processing_chunks' && (
-                      <div className="mt-4 bg-black/30 p-4 rounded-xl border border-white/5 animate-in fade-in slide-in-from-top-2">
-                        <div className="flex justify-between items-end mb-2">
-                          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Mapping Batches</span>
-                          <span className="text-sm font-bold text-accent-400">{progressPercent}%</span>
-                        </div>
-                        <div className="w-full bg-black/50 rounded-full h-2 border border-white/5 overflow-hidden mb-2">
-                          <div 
-                            className="bg-gradient-to-r from-accent-500 to-blue-500 h-2 rounded-full transition-all duration-700 ease-out"
-                            style={{ width: `${progressPercent}%` }}
-                          ></div>
-                        </div>
-                        <p className="text-right text-xs text-gray-500 font-mono">
-                          {completedChunks} / {totalChunks} chunks mapped
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Error details */}
-                    {isFailedAtThisStep && (
-                      <div className="mt-4 p-4 bg-red-950/40 text-red-300 rounded-xl border border-red-500/20 animate-in fade-in">
-                        <p className="font-mono text-xs break-words">
-                          {String(currentState?.error_message || "Unknown error occurred during processing.")}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+        {/* TIMELINE OR PREVIEW TABLE */}
+        {currentState?.is_preview ? (
+          <div className="relative mb-12">
+            {status !== 'completed' && status !== 'failed' && (
+              <div className="flex flex-col items-center justify-center py-12 gap-4 animate-in fade-in">
+                <Loader2 className="animate-spin text-accent-500" size={48} />
+                <p className="text-gray-400 font-medium text-lg">Generating Preview (approx 5-10s)...</p>
+                <p className="text-sm text-gray-500">Transforming the first 10 rows with Gemini Flash</p>
+              </div>
+            )}
+            {status === 'failed' && (
+              <div className="flex flex-col items-center justify-center py-12 gap-4 text-red-400 animate-in fade-in bg-red-950/20 rounded-xl border border-red-500/20">
+                <AlertCircle size={48} />
+                <p className="font-bold">Preview generation failed</p>
+                <p className="text-sm opacity-80 max-w-md text-center">{currentState?.error_message}</p>
+              </div>
+            )}
+            {status === 'completed' && currentState?.preview_data && (
+              <div className="w-full overflow-x-auto rounded-xl border border-white/10 bg-black/40 animate-in fade-in slide-in-from-bottom-4">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs text-gray-400 uppercase bg-black/50 border-b border-white/10">
+                    <tr>
+                      {Object.keys(currentState.preview_data[0] || {}).map(key => (
+                        <th key={key} className="px-4 py-3 font-semibold tracking-wider whitespace-nowrap">{key}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentState.preview_data.map((row, i) => (
+                      <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                        {Object.values(row).map((val: any, j) => (
+                          <td key={j} className="px-4 py-3 text-gray-300 max-w-[200px] truncate">
+                            {val !== null && val !== undefined ? String(val) : <span className="text-gray-600 italic">null</span>}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        </div>
+        ) : (
+          <div className="relative mb-12">
+            {/* Vertical Connecting Line */}
+            <div className="absolute left-[27px] top-4 bottom-8 w-0.5 bg-white/5"></div>
+            
+            <div className="flex flex-col gap-8">
+              {STEPS.map((step, index) => {
+                const isCompleted = currentStepIndex > index || status === 'completed';
+                const isActive = currentStepIndex === index && status !== 'failed' && status !== 'completed';
+                const isFailedAtThisStep = status === 'failed' && currentStepIndex === index;
+                const Icon = step.icon;
+
+                return (
+                  <div key={step.id} className={`relative flex gap-6 items-start ${isActive ? 'opacity-100' : isCompleted ? 'opacity-90' : 'opacity-40'}`}>
+                    {/* Status Node */}
+                    <div className="relative z-10 flex-shrink-0">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-500 ${
+                        isCompleted 
+                          ? 'bg-green-500/10 border-green-500/30 text-green-500 shadow-[0_0_20px_rgba(34,197,94,0.2)]'
+                          : isFailedAtThisStep
+                          ? 'bg-red-500/10 border-red-500/30 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)]'
+                          : isActive
+                          ? 'bg-accent-500/20 border-accent-500/50 text-accent-400 shadow-[0_0_30px_rgba(139,92,246,0.4)]'
+                          : 'bg-black/40 border-white/10 text-gray-500'
+                      }`}>
+                        {isCompleted ? <CheckCircle2 size={24} /> : isFailedAtThisStep ? <AlertCircle size={24} /> : <Icon size={24} className={isActive ? 'animate-pulse' : ''} />}
+                      </div>
+                      {/* Active Pulsating Ring */}
+                      {isActive && (
+                        <div className="absolute inset-0 border-2 border-accent-500/50 rounded-2xl animate-ping opacity-20 pointer-events-none"></div>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-grow pt-2">
+                      <h3 className={`text-lg font-bold mb-1 ${isCompleted ? 'text-gray-200' : isFailedAtThisStep ? 'text-red-400' : isActive ? 'text-accent-400' : 'text-gray-500'}`}>
+                        {step.title}
+                      </h3>
+                      <p className="text-sm text-gray-400">{step.description}</p>
+
+                      {/* Progress Bar for active chunks step */}
+                      {isActive && step.id === 'processing_chunks' && (
+                        <div className="mt-4 bg-black/30 p-4 rounded-xl border border-white/5 animate-in fade-in slide-in-from-top-2">
+                          <div className="flex justify-between items-end mb-2">
+                            <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Mapping Batches</span>
+                            <span className="text-sm font-bold text-accent-400">{progressPercent}%</span>
+                          </div>
+                          <div className="w-full bg-black/50 rounded-full h-2 border border-white/5 overflow-hidden mb-2">
+                            <div 
+                              className="bg-gradient-to-r from-accent-500 to-blue-500 h-2 rounded-full transition-all duration-700 ease-out"
+                              style={{ width: `${progressPercent}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-right text-xs text-gray-500 font-mono">
+                            {completedChunks} / {totalChunks} chunks mapped
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Error details */}
+                      {isFailedAtThisStep && (
+                        <div className="mt-4 p-4 bg-red-950/40 text-red-300 rounded-xl border border-red-500/20 animate-in fade-in">
+                          <p className="font-mono text-xs break-words">
+                            {String(currentState?.error_message || "Unknown error occurred during processing.")}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* COMPLETION AREA */}
         {status === "completed" && !!currentState?.download_url && (
