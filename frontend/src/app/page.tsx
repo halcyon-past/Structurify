@@ -10,10 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 export default function Home() {
   const { user } = useAuth();
   const [file, setFile] = useState<File | null>(null);
-  const [schemaFields, setSchemaFields] = useState<SchemaField[]>([
-    { name: "id", type: "Integer", required: true },
-    { name: "name", type: "String", required: true }
-  ]);
+  const [schemaFields, setSchemaFields] = useState<SchemaField[]>([]);
   
   const [email, setEmail] = useState("");
   

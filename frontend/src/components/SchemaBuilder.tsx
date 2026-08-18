@@ -217,7 +217,7 @@ export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubm
               {isSubmitting ? (
                 <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Processing...</>
               ) : (
-                "Run Preview"
+                "Show Preview"
               )}
             </div>
           </button>

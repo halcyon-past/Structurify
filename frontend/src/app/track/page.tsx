@@ -135,21 +135,21 @@ function TrackContent() {
               </div>
             )}
             {status === 'completed' && currentState?.preview_data && (
-              <div className="w-full overflow-x-auto rounded-xl border border-white/10 bg-black/40 animate-in fade-in slide-in-from-bottom-4">
-                <table className="w-full text-sm text-left">
-                  <thead className="text-xs text-gray-400 uppercase bg-black/50 border-b border-white/10">
+              <div className="w-full overflow-x-auto rounded-xl border border-white/10 bg-[#f9fafb] text-gray-800 animate-in fade-in slide-in-from-bottom-4 shadow-xl">
+                <table className="w-full text-sm text-left border-collapse font-mono">
+                  <thead className="text-xs text-gray-600 uppercase bg-gray-200 border-b-2 border-gray-300">
                     <tr>
                       {Object.keys(currentState.preview_data[0] || {}).map(key => (
-                        <th key={key} className="px-4 py-3 font-semibold tracking-wider whitespace-nowrap">{key}</th>
+                        <th key={key} className="px-4 py-2 border-r border-gray-300 font-bold tracking-wider whitespace-nowrap last:border-r-0">{key}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {currentState.preview_data.map((row, i) => (
-                      <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                      <tr key={i} className="border-b border-gray-200 last:border-0 hover:bg-blue-50 transition-colors">
                         {Object.values(row).map((val: unknown, j) => (
-                          <td key={j} className="px-4 py-3 text-gray-300 max-w-[200px] truncate">
-                            {val !== null && val !== undefined ? String(val) : <span className="text-gray-600 italic">null</span>}
+                          <td key={j} className="px-4 py-2 border-r border-gray-200 max-w-[300px] truncate last:border-r-0">
+                            {val !== null && val !== undefined ? String(val) : <span className="text-gray-400 italic">null</span>}
                           </td>
                         ))}
                       </tr>
@@ -248,15 +248,17 @@ function TrackContent() {
               </div>
             </div>
             
-            <a 
-              href={String(currentState?.download_url)} 
-              target="_blank" 
-              rel="noreferrer"
-              className="group relative flex items-center justify-center gap-2 w-full overflow-hidden rounded-xl bg-green-500/10 hover:bg-green-500/20 text-green-400 py-4 px-4 font-bold transition-all duration-300 border border-green-500/20 hover:border-green-500/40 hover:shadow-[0_0_30px_rgba(34,197,94,0.15)] active:scale-[0.98] mb-4"
-            >
-              <Download size={22} className="group-hover:-translate-y-1 transition-transform" />
-              Download Clean Dataset {currentState?.is_preview ? "(Preview)" : ""}
-            </a>
+            {!currentState?.is_preview && (
+              <a 
+                href={String(currentState?.download_url)} 
+                target="_blank" 
+                rel="noreferrer"
+                className="group relative flex items-center justify-center gap-2 w-full overflow-hidden rounded-xl bg-green-500/10 hover:bg-green-500/20 text-green-400 py-4 px-4 font-bold transition-all duration-300 border border-green-500/20 hover:border-green-500/40 hover:shadow-[0_0_30px_rgba(34,197,94,0.15)] active:scale-[0.98] mb-4"
+              >
+                <Download size={22} className="group-hover:-translate-y-1 transition-transform" />
+                Download Clean Dataset
+              </a>
+            )}
             
             {currentState?.is_preview && (
               <button 
