@@ -19,11 +19,14 @@ def test_process_file_preview(file_parser):
     
     file_parser.process_file(job_id, file_path, target_schema, is_preview=True)
     
-    file_parser.firestore_svc.db.collection().document().update.assert_called()
+    # Preview bypasses pipeline, updates status directly to completed
+    status_doc = file_parser.firestore_svc.statuses[job_id]
+    assert status_doc["status"] == "completed"
+    assert "preview_data" in status_doc
+    assert len(status_doc["preview_data"]) > 0
     
-    # Check if only 1 chunk was created because of the 10 row limit.
-    # We can check publish.call_count. Since the mock file has limited data, it might always be 1.
-    assert file_parser.publisher.publish.call_count == 1
+    # Should not publish chunks for preview
+    assert file_parser.publisher.publish.call_count == 0
 
 def test_process_dirty_csv(file_parser):
     job_id = "test-job-dirty"

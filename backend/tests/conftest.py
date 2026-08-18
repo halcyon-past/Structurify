@@ -11,14 +11,14 @@ class MockStorageService:
         return f"https://mock-storage.com/{file_path}"
 
 class MockPubSubService:
-    def publish_job(self, job_id: str, file_path: str, target_schema: dict, email: str = None, role: str = "guest", plan: str = "free", user_id: str = None, ip_address: str = None):
+    def publish_job(self, job_id: str, file_path: str, target_schema: dict, email: str = None, role: str = "guest", plan: str = "free", user_id: str = None, ip_address: str = None, is_preview: bool = False):
         pass # mock success
 
 class MockFirestoreService:
     def __init__(self):
         self.jobs = {}
 
-    def create_job(self, job_id: str, file_path: str, file_name: str, target_schema: dict, created_at: str, email: str = None, role: str = "guest", plan: str = "free", user_id: str = None, ip_address: str = None):
+    def create_job(self, job_id: str, file_path: str, file_name: str, target_schema: dict, created_at: str, email: str = None, role: str = "guest", plan: str = "free", user_id: str = None, ip_address: str = None, is_preview: bool = False):
         self.jobs[job_id] = {
             "job_id": job_id,
             "status": "queued",
@@ -27,7 +27,7 @@ class MockFirestoreService:
             "role": role,
             "plan": plan,
             "user_id": user_id,
-            "ip_address": ip_address
+            "ip_address": ip_address, "is_preview": is_preview
         }
 
     def update_job_status(self, job_id: str, status: str, error_message: str = None, updated_at: str = None):
