@@ -56,7 +56,7 @@ class FileParserService:
                 return
 
             # Dynamically calculate chunk size based on target schema.
-            # With gemini-3.6-flash (65K output token limit), we can safely process 500 rows per chunk.
+            # With an LLM (typically 65K+ output token limit), we can safely process 500 rows per chunk.
             # Fewer chunks = fewer Pub/Sub push deliveries = no push window throttling.
             num_fields = len(target_schema.keys()) if target_schema else 1
             max_chunk_size = config_service.get('max_rows_per_chunk', 500)

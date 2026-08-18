@@ -49,7 +49,7 @@ graph TD;
     E --> F[Upload to Google Cloud Storage];
     F --> G[Pub/Sub Job Queue];
     G --> H[Cloud Run AI Workers];
-    H --> I[Gemini AI Map-Reduce];
+    H --> I[LLM AI Map-Reduce];
     I --> J[DuckDB Data Aggregation];
     J --> K[Zip Creation data.csv + metadata.json];
     K --> L[Firestore Job Updated];
@@ -59,7 +59,7 @@ graph TD;
 ## 🚀 How It Works
 1. **Upload your unstructured file**: Currently supported formats are **CSV, XLSX, and XLS**.
 2. **Define your Target Schema**: Use the UI Builder or paste a raw JSON schema.
-3. **Submit the Job**: Our asynchronous MapReduce pipeline processes your data using Google Gemini.
+3. **Submit the Job**: Our asynchronous MapReduce pipeline processes your data using LLM.
 4. **Download Results**: Once completed, you will receive a ZIP file containing your structured data and a metadata report.
 
 ## 🔔 Email Notifications

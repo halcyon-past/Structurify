@@ -218,7 +218,7 @@ export default function AdminPage() {
                   icon={<BarChart3 className="w-6 h-6"/>} 
                   title="Tokens Burned" 
                   value={formatNumber(totalTokensUsed)} 
-                  sub="Gemini LLM inference"
+                  sub="LLM inference"
                   gradient="from-emerald-500/20 to-teal-500/5"
                   iconColor="text-emerald-400"
                 />
@@ -718,8 +718,8 @@ export default function AdminPage() {
                   <div className="space-y-8 max-w-4xl">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="space-y-3">
-                        <label className="text-sm font-bold text-gray-300 uppercase tracking-wider">Gemini LLM Model</label>
-                        <p className="text-sm text-gray-500 mb-2">Select the underlying Gemini model used by the ETL worker for data transformation.</p>
+                        <label className="text-sm font-bold text-gray-300 uppercase tracking-wider">LLM Model</label>
+                        <p className="text-sm text-gray-500 mb-2">Select the underlying LLM used by the ETL worker for data transformation.</p>
                         <select 
                           value={localSettings.llm_model || 'gemini-3.6-flash'}
                           onChange={(e) => setLocalSettings({...localSettings, llm_model: e.target.value})}
@@ -735,7 +735,7 @@ export default function AdminPage() {
 
                       <div className="space-y-3">
                         <label className="text-sm font-bold text-gray-300 uppercase tracking-wider">Max Rows Per Chunk</label>
-                        <p className="text-sm text-gray-500 mb-2">The absolute maximum number of rows a worker will send to Gemini in a single prompt.</p>
+                        <p className="text-sm text-gray-500 mb-2">The absolute maximum number of rows a worker will send to the LLM in a single prompt.</p>
                         <input 
                           type="number"
                           value={localSettings.max_rows_per_chunk || 500}

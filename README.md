@@ -2,7 +2,7 @@
 
 **Live Demo**: [structurify.web.app](https://structurify.aritro.cloud)
 
-**Structurify** is a production-ready, event-driven B2B SaaS platform that automates the transformation of unstructured, messy spreadsheet data (CSV, XLSX) into a standardized master schema using **Google Gemini 2.5 Flash**.
+**Structurify** is a production-ready, event-driven B2B SaaS platform that automates the transformation of unstructured, messy spreadsheet data (CSV, XLSX) into a standardized master schema using **LLM**.
 
 Built on a completely decoupled **Serverless Fan-Out Architecture** on Google Cloud Platform (GCP), Structurify ensures 0% web server blocking, high resilience under burst loads, and highly cost-effective scaling. It utilizes a **LangGraph** Map-Reduce pipeline to gracefully process files of immense scale by dynamically batching and error-correcting the LLM output.
 
@@ -16,7 +16,7 @@ Built on a completely decoupled **Serverless Fan-Out Architecture** on Google Cl
 - **Email Notifications**: Upload a massive dataset (over 1MB), and Structurify will immediately email you a tracking link to watch the live progress, followed by a final success email with your secure download URL.
 - **Enterprise SSO & Multi-Tenant Authentication**: Provides robust authentication via Firebase Identity Platform, supporting Google OAuth, SAML, and OIDC enterprise SSO. Features automatic account linking for identity conflict resolution and maps users to isolated multi-tenant workspaces based on their provider `tenantId`.
 - **Massive Scalability**: The backend acts as a lightweight router while heavy data processing is handled by scalable workers via Cloud Pub/Sub, preventing Gateway Timeouts on long jobs.
-- **Dynamic Configuration & Prompt Management**: An integrated Admin UI backed by a real-time Firestore synchronization engine allows operators to hot-swap Gemini LLM models, tune chunk sizes, and edit system AI prompts entirely on the fly without ever redeploying code.
+- **Dynamic Configuration & Prompt Management**: An integrated Admin UI backed by a real-time Firestore synchronization engine allows operators to hot-swap LLM models, tune chunk sizes, and edit system AI prompts entirely on the fly without ever redeploying code.
 - **Graceful Job Cancellation**: Safely halt massive in-flight jobs via a UI cancel button. In-memory TTL caching on workers ensures instant cancellation without generating "ghost jobs" or burning Firestore read quotas.
 - **Custom Toast Notifications**: Uses non-blocking `react-hot-toast` popups instead of native browser alerts to provide users with a clean, modern experience when editing settings or executing administrative actions.
 - **Enterprise Observability & Billing**: Logs rich telemetry into Firestore (`job_audits`), tracking LLM Token Usage via atomic transactions, File Sizes, IP Addresses, and exact Job Runtimes to power strict rate limits and future billing models.
@@ -33,7 +33,7 @@ The architecture utilizes a robust asynchronous data pipeline:
 4. **Cloud Run Worker (FastAPI/Python)**: A massively scalable, asynchronous worker consumes the Pub/Sub push notification.
 5. **LangGraph Map-Reduce Pipeline**: 
     - **Split**: The worker chunks the file (e.g. 500 rows at a time).
-    - **Map (LangGraph)**: Each chunk is pushed to Gemini 2.5 Flash using strict `response_schema` parameters. If Gemini hallucinates or encounters an error, a LangGraph state-machine automatically retries the extraction up to 3 times.
+    - **Map (LangGraph)**: Each chunk is pushed to LLM using strict `response_schema` parameters. If LLM hallucinates or encounters an error, a LangGraph state-machine automatically retries the extraction up to 3 times.
     - **Reduce**: A transaction counter monitors the chunks. When all are complete, a final Reducer service uses DuckDB to compile them into a pristine `.csv` and generate comprehensive `metadata.json`, packaging them into a secure `.zip` archive.
 6. **Real-time UI**: The frontend listens to Firestore via `onSnapshot` and instantly provides the user with a real-time progress bar and a secure download URL.
 
@@ -47,7 +47,7 @@ graph TD;
     E --> F[Upload to Google Cloud Storage];
     F --> G[Pub/Sub Job Queue];
     G --> H[Cloud Run AI Workers];
-    H --> I[Gemini 2.5 Flash Map-Reduce];
+    H --> I[LLM Map-Reduce];
     I --> J[DuckDB Data Aggregation];
     J --> K[Zip Creation data.csv + metadata.json];
     K --> L[Firestore Job Updated];
@@ -70,7 +70,7 @@ Structurify features robust observability and administrative controls via an int
 3. **Telemetry & Audit Logging**: 
    - Every job execution is rigorously tracked via the `AuditService`. 
    - The system decouple identity (`user_id`) from origin (`ip_address`) for guest rate-limiting.
-   - We track exact compute costs (LLM tokens burned) extracted from Gemini API responses and safely increment them in Firestore via atomic transactions.
+   - We track exact compute costs (LLM tokens burned) extracted from LLM API responses and safely increment them in Firestore via atomic transactions.
 4. **History & Job Management**:
    - Both registered users and unauthenticated guests can view a complete history of their past extractions.
    - Users can securely cancel runaway jobs mid-flight directly from their dashboard.
@@ -85,7 +85,7 @@ Structurify features robust observability and administrative controls via an int
 
 - **Frontend**: Next.js 14, React, TailwindCSS, Firebase Client SDK
 - **Backend API Gateway**: Python, FastAPI, Uvicorn
-- **Asynchronous Worker**: Python, FastAPI, Pandas, LangGraph, Google GenAI SDK (Gemini 2.5 Flash), Tenacity
+- **Asynchronous Worker**: Python, FastAPI, Pandas, LangGraph, Google GenAI SDK (LLM), Tenacity
 - **Cloud Infrastructure**: Google Cloud Platform (Cloud Run, Cloud Storage, Cloud Pub/Sub, Firestore, Artifact Registry, Secret Manager)
 - **Architecture Standard**: Clean Architecture / Domain Driven Design (DDD)
 - **Testing**: `pytest`, `httpx`, `jest`, React Testing Library
@@ -126,7 +126,7 @@ Structurify/
 │   ├── src/
 │   │   ├── api/              # PubSub Push endpoints (Map / Reduce routes)
 │   │   └── services/         # LangGraph Chunk Processor, Reducer, File Parser, Email Service
-│   └── tests/                # Pytest suites (Mocks GCP & Gemini)
+│   └── tests/                # Pytest suites (Mocks GCP & LLM)
 │
 ├── frontend/                 # Next.js Application
 │   ├── src/
