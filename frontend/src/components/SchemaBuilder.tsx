@@ -16,7 +16,7 @@ export interface SchemaField {
 interface SchemaBuilderProps {
   fields: SchemaField[];
   onChange: (fields: SchemaField[]) => void;
-  onSubmit: () => void;
+  onSubmit: (isPreview: boolean) => void;
   isSubmitting: boolean;
   isSubmitDisabled: boolean;
   email: string;
@@ -207,21 +207,37 @@ export function SchemaBuilder({ fields, onChange, onSubmit, isSubmitting, isSubm
             )}
           </div>
         </div>
-        <button 
-          onClick={onSubmit}
-          disabled={isSubmitting || isSubmitDisabled || (mode === "json" && !!jsonError)}
-          className="relative w-full overflow-hidden rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed group transition-all duration-300 hover:shadow-[0_0_40px_rgba(139,92,246,0.3)] active:scale-[0.98]"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-accent-600 via-purple-600 to-blue-600"></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-accent-500 via-purple-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative flex items-center justify-center gap-2 py-3 text-white font-bold tracking-wide">
-            {isSubmitting ? (
-              <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Processing Pipeline...</>
-            ) : (
-              "Compile Heterogeneous Data"
-            )}
-          </div>
-        </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => onSubmit(true)}
+            disabled={isSubmitting || isSubmitDisabled || (mode === "json" && !!jsonError)}
+            className="flex-1 relative overflow-hidden rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed group transition-all duration-300 border border-white/20 hover:bg-white/5 active:scale-[0.98]"
+          >
+            <div className="relative flex items-center justify-center gap-2 py-3 text-white font-medium tracking-wide">
+              {isSubmitting ? (
+                <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Processing...</>
+              ) : (
+                "Run Preview"
+              )}
+            </div>
+          </button>
+          
+          <button 
+            onClick={() => onSubmit(false)}
+            disabled={isSubmitting || isSubmitDisabled || (mode === "json" && !!jsonError)}
+            className="flex-[2] relative overflow-hidden rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed group transition-all duration-300 hover:shadow-[0_0_40px_rgba(139,92,246,0.3)] active:scale-[0.98]"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-accent-600 via-purple-600 to-blue-600"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-accent-500 via-purple-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative flex items-center justify-center gap-2 py-3 text-white font-bold tracking-wide">
+              {isSubmitting ? (
+                <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Processing...</>
+              ) : (
+                "Compile Full Data"
+              )}
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   );

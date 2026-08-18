@@ -11,6 +11,7 @@ Built on a completely decoupled **Serverless Fan-Out Architecture** on Google Cl
 ## <img src="./docs/icons/architecture.svg" width="28" align="absbottom" alt="architecture" /> Core Features
 
 - **Strict Schema Enforcement**: Define exactly the JSON/Excel schema you need, and Structurify will enforce strict type-casting and structure.
+- **Sandbox Preview Mode**: Process just the first 10 rows of a dataset to validate schema fit and AI transformation quality before committing to a full long-running job.
 - **Auto-Clean Mode**: Don't know the schema? Structurify will automatically infer the schema from the file headers and repair capitalization, trim whitespace, and standardize date formats across the board.
 - **Email Notifications**: Upload a massive dataset (over 1MB), and Structurify will immediately email you a tracking link to watch the live progress, followed by a final success email with your secure download URL.
 - **Enterprise SSO & Multi-Tenant Authentication**: Provides robust authentication via Firebase Identity Platform, supporting Google OAuth, SAML, and OIDC enterprise SSO. Features automatic account linking for identity conflict resolution and maps users to isolated multi-tenant workspaces based on their provider `tenantId`.

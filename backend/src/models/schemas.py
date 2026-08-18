@@ -17,11 +17,13 @@ class JobRequest(BaseModel):
     role: Optional[str] = "guest"
     plan: Optional[str] = "free"
     user_id: Optional[str] = None
+    is_preview: bool = False
 
 class JobResponse(BaseModel):
     job_id: str
     status: str
     message: str
+    is_preview: bool = False
 
 class JobStatusResponse(BaseModel):
     job_id: str
@@ -32,3 +34,4 @@ class JobStatusResponse(BaseModel):
     error_message: Optional[str] = None
     total_chunks: Optional[int] = None
     completed_chunks: Optional[int] = None
+    is_preview: Optional[bool] = False

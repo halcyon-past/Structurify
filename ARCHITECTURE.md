@@ -136,10 +136,11 @@ sequenceDiagram
 - **Map:** Each chunk is mapped over Gemini concurrently via Pub/Sub. If a chunk fails extraction, a LangGraph state machine catches the error and loops back for up to 3 self-correction retries.
 - **Reduce:** A Firestore transactional counter tracks chunk completions and eventually merges them into a unified `.xlsx` file.
 
-### 3. Strict Schema Enforcement & Auto-Clean
-**Problem:** LLMs are prone to hallucinating formats or omitting columns.
+### 3. Strict Schema Enforcement, Auto-Clean, & Preview Mode
+**Problem:** LLMs are prone to hallucinating formats or omitting columns. Running a full pipeline on an invalid schema is costly.
 **Solution:** 
-- If a target schema is provided, Gemini is forced to map the data directly to a JSON Schema object (`response_schema`).
+- **Sandbox Preview Mode:** The system can be triggered in a preview mode where the split phase instantly cuts the input to exactly 10 rows. This allows rapid validation of the extraction quality without wasting excessive compute tokens on dead runs.
+- **Schema Mapping:** If a target schema is provided, Gemini is forced to map the data directly to a JSON Schema object (`response_schema`).
 - **Auto-Clean Mode:** If no target schema is provided, Structurify dynamically infers the schema, cleans up the mess (capitalization, whitespaces, date formats), and returns the entire spreadsheet as a valid JSON array.
 
 ### 4. Asynchronous Email Notifications

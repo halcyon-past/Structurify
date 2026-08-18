@@ -92,9 +92,16 @@ function TrackContent() {
         </button>
 
         <header className="mb-10 text-center flex flex-col items-center">
-          <h1 className="text-3xl font-bold text-gray-100 mb-2">
-            Job Status Pipeline
-          </h1>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-3xl font-bold text-gray-100">
+              Job Status Pipeline
+            </h1>
+            {currentState?.is_preview && (
+              <span className="px-3 py-1 text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full">
+                PREVIEW
+              </span>
+            )}
+          </div>
           <p className="text-sm font-mono text-gray-400 mb-4">
             Tracking ID: <span className="text-gray-300">{jobId}</span>
           </p>
@@ -202,11 +209,21 @@ function TrackContent() {
               href={String(currentState?.download_url)} 
               target="_blank" 
               rel="noreferrer"
-              className="group relative flex items-center justify-center gap-2 w-full overflow-hidden rounded-xl bg-green-500/10 hover:bg-green-500/20 text-green-400 py-4 px-4 font-bold transition-all duration-300 border border-green-500/20 hover:border-green-500/40 hover:shadow-[0_0_30px_rgba(34,197,94,0.15)] active:scale-[0.98]"
+              className="group relative flex items-center justify-center gap-2 w-full overflow-hidden rounded-xl bg-green-500/10 hover:bg-green-500/20 text-green-400 py-4 px-4 font-bold transition-all duration-300 border border-green-500/20 hover:border-green-500/40 hover:shadow-[0_0_30px_rgba(34,197,94,0.15)] active:scale-[0.98] mb-4"
             >
               <Download size={22} className="group-hover:-translate-y-1 transition-transform" />
-              Download Clean Dataset
+              Download Clean Dataset {currentState?.is_preview ? "(Preview)" : ""}
             </a>
+            
+            {currentState?.is_preview && (
+              <button 
+                onClick={() => router.push("/")}
+                className="group relative flex items-center justify-center gap-2 w-full overflow-hidden rounded-xl bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 py-4 px-4 font-bold transition-all duration-300 border border-accent-500/20 hover:border-accent-500/40 hover:shadow-[0_0_30px_rgba(139,92,246,0.15)] active:scale-[0.98]"
+              >
+                <Sparkles size={22} />
+                Looks Good? Run Full Job
+              </button>
+            )}
           </div>
         )}
       </div>

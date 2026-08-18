@@ -22,14 +22,14 @@ class FileParserService:
         self.publisher = pubsub_v1.PublisherClient()
         self.topic_path = self.publisher.topic_path(settings.GOOGLE_CLOUD_PROJECT, "chunk-processing-jobs")
 
-    def process_file(self, job_id: str, file_path: str, target_schema: Dict[str, Any], email: str = None):
+    def process_file(self, job_id: str, file_path: str, target_schema: Dict[str, Any], email: str = None, is_preview: bool = False):
         self.firestore_svc.update_job_status(job_id, "processing")
         
         try:
             file_bytes = self.storage_svc.download_file_bytes(settings.RAW_BUCKET_NAME, file_path)
             file_size_mb = len(file_bytes) / (1024 * 1024)
 
-            if file_size_mb > 1.0 and email:
+            if file_size_mb > 1.0 and email and not is_preview:
                 tracking_url = f"{settings.FRONTEND_URL}/track?jobId={job_id}"
                 self.email_svc.send_started_email(email, tracking_url)
             
@@ -42,11 +42,13 @@ class FileParserService:
             chunk_size = max(250, min(max_chunk_size, target_cells // num_fields))
             chunks = []
             
+            nrows_limit = 10 if is_preview else None
+            
             if file_path.lower().endswith(".csv"):
-                for chunk_df in pd.read_csv(io.BytesIO(file_bytes), on_bad_lines='skip', chunksize=chunk_size):
+                for chunk_df in pd.read_csv(io.BytesIO(file_bytes), on_bad_lines='skip', chunksize=chunk_size, nrows=nrows_limit):
                     chunks.append(chunk_df.to_csv(index=False))
             elif file_path.lower().endswith((".xlsx", ".xls")):
-                df = pd.read_excel(io.BytesIO(file_bytes))
+                df = pd.read_excel(io.BytesIO(file_bytes), nrows=nrows_limit)
                 total_rows = len(df)
                 for start_idx in range(0, total_rows, chunk_size):
                     end_idx = min(start_idx + chunk_size, total_rows)

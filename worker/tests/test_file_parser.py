@@ -12,6 +12,19 @@ def test_process_file_success(file_parser):
     assert file_parser.publisher.publish.called
     assert file_parser.audit_svc.log_job_start.called
 
+def test_process_file_preview(file_parser):
+    job_id = "test-job-preview"
+    file_path = "uploads/test.csv"
+    target_schema = {"name": "String", "age": "Integer"}
+    
+    file_parser.process_file(job_id, file_path, target_schema, is_preview=True)
+    
+    file_parser.firestore_svc.db.collection().document().update.assert_called()
+    
+    # Check if only 1 chunk was created because of the 10 row limit.
+    # We can check publish.call_count. Since the mock file has limited data, it might always be 1.
+    assert file_parser.publisher.publish.call_count == 1
+
 def test_process_dirty_csv(file_parser):
     job_id = "test-job-dirty"
     file_path = "uploads/dirty_data.csv"

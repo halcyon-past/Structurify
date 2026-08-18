@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-08-18
+### Added
+- **Sandbox Preview Mode**: Added a preview-only mode that processes just the first 10 rows of a file so users can validate schema fit and transformation quality before committing to a full long-running job. This significantly reduces wasted tokens and improves trust for first-time users.
+  - The UI now features a "Run Preview" action.
+  - Preview jobs are flagged in the pipeline UI, skipping heavy processing.
+  - The completion screen for preview mode prompts users to launch a full job if the results are satisfactory.
+
 ## [2.3.0] - 2026-08-17
 ### Added
 - **Enterprise SSO Support**: Introduced support for Enterprise SSO via SAML and OIDC through Firebase Identity Platform.

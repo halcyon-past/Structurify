@@ -1,6 +1,6 @@
 # Structurify Frontend
 
-This is the Next.js 14 frontend application for **Structurify**. It provides a sleek, modern, glassmorphic UI for users to upload unstructured datasets and define strict target schemas.
+This is the Next.js 14 frontend application for **Structurify**. It provides a sleek, modern, glassmorphic UI for users to upload unstructured datasets, define strict target schemas, and test them out using Sandbox Preview Mode.
 
 ## Tech Stack
 - **Framework:** Next.js 14 (App Router)

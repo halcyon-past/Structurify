@@ -27,7 +27,7 @@ export default function Home() {
 
   const router = useRouter();
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (isPreview: boolean = false) => {
     if (!file) return alert("Please select a file.");
     
     const targetSchema: Record<string, string> = {};
@@ -37,7 +37,7 @@ export default function Home() {
     }
 
     try {
-      const jobId = await uploadAndSubmitJob(file, targetSchema, email, user?.uid);
+      const jobId = await uploadAndSubmitJob(file, targetSchema, email, user?.uid, isPreview);
       router.push(`/track?jobId=${jobId}`);
     } catch (error: unknown) {
       alert(error instanceof Error ? error.message : "An error occurred.");
